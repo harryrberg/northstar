@@ -20,4 +20,4 @@ Future platform support is an architectural objective, not a current compatibili
 
 The first deliverable prioritizes faithful editing and file interoperability over broad platform packaging. A common core can support multiple clients, but bindings, builds, rendering, input methods, accessibility, and device testing remain real work.
 
-PDF layout and platform printing are separate from legacy printer-driver emulation. Licensing, final branding, GUI toolkit, Unicode representation, and modern/legacy mode boundaries remain open decisions.
+PDF layout and platform printing are separate from legacy printer-driver emulation. The project is named NorthStar (`northstar` on GitHub) and is open source and non-commercial. The specific open-source license, GUI toolkit, Unicode representation, and modern/legacy mode boundaries remain open decisions.

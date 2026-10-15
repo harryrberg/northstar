@@ -1,6 +1,6 @@
-# WordStar Reconstructed
+# NorthStar
 
-A fidelity-driven reconstruction of WordStar Professional 4.00 for distraction-free writing.
+NorthStar is an open-source, non-commercial reconstruction of WordStar Professional 4.00 for distraction-free writing.
 
 The defining method is to connect reconstructed behavior to original binary analysis, controlled DOS observations, and repeatable differential tests. Familiar key bindings alone do not establish compatibility. This project does not claim that the method is unique among all existing projects.
 
@@ -13,7 +13,7 @@ The defining method is to connect reconstructed behavior to original binary anal
 - Later targets: macOS, Linux, iPadOS, Android, selected e-paper devices, and an Emacs integration.
 - Modern printing and PDF output are planned extensions. Unicode and recovery behavior must have explicit contracts rather than silently changing legacy semantics.
 
-The GUI library, final product name, public release license, and release schedule are not decided. This repository currently records direction and delivery criteria; it contains no working editor yet.
+The product name is NorthStar; the repository name is `northstar`. The GUI library, open-source license, and release schedule are not decided. This repository currently records direction and delivery criteria; it contains no working editor yet.
 
 ## First milestone
 
