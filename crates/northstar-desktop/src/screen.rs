@@ -144,8 +144,8 @@ impl Screen {
             [
                 " ^S left       ^D right        ^E up       ^X down".into(),
                 " Arrows move   Backspace/Delete   Enter new line".into(),
-                " ^V paste      ^K S save       ^K D save and done".into(),
-                " ^K Q done     ^J help         F1 help".into(),
+                " ^V paste      ^Z undo         ^Y redo      ^K S save".into(),
+                " ^K D save and done   ^K Q done   ^J help   F1 help".into(),
                 " F11 full screen              F12 change font".into(),
                 " UTF-8 wraps on screen; stored text is unchanged".into(),
             ]

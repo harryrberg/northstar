@@ -12,7 +12,7 @@ mod reformat;
 mod typing;
 mod utf8;
 pub use formatting::Formatting;
-pub use utf8::{Utf8Editor, Utf8Error, Utf8Snapshot};
+pub use utf8::{UTF8_HISTORY_BYTES, UTF8_HISTORY_EDITS, Utf8Editor, Utf8Error, Utf8Snapshot};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]

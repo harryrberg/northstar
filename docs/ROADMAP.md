@@ -24,11 +24,11 @@ Exit: a runnable Windows 11 build and a reproducible report of passing cases and
 
 ## Windows distribution
 
-An unsigned per-user MSI of the current prototype is checked in at [releases/windows/NorthStar-Prototype-0.1.5-x64.msi](../releases/windows/NorthStar-Prototype-0.1.5-x64.msi). It adds a Start menu entry and uninstall path, carries the project license and font notices, and does not move or remove user documents. The build and install/uninstall checks are in [packaging/windows](../packaging/windows/README.md). For a public Windows release, offer a portable ZIP built from the same executable, complete the recovery and author workflows, then decide signing and release hosting. MSI does not supply automatic updates; consider MSIX or Store distribution later if that channel becomes useful.
+An unsigned per-user MSI of the current prototype is checked in at [releases/windows/NorthStar-Prototype-0.1.6-x64.msi](../releases/windows/NorthStar-Prototype-0.1.6-x64.msi). It adds a Start menu entry and uninstall path, carries the project license and font notices, and does not move or remove user documents. The build and install/uninstall checks are in [packaging/windows](../packaging/windows/README.md). For a public Windows release, offer a portable ZIP built from the same executable, complete the recovery and author workflows, then decide signing and release hosting. MSI does not supply automatic updates; consider MSIX or Store distribution later if that channel becomes useful.
 
 ## Native UTF-8 writing
 
-Keep UTF-8 documents separate from the WordStar carrier and qualify their own behavior. The current flow covers explicit mode selection, Norwegian text input, paste, grapheme-aware movement and deletion, visual word wrap, vertical navigation, Save As, same-path saving with backup and external-byte comparison, and exact reopen. Next add undo and recovery, then an explicit conversion policy. Do not present modern behavior as DOS evidence.
+Keep UTF-8 documents separate from the WordStar carrier and qualify their own behavior. The current flow covers explicit mode selection, Norwegian text input, paste, grapheme-aware movement and deletion, visual word wrap, vertical navigation, bounded undo/redo, Save As, same-path saving with backup and external-byte comparison, and exact reopen. Next add crash recovery, then an explicit conversion policy. Do not present modern behavior as DOS evidence.
 
 ## M2: Working author workflow
 

@@ -434,6 +434,79 @@ fn utf8_keyboard_save_reopen_and_projection_preserve_text() {
 }
 
 #[test]
+fn utf8_undo_redo_keys_restore_cursor_and_exact_saved_bytes() {
+    let scratch = Scratch::new();
+    let path = scratch.0.join("draft.txt");
+    let mut session = DocumentSession::Utf8(Utf8Session::new_at(None));
+    let mut keyboard = Keyboard::default();
+    let Action::Text(text) = keyboard.handle_mode(&type_text("Blåbær"), true).unwrap() else {
+        panic!("UTF-8 text was not routed to the editor")
+    };
+    session.insert_text(&text).unwrap();
+    session.insert_text("\r\nCafe\u{301} 👩‍💻").unwrap();
+    let saved_cursor = match &session {
+        DocumentSession::Utf8(value) => value.editor.snapshot().cursor_byte,
+        DocumentSession::Legacy(_) => unreachable!(),
+    };
+    session.save_as(&path).unwrap();
+    session.backspace().unwrap();
+    assert!(session.modified());
+    assert_eq!(
+        keyboard.handle_mode(&ctrl("z", false), true),
+        Some(Action::Undo)
+    );
+    assert!(session.undo().unwrap());
+    assert!(!session.modified());
+    let DocumentSession::Utf8(value) = &session else {
+        unreachable!()
+    };
+    assert_eq!(value.editor.snapshot().cursor_byte, saved_cursor);
+    assert_eq!(value.editor.text(), "Blåbær\r\nCafe\u{301} 👩‍💻");
+    assert_eq!(
+        keyboard.handle_mode(&ctrl("y", false), true),
+        Some(Action::Redo)
+    );
+    assert_eq!(
+        keyboard.handle_mode(
+            &press(
+                Key::Character("z".into()),
+                Modifiers::CTRL | Modifiers::SHIFT,
+                None,
+                false
+            ),
+            true
+        ),
+        Some(Action::Redo)
+    );
+    assert!(session.redo().unwrap());
+    assert_eq!(keyboard.handle_mode(&ctrl("z", true), true), None);
+    assert_ne!(
+        keyboard.handle_mode(&ctrl("z", false), false),
+        Some(Action::Undo)
+    );
+    session.save().unwrap();
+    assert_eq!(
+        fs::read(&path).unwrap(),
+        "Blåbær\r\nCafe\u{301} ".as_bytes()
+    );
+    assert_eq!(
+        fs::read(scratch.0.join("draft.txt.bak")).unwrap(),
+        "Blåbær\r\nCafe\u{301} 👩‍💻".as_bytes()
+    );
+    assert_eq!(
+        Utf8Session::open(&path).unwrap().editor.text(),
+        "Blåbær\r\nCafe\u{301} "
+    );
+    assert!(session.undo().unwrap());
+    assert!(session.modified());
+    session.save().unwrap();
+    assert_eq!(
+        fs::read(&path).unwrap(),
+        "Blåbær\r\nCafe\u{301} 👩‍💻".as_bytes()
+    );
+}
+
+#[test]
 fn utf8_word_wrap_and_vertical_keys_preserve_stored_line_endings() {
     let scratch = Scratch::new();
     let source = scratch.0.join("long.txt");

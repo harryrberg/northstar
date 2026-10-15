@@ -108,6 +108,20 @@ impl DocumentSession {
         }
     }
 
+    pub fn undo(&mut self) -> Result<bool, String> {
+        match self {
+            Self::Legacy(_) => Err("Undo is not yet qualified for WordStar files".into()),
+            Self::Utf8(session) => Ok(session.editor.undo()),
+        }
+    }
+
+    pub fn redo(&mut self) -> Result<bool, String> {
+        match self {
+            Self::Legacy(_) => Err("Redo is not available for WordStar files".into()),
+            Self::Utf8(session) => Ok(session.editor.redo()),
+        }
+    }
+
     pub fn save_as(&mut self, path: &Path) -> io::Result<()> {
         match self {
             Self::Legacy(session) => session.save_as(path),

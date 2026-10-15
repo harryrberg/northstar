@@ -399,6 +399,14 @@ impl App {
                                 let result = self.session.delete();
                                 self.record_edit(result);
                             }
+                            Some(Action::Undo) => {
+                                let result = self.session.undo();
+                                self.record_history(result, "Nothing to undo");
+                            }
+                            Some(Action::Redo) => {
+                                let result = self.session.redo();
+                                self.record_history(result, "Nothing to redo");
+                            }
                             Some(Action::MoveVertical(direction)) => {
                                 self.move_utf8_vertical(direction);
                             }
@@ -450,6 +458,14 @@ impl App {
         }
     }
 
+    fn record_history(&mut self, result: Result<bool, String>, empty_notice: &str) {
+        match result {
+            Ok(true) => self.record_edit(Ok(())),
+            Ok(false) => self.notice = empty_notice.into(),
+            Err(message) => self.notice = message,
+        }
+    }
+
     fn keep_utf8_cursor_visible(&mut self) {
         if !self.session.is_utf8() {
             return;
@@ -495,13 +511,13 @@ impl App {
                     row![button("Keep editing").on_press(Message::Cancel),button("Discard changes").on_press(Message::Discard)].spacing(18)].spacing(24).into(),
                 Dialog::Help=>column![text("NORTHSTAR HELP").size(24),
                     text(if self.session.is_utf8() {
-                        "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
+                        "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-Z undoes; Ctrl-Y or Ctrl-Shift-Z redoes. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {
                         "WordStar: Ctrl-S/Ctrl-D move, Ctrl-Q R starts document, Ctrl-V toggles insert, Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
                     }),
                     text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, and X to exit."),
                     text(if self.session.is_utf8() {
-                        "Modern UTF-8 keeps exact text bytes. The screen wraps words without inserting line breaks. Movement and deletion follow graphemes. Wide or unsupported glyphs show a square placeholder. Overwrite and undo remain unfinished."
+                        "Modern UTF-8 keeps exact text bytes. The screen wraps words without inserting line breaks. Movement and deletion follow graphemes. Wide or unsupported glyphs show a square placeholder. Overwrite and crash recovery remain unfinished."
                     } else {
                         "Legacy editing supports printable ASCII only. Norwegian letters, IME, clipboard text, deletion, vertical movement, blocks and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
                     }),

@@ -8,6 +8,8 @@ pub enum Action {
     Text(String),
     Backspace,
     Delete,
+    Undo,
+    Redo,
     MoveVertical(isize),
     Paste,
     Save,
@@ -94,6 +96,10 @@ impl Keyboard {
                 "d" => Some(Action::Edit(Command::NextCharacter)),
                 "e" if utf8 => Some(Action::MoveVertical(-1)),
                 "x" if utf8 => Some(Action::MoveVertical(1)),
+                "z" if utf8 && !repeat && modifiers.shift() => Some(Action::Redo),
+                "z" if utf8 && !repeat => Some(Action::Undo),
+                "y" if utf8 && !repeat => Some(Action::Redo),
+                "z" | "y" if utf8 => None,
                 "v" if !repeat => Some(if utf8 {
                     Action::Paste
                 } else {

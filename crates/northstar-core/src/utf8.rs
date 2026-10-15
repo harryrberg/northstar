@@ -1,8 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //! Native UTF-8 documents. No WordStar byte or formatting rules apply here.
 
-use std::{error::Error, fmt};
+use std::{collections::VecDeque, error::Error, fmt};
 use unicode_segmentation::UnicodeSegmentation;
+
+/// Retained changed text, across both undo and redo stacks.
+pub const UTF8_HISTORY_BYTES: usize = 2 * 1024 * 1024;
+pub const UTF8_HISTORY_EDITS: usize = 4096;
+
+struct TextEdit {
+    start: usize,
+    removed: String,
+    inserted: String,
+    cursor_before: usize,
+    cursor_after: usize,
+}
+
+impl TextEdit {
+    fn bytes(&self) -> usize {
+        self.removed.len() + self.inserted.len()
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Utf8Snapshot {
@@ -32,6 +50,9 @@ pub struct Utf8Editor {
     text: String,
     saved: String,
     cursor: usize,
+    undo: VecDeque<TextEdit>,
+    redo: VecDeque<TextEdit>,
+    history_bytes: usize,
 }
 
 impl Utf8Editor {
@@ -40,6 +61,9 @@ impl Utf8Editor {
             saved: text.clone(),
             text,
             cursor: 0,
+            undo: VecDeque::new(),
+            redo: VecDeque::new(),
+            history_bytes: 0,
         }
     }
 
@@ -108,8 +132,7 @@ impl Utf8Editor {
             .take_while(|(start, _)| *start < self.cursor)
             .last()
         {
-            self.text.replace_range(start..self.cursor, "");
-            self.cursor = start;
+            self.replace(start, self.cursor, "");
         }
     }
 
@@ -119,7 +142,7 @@ impl Utf8Editor {
             .grapheme_indices(true)
             .find(|(start, _)| *start == self.cursor)
         {
-            self.text.replace_range(start..start + grapheme.len(), "");
+            self.replace(start, start + grapheme.len(), "");
         }
     }
 
@@ -133,16 +156,61 @@ impl Utf8Editor {
         if value.is_empty() {
             return Ok(());
         }
-        let end = self.cursor + value.len();
-        self.text.insert_str(self.cursor, value);
+        self.replace(self.cursor, self.cursor, value);
+        Ok(())
+    }
+
+    pub fn undo(&mut self) -> bool {
+        let Some(edit) = self.undo.pop_back() else {
+            return false;
+        };
+        self.text
+            .replace_range(edit.start..edit.start + edit.inserted.len(), &edit.removed);
+        self.cursor = edit.cursor_before;
+        self.redo.push_back(edit);
+        true
+    }
+
+    pub fn redo(&mut self) -> bool {
+        let Some(edit) = self.redo.pop_back() else {
+            return false;
+        };
+        self.text
+            .replace_range(edit.start..edit.start + edit.removed.len(), &edit.inserted);
+        self.cursor = edit.cursor_after;
+        self.undo.push_back(edit);
+        true
+    }
+
+    fn replace(&mut self, start: usize, end: usize, inserted: &str) {
+        let removed = self.text[start..end].to_owned();
+        let cursor_before = self.cursor;
+        self.text.replace_range(start..end, inserted);
         self.cursor = self
             .text
             .grapheme_indices(true)
             .map(|(start, _)| start)
             .chain(std::iter::once(self.text.len()))
-            .find(|start| *start >= end)
+            .find(|boundary| *boundary >= start + inserted.len())
             .expect("end of text is a boundary");
-        Ok(())
+        let edit = TextEdit {
+            start,
+            removed,
+            inserted: inserted.to_owned(),
+            cursor_before,
+            cursor_after: self.cursor,
+        };
+        self.history_bytes -= self
+            .redo
+            .drain(..)
+            .map(|entry| entry.bytes())
+            .sum::<usize>();
+        self.history_bytes += edit.bytes();
+        self.undo.push_back(edit);
+        while self.undo.len() > UTF8_HISTORY_EDITS || self.history_bytes > UTF8_HISTORY_BYTES {
+            let oldest = self.undo.pop_front().expect("new edit exists");
+            self.history_bytes -= oldest.bytes();
+        }
     }
 
     pub fn enter(&mut self) {
