@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::Message;
-use iced::{Color, Font, Point, Rectangle, Renderer, Size, Theme, Vector, mouse, widget::canvas};
+use iced::{Color, Font, Point, Rectangle, Renderer, Size, Theme, mouse, widget::canvas};
 use northstar_desktop::screen::Screen;
 
 const COLUMNS: f32 = 80.0;
 const ROWS: f32 = 25.0;
 const CELL_ASPECT: f32 = 0.5;
 // The embedded fonts have advances of 800/1600 em (VGA) and 600/1000 em (Plex).
-const PLEX_X_SCALE: f32 = CELL_ASPECT / 0.6;
+const PLEX_ADVANCE: f32 = 0.6;
+const PLEX_SIZE_RATIO: f32 = CELL_ASPECT / PLEX_ADVANCE;
 
 struct Grid {
     x: f32,
@@ -76,47 +77,45 @@ impl canvas::Program<Message> for Surface {
                 );
             }
         }
-        let text_x_scale = if self.classic_font { 1.0 } else { PLEX_X_SCALE };
-        frame.with_save(|frame| {
-            frame.scale_nonuniform(Vector::new(text_x_scale, 1.0));
-            for (r, row) in self.screen.cells.iter().enumerate() {
-                let mut column = 0;
-                while column < row.len() {
-                    let start = column;
-                    let attribute = row[start].attribute;
-                    while column < row.len() && row[column].attribute == attribute {
-                        column += 1;
-                    }
-                    let content = row[start..column]
-                        .iter()
-                        .map(|cell| cell.glyph)
-                        .collect::<String>();
-                    let content = content.trim_end_matches(' ');
-                    if content.is_empty() {
-                        continue;
-                    }
-                    frame.fill_text(canvas::Text {
-                        content: content.to_string(),
-                        position: Point::new(
-                            (x + start as f32 * w) / text_x_scale,
-                            y + (r as f32 + 0.5) * h,
-                        ),
-                        size: h.into(),
-                        font,
-                        align_x: iced::widget::text::Alignment::Left,
-                        align_y: iced::alignment::Vertical::Center,
-                        color: if attribute == 0x70 {
-                            Color::BLACK
-                        } else if attribute == 15 {
-                            Color::WHITE
-                        } else {
-                            gray
-                        },
-                        ..Default::default()
-                    });
+        let text_size = if self.classic_font {
+            h
+        } else {
+            h * PLEX_SIZE_RATIO
+        };
+        for (r, row) in self.screen.cells.iter().enumerate() {
+            let mut column = 0;
+            while column < row.len() {
+                let start = column;
+                let attribute = row[start].attribute;
+                while column < row.len() && row[column].attribute == attribute {
+                    column += 1;
                 }
+                let content = row[start..column]
+                    .iter()
+                    .map(|cell| cell.glyph)
+                    .collect::<String>();
+                let content = content.trim_end_matches(' ');
+                if content.is_empty() {
+                    continue;
+                }
+                frame.fill_text(canvas::Text {
+                    content: content.to_string(),
+                    position: Point::new(x + start as f32 * w, y + (r as f32 + 0.5) * h),
+                    size: text_size.into(),
+                    font,
+                    align_x: iced::widget::text::Alignment::Left,
+                    align_y: iced::alignment::Vertical::Center,
+                    color: if attribute == 0x70 {
+                        Color::BLACK
+                    } else if attribute == 15 {
+                        Color::WHITE
+                    } else {
+                        gray
+                    },
+                    ..Default::default()
+                });
             }
-        });
+        }
         if self.focused
             && let Some((r, c)) = self.screen.cursor
         {
@@ -139,6 +138,6 @@ mod tests {
         let grid = Grid::fit(Size::new(2048.0, 1152.0));
         assert_eq!(grid.y, 0.0);
         assert_eq!(grid.height * ROWS, 1152.0);
-        assert_eq!(PLEX_X_SCALE * 0.6, CELL_ASPECT);
+        assert_eq!(PLEX_SIZE_RATIO * PLEX_ADVANCE, CELL_ASPECT);
     }
 }
