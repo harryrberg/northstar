@@ -27,7 +27,7 @@ Replay compares local Rust behavior with declared retained DOS observations. It 
 
 The desktop prototype accepts an optional document path. Without one, press D at the opening menu and enter a path. In the editor, Ctrl-S/Ctrl-D move the cursor, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to a **new** path; existing files cannot be overwritten. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
 
-An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.1-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
+An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.2-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
 
 ## Direction
 

@@ -14,7 +14,7 @@ The portable `screen_oracle` test compares the screen's full 4,000-byte characte
 
 Before the shared-grid change, full screen and both fonts were inspected in the native Windows window at 2048x1152. The horizontally compressed Plex layout was inspected at 1120x700. The current proportional Plex layout retains the shared grid and is checked by a layout test. Its full-screen pixel output, other display resolutions, scaling settings, and platforms have not been tested after this change. The screen comparison proves cell content for the declared fixture, not pixel-level identity across fonts or displays.
 
-The checked-in 0.1.1 MSI contains the earlier horizontally compressed Plex rendering. The proportional layout is available in source builds and awaits a new installer build.
+The 0.1.2 MSI includes the proportional Plex layout. The earlier 0.1.1 MSI used horizontal compression.
 
 After saving, a further unsaved edit was made in the native window. Alt-F4 showed the unsaved-change prompt, and Escape returned to the edited document without writing it. The test window was then closed by explicitly discarding that extra edit.
 
