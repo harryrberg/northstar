@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-reformat-v1",
+  "id": "reformat-leading-soft-break",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-ctrlb-03/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/fixtures.json",
+        "sha256": "cf4d0e507f2351a9ef82acca1078e2f0a7f148cdb5ea1ae6cffbd7ddecc77dd7"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/events.json",
+        "sha256": "965c25c349400d6b7a5f7cf162c0f2a2d81969bb452aa7575fac94d83c6ff404"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/SOFT.input.DOC",
+        "sha256": "9bdd1899b7deb38251f8b3d9179d1405f9b95699aa8eeaf7e7baeae35d249201"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/files/SOFT.DOC",
+        "sha256": "77a92810939d75944e2d0e236595f2c5ed4f7e3b825d3386649dec8d06445e15"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/SOFT-screen.bin",
+        "sha256": "a6c9aa6f28b75e2113b01260e6c48e5d85306d60bed6b38acc34daba7cd3303b"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/SOFT-before.png",
+        "sha256": "869f785dd288a10d3b5ac7266da6e5331f3532a9bfd1ee93b78a70c622e20b90"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/events.json",
+        "sha256": "76bf3287a0997be4e35c2f416458ad0831728ce3b8ffa2976997087ea2568d12"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/justify-default-screen.bin",
+        "sha256": "9fa2c5dd8886d723e479197405be012ea94a44d8ad67fff160a8fdac5efc3eb7"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/justify-off-screen.bin",
+        "sha256": "3b835a0db8fcf07f18e1bc509a946ca033cb4157ac3b0e4c56d609dcd9067aec"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15; right justification explicitly toggled off after each file open.",
+      "Default document mode, single spacing and margins 1/65.",
+      "Cursor byte derived from captured text-mode screen L01 C11 and saved token boundaries; not a dumped document cursor pointer.",
+      "Starting cursor and Insert state are preserved in the before screenshot. No full screen rendering comparison.",
+      "The default/on-to-off right-justification menu transition is explicitly captured in runtime-northstar-ctrlb-04. Earlier quick menu screenshots can precede the delayed help-menu display."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "8d0a414c50484120424554411a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "reformat"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "77a92810939d75944e2d0e236595f2c5ed4f7e3b825d3386649dec8d06445e15",
+    "cursor_byte": 10,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

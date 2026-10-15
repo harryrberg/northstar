@@ -76,6 +76,91 @@ fn retained_enter_scenarios_pass_through_the_real_cli() {
 }
 
 #[test]
+fn retained_reformat_scenarios_match_saved_bytes_cursor_and_modes() {
+    use sha2::{Digest, Sha256};
+    let scratch = Scratch::new();
+    let mut paths: Vec<_> = fs::read_dir(oracle("unused").parent().unwrap())
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| {
+            path.file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with("reformat-")
+        })
+        .collect();
+    paths.sort();
+    assert!(!paths.is_empty());
+    for (index, input) in paths.iter().enumerate() {
+        let spec: Value = serde_json::from_slice(&fs::read(input).unwrap()).unwrap();
+        let saved = scratch.path(&format!("case-{index}.doc"));
+        let output = run(&[
+            "replay".as_ref(),
+            input.as_os_str(),
+            "--output".as_ref(),
+            saved.as_os_str(),
+        ]);
+        assert!(
+            output.status.success(),
+            "{}: {}",
+            input.display(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+        let saved_hash = format!("{:x}", Sha256::digest(fs::read(saved).unwrap()));
+        assert_eq!(saved_hash, spec["expected"]["carrier_sha256"]);
+        for field in ["cursor_byte", "insert", "formatting"] {
+            assert_eq!(report["compared_fields"][field], true);
+            assert_eq!(report["state"][field], spec["expected"][field]);
+        }
+        assert_eq!(report["target_executed"], false);
+    }
+}
+
+#[test]
+fn reformat_requires_explicit_profile_and_formatting_without_publishing_failures() {
+    let scratch = Scratch::new();
+    for (index, condition) in [
+        "missing_formatting",
+        "old_profile",
+        "justify_on",
+        "wrong_margin",
+        "comparison",
+    ]
+    .iter()
+    .enumerate()
+    {
+        let mut spec = case("reformat-plain-wrap");
+        match *condition {
+            "missing_formatting" => {
+                spec["initial"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("formatting");
+            }
+            "old_profile" => spec["profile"] = json!("ws4-ascii-enter-v1"),
+            "justify_on" => spec["initial"]["formatting"]["right_justify"] = json!(true),
+            "wrong_margin" => spec["initial"]["formatting"]["right_margin"] = json!(66),
+            _ => spec["expected"]["formatting"]["right_justify"] = json!(true),
+        }
+        let input = scratch.path(&format!("invalid-{index}.json"));
+        let saved = scratch.path(&format!("invalid-{index}.doc"));
+        fs::write(&input, serde_json::to_vec(&spec).unwrap()).unwrap();
+        assert!(
+            !run(&[
+                "replay".as_ref(),
+                input.as_os_str(),
+                "--output".as_ref(),
+                saved.as_os_str()
+            ])
+            .status
+            .success()
+        );
+        assert!(!saved.exists());
+    }
+}
+
+#[test]
 fn new_output_is_exact_and_an_existing_file_is_never_overwritten() {
     let scratch = Scratch::new();
     let output_path = scratch.path("saved.doc");
@@ -103,7 +188,7 @@ fn mismatches_and_unknown_commands_do_not_publish_output() {
     for malformed in [false, true] {
         let mut spec = case("enter-insert-on-alpha-beta");
         if malformed {
-            spec["commands"][0] = json!({"command":"reformat"});
+            spec["commands"][0] = json!({"command":"unsupported_test_command"});
         } else {
             spec["expected"]["carrier_sha256"] = json!("0".repeat(64));
         }

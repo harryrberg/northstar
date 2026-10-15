@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-reformat-v1",
+  "id": "reformat-spaces-record-127",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-ctrlb-03/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/fixtures.json",
+        "sha256": "cf4d0e507f2351a9ef82acca1078e2f0a7f148cdb5ea1ae6cffbd7ddecc77dd7"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/events.json",
+        "sha256": "965c25c349400d6b7a5f7cf162c0f2a2d81969bb452aa7575fac94d83c6ff404"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/S127.input.DOC",
+        "sha256": "3b97fdb9d3866953941a92ddbc52921eab033f419045395a61a6af99bf170e12"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/files/S127.DOC",
+        "sha256": "cf88b20b0fd8a80bb4a95b83205f9522c8830564419309cdc78897cb26d6edea"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/S127-screen.bin",
+        "sha256": "ed1d64710f1dfbf86a328b40ce3c7528959c41a44be8446b9404269bb003f68c"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-03/S127-before.png",
+        "sha256": "3ce9189c7b92da74f1539db53c6d3d88fd29c54c2e4faaf7cd0f476dac7e8f9a"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/events.json",
+        "sha256": "76bf3287a0997be4e35c2f416458ad0831728ce3b8ffa2976997087ea2568d12"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/justify-default-screen.bin",
+        "sha256": "9fa2c5dd8886d723e479197405be012ea94a44d8ad67fff160a8fdac5efc3eb7"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/justify-off-screen.bin",
+        "sha256": "3b835a0db8fcf07f18e1bc509a946ca033cb4157ac3b0e4c56d609dcd9067aec"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/fixtures.json",
+        "sha256": "4ca3879854896f1b095ed7066d094d9f1761c9b472d9e2e245adff8dbd35cdc7"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/F04.input.DOC",
+        "sha256": "cf88b20b0fd8a80bb4a95b83205f9522c8830564419309cdc78897cb26d6edea"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/files/F04.DOC",
+        "sha256": "cf88b20b0fd8a80bb4a95b83205f9522c8830564419309cdc78897cb26d6edea"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15; right justification explicitly toggled off after each file open.",
+      "Default document mode, single spacing and margins 1/65.",
+      "Cursor byte derived from captured text-mode screen L01 C128 and saved token boundaries; not a dumped document cursor pointer.",
+      "Starting cursor and Insert state are preserved in the before screenshot. No full screen rendering comparison.",
+      "The final Rust release output was also opened and saved without content edits in a separate DOS run; the entire carrier remained identical.",
+      "The default/on-to-off right-justification menu transition is explicitly captured in runtime-northstar-ctrlb-04. Earlier quick menu screenshots can precede the delayed help-menu display."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020201a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "reformat"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "cf88b20b0fd8a80bb4a95b83205f9522c8830564419309cdc78897cb26d6edea",
+    "cursor_byte": 127,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

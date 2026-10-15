@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //! Byte-preserving legacy documents and a deliberately bounded editing profile.
 //!
-//! Only the ASCII/CRLF Enter scenarios are currently qualified. Parsing a token
+//! Only declared Enter and ASCII reformat scenarios are currently qualified. Parsing a token
 //! does not establish editing, layout, or rendering semantics for that token.
 
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, ops::Range};
+
+mod reformat;
+pub use reformat::Formatting;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
@@ -140,6 +143,7 @@ pub enum Command {
     DocumentStart,
     NextCharacter,
     PreviousCharacter,
+    Reformat,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -170,12 +174,13 @@ impl fmt::Display for EditError {
 
 impl Error for EditError {}
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Snapshot {
     pub cursor_byte: usize,
     pub insert: bool,
     pub modified: bool,
     pub active_bytes: usize,
+    pub formatting: Formatting,
 }
 
 /// Owns cursor, modes, and document mutation; adapters must not duplicate these.
@@ -184,11 +189,23 @@ pub struct Editor {
     original: Vec<u8>,
     cursor: usize,
     insert: bool,
+    formatting: Formatting,
 }
 
 impl Editor {
     /// Restore declared scenario state. This is not a WordStar command.
     pub fn restore(document: Document, cursor: usize, insert: bool) -> Result<Self, EditError> {
+        Self::restore_with_formatting(document, cursor, insert, Formatting::default())
+    }
+
+    /// Restore explicitly declared formatting; unsupported settings are retained
+    /// and rejected by operations that need them, never silently normalized.
+    pub fn restore_with_formatting(
+        document: Document,
+        cursor: usize,
+        insert: bool,
+        formatting: Formatting,
+    ) -> Result<Self, EditError> {
         if cursor > document.active_end()
             || !(cursor == document.active_end()
                 || document.tokens().any(|t| t.range.start == cursor))
@@ -200,6 +217,7 @@ impl Editor {
             document,
             cursor,
             insert,
+            formatting,
         })
     }
 
@@ -213,19 +231,33 @@ impl Editor {
             insert: self.insert,
             modified: self.document.bytes != self.original,
             active_bytes: self.document.active_end(),
+            formatting: self.formatting,
         }
     }
 
     /// Reject unsupported cases before changing state. Returned errors are atomic.
     pub fn apply(&mut self, command: &Command) -> Result<(), EditError> {
-        self.document.check_editable()?;
+        if matches!(command, Command::Enter | Command::InsertAscii { .. }) {
+            if (self.formatting.left_margin, self.formatting.right_margin) != (1, 65)
+                || self.formatting.line_spacing != 1
+                || !self.formatting.document_mode
+            {
+                return Err(EditError::UnqualifiedOperation(
+                    "ASCII editing requires document mode, single spacing, and margins 1/65",
+                ));
+            }
+            self.document.check_editable()?;
+        }
         match command {
             Command::ToggleInsert => self.insert = !self.insert,
             Command::DocumentStart => self.cursor = 0,
             Command::NextCharacter => {
-                if let Some(token) = self.document.tokens().find(|t| {
-                    t.range.start == self.cursor && t.range.start < self.document.active_end()
-                }) {
+                let end = self.document.active_end();
+                if let Some(token) = self
+                    .document
+                    .tokens()
+                    .find(|t| t.range.start == self.cursor && t.range.start < end)
+                {
                     self.cursor = token.range.end;
                 }
             }
@@ -279,6 +311,11 @@ impl Editor {
                 }
                 self.insert_bytes(text.as_bytes());
             }
+            Command::Reformat => {
+                let change = reformat::paragraph(&self.document, self.cursor, self.formatting)?;
+                self.replace_active(change.active);
+                self.cursor = change.cursor;
+            }
         }
         Ok(())
     }
@@ -287,9 +324,13 @@ impl Editor {
         let mut active = self.document.bytes[..self.document.active_end()].to_vec();
         active.splice(self.cursor..self.cursor, bytes.iter().copied());
         self.cursor += bytes.len();
-        // Qualified by the ALPHA/Enter/BETA save capture only. Broader saving is
-        // an implementation policy until further record-boundary oracle cases.
-        let carrier_size = (active.len() + 1).div_ceil(128) * 128;
+        self.replace_active(active);
+    }
+
+    fn replace_active(&mut self, mut active: Vec<u8>) {
+        // Explicit mutations serialize records; navigation/inspection retain the
+        // carrier. DOS captures at active lengths 126..129 require two EOF bytes.
+        let carrier_size = (active.len() + 2).div_ceil(128) * 128;
         active.resize(carrier_size, 0x1a);
         self.document = Document::from_bytes(active);
     }

@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-reformat-v1",
+  "id": "reformat-empty-document",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-ctrlb-01/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-01/fixtures.json",
+        "sha256": "857ec2d9cc766bc77be027d6efe0a424bfce43b2e38a3ddc7e95abeba379eeda"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-01/events.json",
+        "sha256": "27c05ed12009ba918595c052a9a3d0ae4bcb2c14f3949f782de38a3e2d7ceff0"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-01/EMPTY.input.DOC",
+        "sha256": "6fca86c50b7426e5da476d35a0ce2d64a6cd4db0925f002ab259842a9465a345"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-01/files/NEMPTY.DOC",
+        "sha256": "6fca86c50b7426e5da476d35a0ce2d64a6cd4db0925f002ab259842a9465a345"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-01/NEMPTY-screen.bin",
+        "sha256": "abc81dbe497766735a2f90f3ceb77d965c37d01a2dd3a4553e45caacabf2a9f1"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-01/NEMPTY-mode-before.png",
+        "sha256": "4517f268e57af0268829c26d22a28a9ee4a269bce5d49e407b769abd6640c539"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-02/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-02/fixtures.json",
+        "sha256": "aff7822c4d2d76dceb68410aafd12f4c7e621fbd9bba65654e48ee6d1f4bb4d1"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-02/events.json",
+        "sha256": "1259c563577a558e2b949dde3dea353ef8c06dfc2081b81059f407285f46c5a1"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-02/R01.input.DOC",
+        "sha256": "6fca86c50b7426e5da476d35a0ce2d64a6cd4db0925f002ab259842a9465a345"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-02/files/R01.DOC",
+        "sha256": "6fca86c50b7426e5da476d35a0ce2d64a6cd4db0925f002ab259842a9465a345"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-02/R01-screen.bin",
+        "sha256": "ae59b7f75a8fa99bde61f584be4d5a12cd40839ef32333103a92c1ae8e52b08a"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/events.json",
+        "sha256": "76bf3287a0997be4e35c2f416458ad0831728ce3b8ffa2976997087ea2568d12"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/justify-default-screen.bin",
+        "sha256": "9fa2c5dd8886d723e479197405be012ea94a44d8ad67fff160a8fdac5efc3eb7"
+      },
+      {
+        "path": "runtime-northstar-ctrlb-04/justify-off-screen.bin",
+        "sha256": "3b835a0db8fcf07f18e1bc509a946ca033cb4157ac3b0e4c56d609dcd9067aec"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture, reformatted by the original in an isolated DOSBox copy on 2026-10-15.",
+      "Initial cursor at document start; Insert on; Ctrl-O/J explicitly disables right justification on each file open.",
+      "Cursor byte is derived from captured text-mode screen L01 C01 and saved ASCII line boundaries, not a dumped document cursor pointer.",
+      "No full screen rendering comparison. Historical runtime references are verified separately.",
+      "A second isolated run opened the actual Rust output and repeated Ctrl-B with identical saved bytes. The replay uses document_start to restore the same cursor for its second Ctrl-B; it does not emulate closing/reopening the DOS application.",
+      "The default/on-to-off right-justification menu transition is explicitly captured in runtime-northstar-ctrlb-04. Earlier quick menu screenshots can precede the delayed help-menu display."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "reformat"
+    },
+    {
+      "command": "document_start"
+    },
+    {
+      "command": "reformat"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "6fca86c50b7426e5da476d35a0ce2d64a6cd4db0925f002ab259842a9465a345",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

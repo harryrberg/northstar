@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{hex, sha256};
-use northstar_core::{Command, Document, Editor};
+use northstar_core::{Command, Document, Editor, Formatting};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{error::Error, fs::OpenOptions, io::Write, path::Path};
@@ -39,6 +39,7 @@ struct Initial {
     carrier_hex: String,
     cursor_byte: usize,
     insert: bool,
+    formatting: Option<Formatting>,
 }
 
 #[derive(Deserialize)]
@@ -47,12 +48,24 @@ struct Expected {
     carrier_sha256: String,
     cursor_byte: Option<usize>,
     insert: Option<bool>,
+    formatting: Option<Formatting>,
 }
 
 pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     let spec: Scenario = serde_json::from_slice(bytes)?;
-    if spec.schema_version != 1 || spec.profile != "ws4-ascii-enter-v1" {
+    if spec.schema_version != 1
+        || !matches!(
+            spec.profile.as_str(),
+            "ws4-ascii-enter-v1" | "ws4-ascii-reformat-v1"
+        )
+    {
         return Err("unsupported scenario schema or compatibility profile".into());
+    }
+    if spec.profile == "ws4-ascii-reformat-v1" && spec.initial.formatting.is_none() {
+        return Err("reformat scenarios require explicit initial formatting".into());
+    }
+    if spec.profile == "ws4-ascii-enter-v1" && spec.commands.contains(&Command::Reformat) {
+        return Err("reformat is outside the declared Enter profile".into());
     }
     if spec.commands.len() > 10_000 {
         return Err("scenario exceeds the 10000-command resource bound".into());
@@ -98,10 +111,11 @@ fn decode_hex(value: &str) -> Result<Vec<u8>, Box<dyn Error>> {
 pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value, Box<dyn Error>> {
     let input = decode_hex(&spec.initial.carrier_hex)?;
     let input_sha = sha256(&input);
-    let mut editor = Editor::restore(
+    let mut editor = Editor::restore_with_formatting(
         Document::from_bytes(input),
         spec.initial.cursor_byte,
         spec.initial.insert,
+        spec.initial.formatting.unwrap_or_default(),
     )?;
     let mut steps = Vec::new();
     for (index, command) in spec.commands.iter().enumerate() {
@@ -125,6 +139,13 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
     }
     if spec.expected.insert.is_some_and(|x| x != snapshot.insert) {
         mismatches.push("insert");
+    }
+    if spec
+        .expected
+        .formatting
+        .is_some_and(|x| x != snapshot.formatting)
+    {
+        mismatches.push("formatting");
     }
     if !mismatches.is_empty() {
         return Err(format!(
@@ -154,7 +175,7 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
         "active_hex": hex(&editor.document().bytes()[..editor.document().active_end()]),
         "state": snapshot,
         "steps": steps,
-        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some()},
+        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some()},
         "output_path": output,
         "target_executed": false,
         "provenance": spec.provenance,

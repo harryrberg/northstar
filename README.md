@@ -2,7 +2,7 @@
 
 NorthStar is an open-source, non-commercial reconstruction of WordStar Professional 4.00 for distraction-free writing.
 
-The defining method is to connect reconstructed behavior to original binary analysis, controlled DOS observations, and repeatable differential tests. Familiar key bindings alone do not establish compatibility. This project does not claim that the method is unique among all existing projects.
+The defining method is to connect reconstructed behavior to original binary analysis, controlled DOS observations, and repeatable differential tests.
 
 ## Direction
 
@@ -13,7 +13,7 @@ The defining method is to connect reconstructed behavior to original binary anal
 - Later targets: macOS, Linux, iPadOS, Android, selected e-paper devices, and an Emacs integration.
 - Modern printing and PDF output are planned extensions. Unicode and recovery behavior must have explicit contracts rather than silently changing legacy semantics.
 
-The product name is NorthStar; the repository name is `northstar`. The GUI library and release schedule are not decided. The repository contains a portable Rust core and a CLI for structural inspection and two bounded compatibility scenarios. An interactive editor is not implemented yet.
+The GUI library and release schedule are not decided. The repository contains a portable Rust core and a CLI for structural inspection, Enter, and a bounded reconstruction of Ctrl-B. An interactive editor is not implemented yet.
 
 ## Build and try the prototype
 
@@ -24,11 +24,14 @@ cargo test --workspace --locked
 cargo run -p northstar-cli -- inspect path/to/document.doc
 cargo run -p northstar-cli -- replay tests/oracles/enter-insert-on-alpha-beta.json
 cargo run -p northstar-cli -- replay tests/oracles/enter-insert-off-next-line.json
+cargo run -p northstar-cli -- replay tests/oracles/reformat-old-markers.json
 ```
 
 Replay compares local Rust behavior with declared retained DOS observations. It does not execute the original program. Add `--output NEW_FILE` to write the scenario result to a new path; existing files are never overwritten. Inspection is read-only.
 
 [Compatibility profile and limitations](docs/COMPATIBILITY_PROFILE.md).
+
+Ctrl-B currently has 27 synthetic scenarios compared against the DOS original, covering saved bytes, cursor offsets, and declared modes. [Reconstructed rules, evidence, and remaining scope](docs/CTRL_B.md).
 
 ## First milestone
 
