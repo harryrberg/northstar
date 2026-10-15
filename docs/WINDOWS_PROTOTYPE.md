@@ -16,9 +16,7 @@ The portable `screen_oracle` test compares the screen's full 4,000-byte characte
 
 Before the shared-grid change, full screen and both fonts were inspected in the native Windows window at 2048x1152. The horizontally compressed Plex layout was inspected at 1120x700. The current proportional Plex layout retains the shared grid and is checked by a layout test. Its full-screen pixel output, other display resolutions, scaling settings, and platforms have not been tested after this change. The screen comparison proves cell content for the declared fixture, not pixel-level identity across fonts or displays.
 
-The 0.1.3 MSI includes the separate native UTF-8 mode and proportional Plex layout. The earlier 0.1.2 MSI used the same font layout but supported only ASCII editing.
-
-The checked-in 0.1.3 MSI predates the same-path save change. Build the current source to use this behavior; the installer has not been rebuilt or installed for this change.
+The 0.1.4 MSI includes same-path saving with backup and external-byte comparison. The 0.1.3 MSI included the separate native UTF-8 mode and proportional Plex layout but only saved to a new path.
 
 After saving, a further unsaved edit was made in the native window. Alt-F4 showed the unsaved-change prompt, and Escape returned to the edited document without writing it. The test window was then closed by explicitly discarding that extra edit.
 

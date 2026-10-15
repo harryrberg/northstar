@@ -27,9 +27,7 @@ Replay compares local Rust behavior with declared retained DOS observations. It 
 
 The desktop prototype accepts an optional WordStar document path. Without one, press D at the opening menu and enter a path. F2 starts a new UTF-8 document, and F3 opens a UTF-8 file; `--utf8 FILE` explicitly selects that mode from the command line. UTF-8 mode supports Norwegian text, paste, grapheme-aware left/right movement and deletion, Enter, and saving. In the legacy editor, Ctrl-S/Ctrl-D move the cursor, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to the current path, Ctrl-K D saves and returns to the menu, and Ctrl-Shift-S saves a copy to a new path. Saving an existing file retains its previous bytes in a backup and refuses to overwrite a file changed outside NorthStar. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
 
-An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.3-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
-
-The 0.1.3 MSI predates the same-path save change described above. Build the current source to try it.
+An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.4-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
 
 ## Direction
 

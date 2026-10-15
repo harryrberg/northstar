@@ -2,7 +2,7 @@
 
 `NorthStar.wxs` packages the 64-bit desktop prototype for the current Windows user. It installs the executable, project license, font notices, IBM Plex license, and prototype guide under the user's local application data. It creates a Start menu shortcut and a normal Windows uninstall entry. It does not associate document extensions or touch user documents.
 
-The package is an unsigned prototype. It includes only the desktop application; no Rust, .NET, or WiX runtime is required on the target machine. The desktop still saves only to a new path and does not yet implement many WordStar commands. Read `WINDOWS_PROTOTYPE.md` before editing important files.
+The package is an unsigned prototype. It includes only the desktop application; no Rust, .NET, or WiX runtime is required on the target machine. The desktop can now save an existing file with a backup and an external-change check; many WordStar commands remain unimplemented. Read `WINDOWS_PROTOTYPE.md` before editing important files.
 
 Build on Windows with Rust 1.99.0, the MSVC C++ build tools, Windows SDK, and .NET SDK 10.0.100:
 
