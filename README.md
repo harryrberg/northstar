@@ -13,7 +13,7 @@ The defining method is to connect reconstructed behavior to original binary anal
 - Later targets: macOS, Linux, iPadOS, Android, selected e-paper devices, and an Emacs integration.
 - Modern printing and PDF output are planned extensions. Unicode and recovery behavior must have explicit contracts rather than silently changing legacy semantics.
 
-The product name is NorthStar; the repository name is `northstar`. The GUI library, open-source license, and release schedule are not decided. This repository currently records direction and delivery criteria; it contains no working editor yet.
+The product name is NorthStar; the repository name is `northstar`. The GUI library and release schedule are not decided. This repository currently records direction and delivery criteria; it contains no working editor yet.
 
 ## First milestone
 
@@ -30,3 +30,11 @@ Completion requires passing declared differential cases for document bytes, curs
 - [Recorded source identities](docs/analysis-baseline.json)
 
 Original executables, dictionaries, proprietary resources, decompiled source, and the bulk investigation archive are not included in this repository.
+
+## License
+
+Copyright (C) 2026 Harry Berg.
+
+NorthStar is licensed under the GNU General Public License, version 3 only (SPDX: `GPL-3.0-only`). See [LICENSE](LICENSE) for the complete terms. This applies to the project's original code and documentation, not to the original WordStar software or third-party material.
+
+NorthStar is developed as a non-commercial project. The GPL nevertheless permits commercial use and redistribution under its terms; there is no additional non-commercial restriction.

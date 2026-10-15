@@ -22,4 +22,4 @@ Keep original uploads immutable. Any original-program execution must use isolate
 
 Use focused meaningful checks for the actual change. Record untested platforms and unknown semantics. Do not present an empty scaffold or a passing byte round trip as a complete editor.
 
-Use Conventional Commit subjects. Do not publish the repository or choose a release license without the user's decision.
+Use Conventional Commit subjects. The owner selected GPL-3.0-only and authorized public GitHub development on 2026-10-15. Preserve that license for original project contributions; do not apply it to the original WordStar software or third-party material. Do not change licensing or repository visibility without a new owner decision.
