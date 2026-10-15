@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-enter-v1",
+  "id": "enter-insert-off-next-line",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "MODE_TRACES.md",
+        "sha256": "6b40a2eeca6aa812d9cd56abd9ffa4efdb88f7fcbb1cf71c8edc998988d71e28"
+      },
+      {
+        "path": "runtime-modes-01/observations.json",
+        "sha256": "3322e4af08d7a7bf0538cdb684d6769a0694ba7d0c2ddb2f56fab38b4217c209"
+      },
+      {
+        "path": "runtime-modes-01/enter-before-off.DOC",
+        "sha256": "045784eb74d293374f2b230d2ad22096d55ad6134b93a625e1e92b30a0702036"
+      },
+      {
+        "path": "runtime-modes-01/files/ENTER.DOC",
+        "sha256": "045784eb74d293374f2b230d2ad22096d55ad6134b93a625e1e92b30a0702036"
+      }
+    ],
+    "limitations": [
+      "The initial bytes are synthetically constructed from ALPHA, CRLF, BETA and 1A padding, then checked against both captured files.",
+      "Cursor byte 7 is derived from the observed L02 C01 and this simple ASCII document; it is not a dumped cursor pointer.",
+      "Commands are semantic events; no DOS execution, keyboard dispatcher, or screen rendering is exercised.",
+      "DOS default CTLNFL=FF and Insert off are the reference conditions."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "414c5048410d0a424554411a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": false
+  },
+  "commands": [
+    {
+      "command": "enter"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "045784eb74d293374f2b230d2ad22096d55ad6134b93a625e1e92b30a0702036",
+    "cursor_byte": 7,
+    "insert": false
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-enter-v1",
+  "id": "enter-insert-on-alpha-beta",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "ENTER_TRACE.md",
+        "sha256": "9f5a76f780066a89e3752cd5c2bfc63ab97a15793700a3bffeec77a9bbf3da26"
+      },
+      {
+        "path": "runtime-trace-03/events.json",
+        "sha256": "648326c145b351da23b1044569c9ab26d5b8549ad647bda84f3b9d1ecbd7658b"
+      },
+      {
+        "path": "runtime-trace-03/files/TRACE.DOC",
+        "sha256": "045784eb74d293374f2b230d2ad22096d55ad6134b93a625e1e92b30a0702036"
+      }
+    ],
+    "limitations": [
+      "The empty initial carrier is a synthetic representation of the new document, not a captured DOS buffer.",
+      "Commands are semantic events; DOS menus, key timing, and save commands are not replayed.",
+      "Only final saved bytes and the declared insert mode are compared; final cursor and screen are unqualified.",
+      "DOS default CTLNFL=FF and Insert on are the reference conditions."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "",
+    "cursor_byte": 0,
+    "insert": true
+  },
+  "commands": [
+    {
+      "command": "insert_ascii",
+      "text": "ALPHA"
+    },
+    {
+      "command": "enter"
+    },
+    {
+      "command": "insert_ascii",
+      "text": "BETA"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "045784eb74d293374f2b230d2ad22096d55ad6134b93a625e1e92b30a0702036",
+    "cursor_byte": null,
+    "insert": true
+  }
+}

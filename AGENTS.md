@@ -2,6 +2,14 @@
 
 Read README.md and docs/decisions/0001-rust-windows-first.md before implementation.
 
+## Model selection
+
+Before each task execution and each substantive iteration, reassess the model and reasoning effort against the actual work. Apply the same rule to subagents, selecting their model and effort explicitly when supported. Do not equate higher effort with verified fidelity; preserve independent evidence and tests.
+
+Use GPT-6.1-Sol/high as the normal implementation starting point, and consider GPT-6-Astra/xhigh for difficult reconstruction or unresolved semantic analysis. Reassess these choices as model availability and task evidence change. Routine documentation may need less effort.
+
+When the required model or effort cannot be changed automatically in the active session, tell the user the exact recommended settings before dependent work and let the user set them. Editing a configuration file does not prove that the active conversation changed models. Do not claim an unverified switch.
+
 ## Authority and scope
 
 NorthStar is an open-source, non-commercial, fidelity-driven WordStar Professional 4.00 reconstruction in Rust, with Windows 11 as the first deliverable. Preserve portability for later desktop, tablet, e-paper, and Emacs clients. Keep this repository separate from REA.

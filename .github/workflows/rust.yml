@@ -1,0 +1,28 @@
+name: Rust
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Resolve pinned toolchain
+        run: rustup show
+      - name: Formatting
+        run: cargo fmt --all --check
+      - name: Tests
+        run: cargo test --workspace --locked
+      - name: Lints
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings

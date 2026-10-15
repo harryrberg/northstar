@@ -13,7 +13,22 @@ The defining method is to connect reconstructed behavior to original binary anal
 - Later targets: macOS, Linux, iPadOS, Android, selected e-paper devices, and an Emacs integration.
 - Modern printing and PDF output are planned extensions. Unicode and recovery behavior must have explicit contracts rather than silently changing legacy semantics.
 
-The product name is NorthStar; the repository name is `northstar`. The GUI library and release schedule are not decided. This repository currently records direction and delivery criteria; it contains no working editor yet.
+The product name is NorthStar; the repository name is `northstar`. The GUI library and release schedule are not decided. The repository contains a portable Rust core and a CLI for structural inspection and two bounded compatibility scenarios. An interactive editor is not implemented yet.
+
+## Build and try the prototype
+
+Install Rust with rustup and, on Windows, the MSVC C++ build tools and Windows SDK. The repository pins Rust 1.99.0. From the repository root:
+
+```text
+cargo test --workspace --locked
+cargo run -p northstar-cli -- inspect path/to/document.doc
+cargo run -p northstar-cli -- replay tests/oracles/enter-insert-on-alpha-beta.json
+cargo run -p northstar-cli -- replay tests/oracles/enter-insert-off-next-line.json
+```
+
+Replay compares local Rust behavior with declared retained DOS observations. It does not execute the original program. Add `--output NEW_FILE` to write the scenario result to a new path; existing files are never overwritten. Inspection is read-only.
+
+[Compatibility profile and limitations](docs/COMPATIBILITY_PROFILE.md).
 
 ## First milestone
 
@@ -32,8 +47,6 @@ Completion requires passing declared differential cases for document bytes, curs
 Original executables, dictionaries, proprietary resources, decompiled source, and the bulk investigation archive are not included in this repository.
 
 ## License
-
-Copyright (C) 2026 Harry Berg.
 
 NorthStar is licensed under the GNU General Public License, version 3 only (SPDX: `GPL-3.0-only`). See [LICENSE](LICENSE) for the complete terms. This applies to the project's original code and documentation, not to the original WordStar software or third-party material.
 

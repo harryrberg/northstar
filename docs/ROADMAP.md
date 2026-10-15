@@ -2,7 +2,7 @@
 
 ## Current state
 
-Direction recorded; implementation has not started. The REA analysis package remains in its original local investigation directory. This repository contains project specifications and source identity records only.
+Initial Rust implementation: byte-preserving document inspection, bounded ASCII/Enter editing, and a CLI that compares two synthetic scenarios with retained DOS observations. This is a tested foundation, not a complete editor. The REA analysis package remains in its original local investigation directory. [Current compatibility profile](COMPATIBILITY_PROFILE.md).
 
 ## M0: Reconstruction contract
 
