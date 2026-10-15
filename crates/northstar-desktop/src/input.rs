@@ -8,6 +8,7 @@ pub enum Action {
     Text(String),
     Backspace,
     Delete,
+    MoveVertical(isize),
     Paste,
     Save,
     SaveAs,
@@ -91,6 +92,8 @@ impl Keyboard {
                 }
                 "s" => Some(Action::Edit(Command::PreviousCharacter)),
                 "d" => Some(Action::Edit(Command::NextCharacter)),
+                "e" if utf8 => Some(Action::MoveVertical(-1)),
+                "x" if utf8 => Some(Action::MoveVertical(1)),
                 "v" if !repeat => Some(if utf8 {
                     Action::Paste
                 } else {
@@ -112,6 +115,8 @@ impl Keyboard {
         match key {
             Key::Named(Named::ArrowLeft) => Some(Action::Edit(Command::PreviousCharacter)),
             Key::Named(Named::ArrowRight) => Some(Action::Edit(Command::NextCharacter)),
+            Key::Named(Named::ArrowUp) if utf8 => Some(Action::MoveVertical(-1)),
+            Key::Named(Named::ArrowDown) if utf8 => Some(Action::MoveVertical(1)),
             Key::Named(Named::Backspace) => Some(Action::Backspace),
             Key::Named(Named::Delete) => Some(Action::Delete),
             Key::Named(Named::Enter) => Some(Action::Edit(Command::Enter)),

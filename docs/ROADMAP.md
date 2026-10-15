@@ -2,7 +2,7 @@
 
 ## Current state
 
-Initial Rust implementation: byte-preserving document inspection, bounded ASCII insert/overwrite and Enter on formatted lines, automatic wrapping with justification off, and Ctrl-B at hard paragraph starts with default margins and right justification off. The CLI compares 119 scenarios with retained DOS observations: two original Enter cases, 27 Ctrl-B cases, 46 further editing cases and 44 wrapping cases. The Windows prototype renders the retained 80x25 screen, edits through actual keyboard input, saves the current file with a backup and external-byte comparison, and supports full screen with a smooth default font. A file produced by this flow reopened in the DOS original without byte changes. Three additional screen states from a longer document match retained DOS captures. A separate plain UTF-8 mode now handles a bounded native writing flow without converting WordStar files. Broader wrapping, formatting, navigation, recovery, and author workflow remain unfinished. The REA analysis package remains in its original local investigation directory. [Windows verification](WINDOWS_PROTOTYPE.md), [UTF-8 decision](decisions/0002-utf8-documents.md), [save behavior](SAVING.md), [current compatibility profiles](COMPATIBILITY_PROFILE.md), [Ctrl-B evidence](CTRL_B.md), [editing evidence](EDITING.md) and [wrapping evidence](WRAPPING.md).
+Initial Rust implementation: byte-preserving document inspection, bounded ASCII insert/overwrite and Enter on formatted lines, automatic wrapping with justification off, and Ctrl-B at hard paragraph starts with default margins and right justification off. The CLI compares 119 scenarios with retained DOS observations: two original Enter cases, 27 Ctrl-B cases, 46 further editing cases and 44 wrapping cases. The Windows prototype renders the retained 80x25 screen, edits through actual keyboard input, saves the current file with a backup and external-byte comparison, and supports full screen with a smooth default font. A file produced by this flow reopened in the DOS original without byte changes. Three additional screen states from a longer document match retained DOS captures. A separate plain UTF-8 mode now handles visual word wrap and vertical navigation without converting WordStar files. Broader legacy wrapping, formatting, navigation, recovery, and author workflow remain unfinished. The REA analysis package remains in its original local investigation directory. [Windows verification](WINDOWS_PROTOTYPE.md), [UTF-8 decision](decisions/0002-utf8-documents.md), [save behavior](SAVING.md), [current compatibility profiles](COMPATIBILITY_PROFILE.md), [Ctrl-B evidence](CTRL_B.md), [editing evidence](EDITING.md) and [wrapping evidence](WRAPPING.md).
 
 ## M0: Reconstruction contract
 
@@ -10,7 +10,7 @@ Initial Rust implementation: byte-preserving document inspection, bounded ASCII 
 - Turn the verified Enter, mode, wrap, Ctrl-B, and cursor observations into named scenarios. List missing cursor/selection observations rather than inventing them.
 - Specify document byte positions versus screen columns, hard/soft boundaries, EOF/padding, and preservation of unknown controls.
 - Define oracle observation and comparison formats, including input identities and coverage limits.
-- Trial a Rust Windows input/view adapter for Ctrl prefixes, key repeat, focus, and rendering. Iced 0.14 is selected for the Windows prototype. Norwegian text entry remains outside the legacy ASCII profile and needs its own contract.
+- Trial a Rust Windows input/view adapter for Ctrl prefixes, key repeat, focus, and rendering. Iced 0.14 is selected for the Windows prototype. Norwegian text entry stays outside the legacy ASCII profile and follows the separate UTF-8 contract.
 
 Exit: reviewable contracts and a bounded implementation plan with evidence references.
 
@@ -24,11 +24,11 @@ Exit: a runnable Windows 11 build and a reproducible report of passing cases and
 
 ## Windows distribution
 
-An unsigned per-user MSI of the current prototype is checked in at [releases/windows/NorthStar-Prototype-0.1.4-x64.msi](../releases/windows/NorthStar-Prototype-0.1.4-x64.msi). It adds a Start menu entry and uninstall path, carries the project license and font notices, and does not move or remove user documents. The build and install/uninstall checks are in [packaging/windows](../packaging/windows/README.md). For a public Windows release, offer a portable ZIP built from the same executable, complete the recovery and author workflows, then decide signing and release hosting. MSI does not supply automatic updates; consider MSIX or Store distribution later if that channel becomes useful.
+An unsigned per-user MSI of the current prototype is checked in at [releases/windows/NorthStar-Prototype-0.1.5-x64.msi](../releases/windows/NorthStar-Prototype-0.1.5-x64.msi). It adds a Start menu entry and uninstall path, carries the project license and font notices, and does not move or remove user documents. The build and install/uninstall checks are in [packaging/windows](../packaging/windows/README.md). For a public Windows release, offer a portable ZIP built from the same executable, complete the recovery and author workflows, then decide signing and release hosting. MSI does not supply automatic updates; consider MSIX or Store distribution later if that channel becomes useful.
 
 ## Native UTF-8 writing
 
-Keep UTF-8 documents separate from the WordStar carrier and qualify their own behavior. The first flow covers explicit mode selection, Norwegian text input, paste, grapheme-aware horizontal movement and deletion, Save As, same-path saving with backup and external-byte comparison, and exact reopen. Next add visual word wrap, vertical movement, recovery, and an explicit conversion policy. Do not present modern behavior as DOS evidence.
+Keep UTF-8 documents separate from the WordStar carrier and qualify their own behavior. The current flow covers explicit mode selection, Norwegian text input, paste, grapheme-aware movement and deletion, visual word wrap, vertical navigation, Save As, same-path saving with backup and external-byte comparison, and exact reopen. Next add undo and recovery, then an explicit conversion policy. Do not present modern behavior as DOS evidence.
 
 ## M2: Working author workflow
 

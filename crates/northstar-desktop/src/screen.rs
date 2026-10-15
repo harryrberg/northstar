@@ -78,11 +78,16 @@ impl Screen {
         label: &str,
         prefix: Option<char>,
     ) -> Self {
-        Self::editor_view(projection, state.insert, label, prefix, false)
+        Self::editor_view(projection, state.insert, label, prefix, None)
     }
 
-    pub fn utf8_editor(projection: &Projection, label: &str, prefix: Option<char>) -> Self {
-        Self::editor_view(projection, true, label, prefix, true)
+    pub fn utf8_editor(
+        projection: &Projection,
+        label: &str,
+        prefix: Option<char>,
+        viewport_top: usize,
+    ) -> Self {
+        Self::editor_view(projection, true, label, prefix, Some(viewport_top))
     }
 
     fn editor_view(
@@ -90,8 +95,9 @@ impl Screen {
         insert_mode: bool,
         label: &str,
         prefix: Option<char>,
-        utf8: bool,
+        utf8_viewport_top: Option<usize>,
     ) -> Self {
+        let utf8 = utf8_viewport_top.is_some();
         let mut s = Self::default();
         s.cells[0].fill(Cell {
             glyph: ' ',
@@ -136,12 +142,12 @@ impl Screen {
         }
         let lines: [String; 6] = if utf8 {
             [
-                " ^S left       ^D right        ^Q R document start".into(),
-                " Backspace     Delete          Enter new line".into(),
+                " ^S left       ^D right        ^E up       ^X down".into(),
+                " Arrows move   Backspace/Delete   Enter new line".into(),
                 " ^V paste      ^K S save       ^K D save and done".into(),
                 " ^K Q done     ^J help         F1 help".into(),
                 " F11 full screen              F12 change font".into(),
-                " UTF-8 text is stored exactly as entered".into(),
+                " UTF-8 wraps on screen; stored text is unchanged".into(),
             ]
         } else {
             let insert = if insert_mode { "off" } else { "on " };
@@ -180,7 +186,7 @@ impl Screen {
                 s.cells[10][column].glyph = '!';
             }
         }
-        let top = row.saturating_sub(11);
+        let top = utf8_viewport_top.unwrap_or_else(|| row.saturating_sub(11));
         let left = column.saturating_sub(78);
         for screen_row in 11..23 {
             let document_row = top + screen_row - 11;

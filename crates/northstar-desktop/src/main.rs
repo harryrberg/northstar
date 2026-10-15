@@ -13,6 +13,7 @@ use northstar_desktop::{
 };
 use std::path::PathBuf;
 mod surface;
+const UTF8_VISIBLE_ROWS: usize = 12;
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
@@ -51,6 +52,8 @@ struct App {
     fullscreen: bool,
     classic_font: bool,
     session_generation: u64,
+    utf8_top_row: usize,
+    preferred_column: Option<usize>,
 }
 #[derive(Debug, Clone, Copy)]
 enum Next {
@@ -126,6 +129,8 @@ impl App {
             fullscreen: false,
             classic_font: false,
             session_generation: 0,
+            utf8_top_row: 0,
+            preferred_column: None,
         }
     }
     fn title(&self) -> String {
@@ -164,6 +169,8 @@ impl App {
                 self.session = DocumentSession::Legacy(Session::default());
                 self.session_generation += 1;
                 self.projection = Projection::for_session(&self.session);
+                self.utf8_top_row = 0;
+                self.preferred_column = None;
                 self.dialog = None;
                 self.opening = true;
                 self.notice.clear();
@@ -191,6 +198,8 @@ impl App {
                 self.session = DocumentSession::Utf8(Utf8Session::new_at(None));
                 self.session_generation += 1;
                 self.projection = Projection::for_session(&self.session);
+                self.utf8_top_row = 0;
+                self.preferred_column = None;
                 self.opening = false;
                 self.notice.clear();
             }
@@ -262,6 +271,8 @@ impl App {
                         Ok(()) => {
                             if matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8) {
                                 self.session_generation += 1;
+                                self.utf8_top_row = 0;
+                                self.preferred_column = None;
                             }
                             let done = matches!(kind, PathKind::SaveAs { done: true });
                             self.opening = false;
@@ -388,6 +399,9 @@ impl App {
                                 let result = self.session.delete();
                                 self.record_edit(result);
                             }
+                            Some(Action::MoveVertical(direction)) => {
+                                self.move_utf8_vertical(direction);
+                            }
                             Some(Action::Paste) => {
                                 let generation = self.session_generation;
                                 return clipboard::read()
@@ -428,10 +442,42 @@ impl App {
         match result {
             Ok(()) => {
                 self.projection = Projection::for_session(&self.session);
+                self.preferred_column = None;
+                self.keep_utf8_cursor_visible();
                 self.notice.clear();
             }
             Err(message) => self.notice = message,
         }
+    }
+
+    fn keep_utf8_cursor_visible(&mut self) {
+        if !self.session.is_utf8() {
+            return;
+        }
+        let row = self.projection.cursor.0;
+        if row < self.utf8_top_row {
+            self.utf8_top_row = row;
+        } else if row >= self.utf8_top_row + UTF8_VISIBLE_ROWS {
+            self.utf8_top_row = row + 1 - UTF8_VISIBLE_ROWS;
+        }
+    }
+
+    fn move_utf8_vertical(&mut self, direction: isize) {
+        let column = self.preferred_column.unwrap_or(self.projection.cursor.1);
+        let Some(target) = self.projection.utf8_vertical_target(direction, column) else {
+            return;
+        };
+        let DocumentSession::Utf8(session) = &mut self.session else {
+            return;
+        };
+        session
+            .editor
+            .set_cursor(target)
+            .expect("projection cursor stops are grapheme boundaries");
+        self.projection = Projection::utf8(&session.editor);
+        self.preferred_column = Some(column);
+        self.keep_utf8_cursor_visible();
+        self.notice.clear();
     }
     fn view(&self) -> Element<'_, Message> {
         if let Some(dialog) = &self.dialog {
@@ -449,13 +495,13 @@ impl App {
                     row![button("Keep editing").on_press(Message::Cancel),button("Discard changes").on_press(Message::Discard)].spacing(18)].spacing(24).into(),
                 Dialog::Help=>column![text("NORTHSTAR HELP").size(24),
                     text(if self.session.is_utf8() {
-                        "UTF-8: type or paste with Ctrl-V, Backspace/Delete, Left/Right, Enter, Ctrl-Q R. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
+                        "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {
                         "WordStar: Ctrl-S/Ctrl-D move, Ctrl-Q R starts document, Ctrl-V toggles insert, Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
                     }),
                     text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, and X to exit."),
                     text(if self.session.is_utf8() {
-                        "Modern UTF-8 keeps exact text bytes. Grapheme-aware movement and deletion are available. Wide or unsupported glyphs show a square placeholder. Overwrite, word wrap and vertical movement remain unfinished."
+                        "Modern UTF-8 keeps exact text bytes. The screen wraps words without inserting line breaks. Movement and deletion follow graphemes. Wide or unsupported glyphs show a square placeholder. Overwrite and undo remain unfinished."
                     } else {
                         "Legacy editing supports printable ASCII only. Norwegian letters, IME, clipboard text, deletion, vertical movement, blocks and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
                     }),
@@ -495,9 +541,12 @@ impl App {
                     &label,
                     self.keyboard.prefix(),
                 ),
-                DocumentSession::Utf8(_) => {
-                    Screen::utf8_editor(&self.projection, &label, self.keyboard.prefix())
-                }
+                DocumentSession::Utf8(_) => Screen::utf8_editor(
+                    &self.projection,
+                    &label,
+                    self.keyboard.prefix(),
+                    self.utf8_top_row,
+                ),
             }
         };
         if !self.notice.is_empty() {
@@ -552,5 +601,39 @@ mod tests {
             panic!()
         };
         assert!(session.editor.text().is_empty());
+    }
+
+    #[test]
+    fn vertical_movement_keeps_the_preferred_column_and_scrolls_only_at_edges() {
+        let mut app = App::new();
+        let _ = app.update(Message::NewUtf8);
+        let result = app.session.insert_text("123456789\nx\nabcdefghi");
+        app.record_edit(result);
+        assert_eq!(app.projection.cursor, (2, 9));
+        app.move_utf8_vertical(-1);
+        assert_eq!(app.projection.cursor, (1, 1));
+        app.move_utf8_vertical(-1);
+        assert_eq!(app.projection.cursor, (0, 9));
+        assert_eq!(app.preferred_column, Some(9));
+        let result = app
+            .session
+            .apply_command(&northstar_core::Command::PreviousCharacter);
+        app.record_edit(result);
+        assert_eq!(app.preferred_column, None);
+
+        let _ = app.update(Message::NewUtf8);
+        let result = app.session.insert_text(&"line\n".repeat(20));
+        app.record_edit(result);
+        assert_eq!(app.projection.cursor, (20, 0));
+        assert_eq!(app.utf8_top_row, 9);
+        app.move_utf8_vertical(-1);
+        assert_eq!(app.utf8_top_row, 9);
+        for _ in 0..11 {
+            app.move_utf8_vertical(-1);
+        }
+        assert_eq!(app.projection.cursor, (8, 0));
+        assert_eq!(app.utf8_top_row, 8);
+        let screen = Screen::utf8_editor(&app.projection, "test.txt", None, app.utf8_top_row);
+        assert_eq!(screen.cursor, Some((11, 0)));
     }
 }

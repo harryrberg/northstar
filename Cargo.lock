@@ -1519,7 +1519,7 @@ dependencies = [
 
 [[package]]
 name = "northstar-cli"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "northstar-core",
  "serde",
@@ -1529,7 +1529,7 @@ dependencies = [
 
 [[package]]
 name = "northstar-core"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "serde",
  "unicode-segmentation",
@@ -1537,7 +1537,7 @@ dependencies = [
 
 [[package]]
 name = "northstar-desktop"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "iced",
  "northstar-core",

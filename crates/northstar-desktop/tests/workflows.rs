@@ -6,7 +6,8 @@ use iced::keyboard::{
 use northstar_core::{Command, Document, Editor};
 use northstar_desktop::{
     input::{Action, Keyboard},
-    projection::Projection,
+    projection::{Projection, UTF8_TEXT_COLUMNS},
+    screen::Screen,
     session::{DOCUMENT_LIMIT, DocumentSession, Session, Utf8Session},
 };
 use sha2::{Digest, Sha256};
@@ -430,6 +431,115 @@ fn utf8_keyboard_save_reopen_and_projection_preserve_text() {
         .map(|row| row.iter().map(|c| c.glyph).collect::<String>())
         .collect::<Vec<_>>();
     assert_eq!(rows, ["Blåbær og æøå¶", "Café □"]);
+}
+
+#[test]
+fn utf8_word_wrap_and_vertical_keys_preserve_stored_line_endings() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("long.txt");
+    let original = format!("{}Blåbær\r\n{}", "word ".repeat(15), "a".repeat(78));
+    fs::write(&source, &original).unwrap();
+    let mut session = Utf8Session::open(&source).unwrap();
+    let projection = Projection::utf8(&session.editor);
+    assert_eq!(UTF8_TEXT_COLUMNS, 78);
+    let rows = projection
+        .rows
+        .iter()
+        .map(|row| row.iter().map(|cell| cell.glyph).collect::<String>())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        rows,
+        [
+            format!("{}↵", "word ".repeat(15)),
+            "Blåbær¶".into(),
+            "a".repeat(78)
+        ]
+    );
+    let screen = Screen::utf8_editor(&projection, "long.txt", None, 0);
+    assert_eq!(screen.cells[11][79].glyph, ' ');
+    assert_eq!(screen.cells[12][79].glyph, '<');
+
+    let mut keyboard = Keyboard::default();
+    assert_eq!(
+        keyboard.handle_mode(
+            &press(
+                Key::Named(Named::ArrowDown),
+                Modifiers::empty(),
+                None,
+                false
+            ),
+            true
+        ),
+        Some(Action::MoveVertical(1))
+    );
+    assert_eq!(
+        keyboard.handle_mode(&ctrl("e", false), true),
+        Some(Action::MoveVertical(-1))
+    );
+    assert_ne!(
+        keyboard.handle_mode(
+            &press(
+                Key::Named(Named::ArrowDown),
+                Modifiers::empty(),
+                None,
+                false
+            ),
+            false
+        ),
+        Some(Action::MoveVertical(1))
+    );
+
+    session.editor.set_cursor(75).unwrap();
+    let projection = Projection::utf8(&session.editor);
+    assert_eq!(projection.cursor, (1, 0));
+    session.editor.set_cursor(75 + "Blå".len()).unwrap();
+    assert_eq!(Projection::utf8(&session.editor).cursor, (1, 3));
+    session.editor.set_cursor(75).unwrap();
+    let next = projection.utf8_vertical_target(1, 6).unwrap();
+    session.editor.set_cursor(next).unwrap();
+    assert_eq!(Projection::utf8(&session.editor).cursor, (2, 6));
+    let destination = scratch.0.join("copy.txt");
+    session.save_as(&destination).unwrap();
+    assert_eq!(fs::read(&source).unwrap(), original.as_bytes());
+    assert_eq!(fs::read(&destination).unwrap(), original.as_bytes());
+}
+
+#[test]
+fn utf8_wrap_keeps_the_cursor_visible_at_a_full_row_and_crlf_boundary() {
+    let text = format!("{}\r\nB", "a".repeat(UTF8_TEXT_COLUMNS));
+    let mut editor = northstar_core::Utf8Editor::new(text);
+    editor.set_cursor(UTF8_TEXT_COLUMNS).unwrap();
+    let projection = Projection::utf8(&editor);
+    assert_eq!(projection.cursor, (0, UTF8_TEXT_COLUMNS));
+    assert_eq!(projection.rows[0].last().unwrap().glyph, '¶');
+    let screen = Screen::utf8_editor(&projection, "edge.txt", None, 0);
+    assert_eq!(screen.cursor, Some((11, UTF8_TEXT_COLUMNS)));
+    editor.set_cursor(UTF8_TEXT_COLUMNS + 2).unwrap();
+    assert_eq!(Projection::utf8(&editor).cursor, (1, 0));
+
+    let mut editor =
+        northstar_core::Utf8Editor::new(format!("{}👩‍💻", "a".repeat(UTF8_TEXT_COLUMNS + 1)));
+    editor.set_cursor(UTF8_TEXT_COLUMNS).unwrap();
+    let projection = Projection::utf8(&editor);
+    assert_eq!(projection.cursor, (1, 0));
+    assert_eq!(projection.rows[0].last().unwrap().glyph, '↵');
+    assert_eq!(projection.rows[1].len(), 2);
+    editor.set_cursor(UTF8_TEXT_COLUMNS + 1).unwrap();
+    assert_eq!(Projection::utf8(&editor).cursor, (1, 1));
+
+    let mut editor = northstar_core::Utf8Editor::new("A\rB".into());
+    editor.set_cursor(2).unwrap();
+    let projection = Projection::utf8(&editor);
+    assert_eq!(projection.cursor, (1, 0));
+    assert_eq!(projection.rows[0].last().unwrap().glyph, '¶');
+
+    let mut editor =
+        northstar_core::Utf8Editor::new(format!("{} B", "a".repeat(UTF8_TEXT_COLUMNS)));
+    editor.set_cursor(UTF8_TEXT_COLUMNS + 1).unwrap();
+    let projection = Projection::utf8(&editor);
+    assert_eq!(projection.cursor, (1, 0));
+    assert_eq!(projection.rows[1][0].glyph, 'B');
+    assert_eq!(editor.text().as_bytes()[UTF8_TEXT_COLUMNS], b' ');
 }
 
 #[test]
