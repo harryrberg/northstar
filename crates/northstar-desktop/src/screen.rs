@@ -85,13 +85,9 @@ impl Screen {
         });
         s.put(0, 3, &label.chars().take(19).collect::<String>(), 0x70);
         let (row, column) = projection.cursor;
-        let page = if projection.rows.len() <= 12
-            && !projection
-                .rows
-                .iter()
-                .flatten()
-                .any(|c| c.glyph == '□' || c.glyph == '!')
-        {
+        // The retained DOS captures establish P01 through L14. Later automatic
+        // page transitions are not yet qualified, so do not guess their number.
+        let page = if row < 14 && !projection.page_unknown_before_cursor {
             "01"
         } else {
             "??"

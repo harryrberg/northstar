@@ -15,3 +15,9 @@ The portable `screen_oracle` test compares the screen's full 4,000-byte characte
 Full screen and both fonts were inspected in the native Windows window at 2048x1152. Other display resolutions, scaling settings, and platforms have not been tested. The screen comparison proves cell content for the declared fixture, not pixel-level identity across fonts or displays.
 
 After saving, a further unsaved edit was made in the native window. Alt-F4 showed the unsaved-change prompt, and Escape returned to the edited document without writing it. The test window was then closed by explicitly discarding that extra edit.
+
+## Longer documents
+
+A separate 256-byte synthetic document with 18 hard-terminated lines was opened in the DOS original. Its SHA-256 was `0370f3f91599a1b662bb66efb0a09fd5a95e94b1443fd382baddc831e9d99050`. At the starts of lines 12, 13, and 14, the retained 4,000-byte screen images had SHA-256 values `05d9ef90e403b7e2ac769eb6220a8db2bed0efa092054e816ac681c8b49d5477`, `a722f096fb7b038299a2af08beaa92996d862ef2688c5f77d41582fa26ecb95e`, and `376bef6bb75110cea334adde75b6cb33c6bea6e9554091e59f8114a4dccd7c4b`. The `screen_oracle` test now matches all three images byte for byte. From line 13 onward, each line moved the document viewport up one row while the status still showed page 01. Page numbering after line 14 is not yet qualified. Set `NORTHSTAR_NAV_SCREENS` to the local capture directory to see byte-level differences on a failing test.
+
+The same DOS session showed that repeated Ctrl-E and Ctrl-X movement across a one-character line does not always preserve the apparent screen column. That sequence needs a separate cursor-state investigation before vertical movement is added to the Rust core. The source file was unchanged by the DOS navigation run.

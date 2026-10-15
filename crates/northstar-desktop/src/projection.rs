@@ -12,6 +12,7 @@ pub struct Projection {
     pub rows: Vec<Vec<Cell>>,
     pub cursor: (usize, usize),
     pub hidden_tail_bytes: usize,
+    pub page_unknown_before_cursor: bool,
 }
 
 impl Projection {
@@ -29,6 +30,19 @@ impl Projection {
             }
             if token.range.start >= snapshot.active_bytes {
                 break;
+            }
+            if token.range.start < snapshot.cursor_byte
+                && !matches!(
+                    token.kind,
+                    TokenKind::Text { .. }
+                        | TokenKind::SoftSpace
+                        | TokenKind::LineBreak {
+                            page_marker: false,
+                            ..
+                        }
+                )
+            {
+                result.page_unknown_before_cursor = true;
             }
             let row = result.rows.last_mut().unwrap();
             match token.kind {

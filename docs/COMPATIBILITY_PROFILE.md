@@ -63,4 +63,4 @@ Ctrl-B also normalizes padding when active text is unchanged: 127 spaces grow fr
 
 ## Remaining first-milestone work
 
-General Ctrl-B behavior, right-justified and hyphen-aware wrapping, visual cursor behavior, full file-save semantics, and a Windows interactive adapter remain unfinished. CP437 glyph rendering, Unicode, input-method composition, accessibility, undo/recovery, PDF, and printing are separate work. Passing these profiles does not establish those features or general compatibility.
+General Ctrl-B behavior, right-justified and hyphen-aware wrapping, vertical cursor behavior, and full file-save semantics remain unfinished. The Windows interactive prototype has a bounded 80x25 screen comparison, including three scroll positions through line 14; later automatic page numbering is unknown. CP437 glyph rendering outside the tested screen, Unicode, input-method composition, accessibility, undo/recovery, PDF, and printing are separate work. Passing these profiles does not establish those features or general compatibility.
