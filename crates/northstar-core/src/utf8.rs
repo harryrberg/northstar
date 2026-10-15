@@ -67,8 +67,20 @@ impl Utf8Editor {
         }
     }
 
+    /// Restore an unsaved draft without creating a synthetic undo operation.
+    pub fn recover(text: String, saved: String, cursor: usize) -> Result<Self, Utf8Error> {
+        let mut editor = Self::new(text);
+        editor.set_cursor(cursor)?;
+        editor.saved = saved;
+        Ok(editor)
+    }
+
     pub fn text(&self) -> &str {
         &self.text
+    }
+
+    pub fn saved_text(&self) -> &str {
+        &self.saved
     }
 
     pub fn graphemes(&self) -> impl Iterator<Item = (usize, &str)> {

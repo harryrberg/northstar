@@ -19,6 +19,7 @@
       <ComponentRef Id="FontNotices" />
       <ComponentRef Id="PlexLicense" />
       <ComponentRef Id="PrototypeGuide" />
+      <ComponentRef Id="RecoveryGuide" />
     </Feature>
 
     <Component Id="DesktopExecutable" Directory="INSTALLFOLDER" Guid="08FBB73A-5EFD-48DE-8D56-3036D8ECFFC1">
@@ -46,6 +47,10 @@
     <Component Id="PrototypeGuide" Directory="INSTALLFOLDER" Guid="2C7EA8C3-B606-4246-B626-E460B04B7601">
       <File Source="$(var.RepoRoot)\docs\WINDOWS_PROTOTYPE.md" />
       <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="Guide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="RecoveryGuide" Directory="INSTALLFOLDER" Guid="3AA98D6B-46B9-419B-8D7A-DBCFEEB6B57E">
+      <File Source="$(var.RepoRoot)\docs\RECOVERY.md" />
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="RecoveryGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
   </Package>
 </Wix>

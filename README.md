@@ -25,9 +25,9 @@ cargo run -p northstar-desktop -- path/to/document.doc
 
 Replay compares local Rust behavior with declared retained DOS observations. It does not execute the original program. Add `--output NEW_FILE` to write the scenario result to a new path; existing files are never overwritten. Inspection is read-only.
 
-The desktop prototype accepts an optional WordStar document path. Without one, press D at the opening menu and enter a path. F2 starts a new UTF-8 document, and F3 opens a UTF-8 file; `--utf8 FILE` explicitly selects that mode from the command line. UTF-8 mode supports Norwegian text, paste, visual word wrap, grapheme-aware movement and deletion, Enter, saving, Ctrl-Z undo, and Ctrl-Y or Ctrl-Shift-Z redo. Up/Down or Ctrl-E/Ctrl-X move through visual rows without changing the file's line endings. In the legacy editor, Ctrl-S/Ctrl-D move the cursor, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to the current path, Ctrl-K D saves and returns to the menu, and Ctrl-Shift-S saves a copy to a new path. Saving an existing file retains its previous bytes in a backup and refuses to overwrite a file changed outside NorthStar. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
+The desktop prototype accepts an optional WordStar document path. Without one, press D at the opening menu and enter a path. F2 starts a new UTF-8 document, and F3 opens a UTF-8 file; `--utf8 FILE` explicitly selects that mode from the command line. UTF-8 mode supports Norwegian text, paste, visual word wrap, grapheme-aware movement and deletion, Enter, saving, undo/redo, and separate recovery copies of unsaved drafts. F4 on the opening menu finds a recovery copy. Up/Down or Ctrl-E/Ctrl-X move through visual rows without changing the file's line endings. In the legacy editor, Ctrl-S/Ctrl-D move the cursor, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to the current path, Ctrl-K D saves and returns to the menu, and Ctrl-Shift-S saves a copy to a new path. Saving an existing file retains its previous bytes in a backup and refuses to overwrite a file changed outside NorthStar. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
 
-An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.6-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
+An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.7-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
 
 ## Direction
 
@@ -63,6 +63,7 @@ Automatic wrapping adds 44 comparisons with right justification off, including c
 - [Analysis provenance](docs/PROVENANCE.md)
 - [Recorded source identities](docs/analysis-baseline.json)
 - [Save behavior and open questions](docs/SAVING.md)
+- [UTF-8 draft recovery](docs/RECOVERY.md)
 
 Original executables, dictionaries, proprietary resources, decompiled source, and the bulk investigation archive are not included in this repository.
 

@@ -8,10 +8,11 @@ use iced::{
 use northstar_desktop::{
     input::{Action, Keyboard},
     projection::Projection,
+    recovery::{RecoveryCandidate, RecoveryStore},
     screen::Screen,
     session::{DocumentSession, Session, Utf8Session},
 };
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 mod surface;
 const UTF8_VISIBLE_ROWS: usize = 12;
 
@@ -54,6 +55,10 @@ struct App {
     session_generation: u64,
     utf8_top_row: usize,
     preferred_column: Option<usize>,
+    recovery_store: Option<RecoveryStore>,
+    recovery_id: String,
+    recovery_written: bool,
+    recovery_pending: bool,
 }
 #[derive(Debug, Clone, Copy)]
 enum Next {
@@ -73,6 +78,10 @@ enum Dialog {
         error: String,
     },
     Discard(Next),
+    Recovery {
+        candidate: Box<RecoveryCandidate>,
+        error: String,
+    },
     Help,
 }
 #[derive(Debug, Clone)]
@@ -89,11 +98,28 @@ pub(crate) enum Message {
     Cancel,
     Discard,
     Paste(u64, Option<String>),
+    RecoveryTick,
+    ShowRecovery,
+    Recover,
+    SkipRecovery,
+    DiscardRecovery,
 }
 impl App {
     fn new() -> Self {
+        match RecoveryStore::default_location() {
+            Ok(store) => Self::new_with_recovery(Some(store), None),
+            Err(error) => Self::new_with_recovery(None, Some(error.to_string())),
+        }
+    }
+
+    fn new_with_recovery(
+        recovery_store: Option<RecoveryStore>,
+        recovery_error: Option<String>,
+    ) -> Self {
         let mut session = DocumentSession::Legacy(Session::default());
-        let mut notice = String::new();
+        let mut notice = recovery_error
+            .map(|error| format!("Recovery unavailable: {error}"))
+            .unwrap_or_default();
         let mut opening = true;
         let mut args = std::env::args_os().skip(1);
         if let Some(first) = args.next() {
@@ -118,7 +144,7 @@ impl App {
             }
         }
         let projection = Projection::for_session(&session);
-        Self {
+        let mut app = Self {
             session,
             projection,
             keyboard: Keyboard::default(),
@@ -131,7 +157,15 @@ impl App {
             session_generation: 0,
             utf8_top_row: 0,
             preferred_column: None,
+            recovery_store,
+            recovery_id: RecoveryStore::new_id(),
+            recovery_written: false,
+            recovery_pending: false,
+        };
+        if app.opening || app.session.is_utf8() {
+            app.offer_recovery(app.opening, false);
         }
+        app
     }
     fn title(&self) -> String {
         let path = self
@@ -145,13 +179,16 @@ impl App {
         )
     }
     fn subscription(&self) -> Subscription<Message> {
-        iced::event::listen_with(|event, status, id| {
-            if matches!(event, Event::Window(_)) || status == iced::event::Status::Ignored {
-                Some(Message::Event(event, id))
-            } else {
-                None
-            }
-        })
+        Subscription::batch([
+            iced::event::listen_with(|event, status, id| {
+                if matches!(event, Event::Window(_)) || status == iced::event::Status::Ignored {
+                    Some(Message::Event(event, id))
+                } else {
+                    None
+                }
+            }),
+            iced::time::every(Duration::from_secs(2)).map(|_| Message::RecoveryTick),
+        ])
     }
     fn begin(&mut self, next: Next) -> Task<Message> {
         self.keyboard.reset();
@@ -174,6 +211,9 @@ impl App {
                 self.dialog = None;
                 self.opening = true;
                 self.notice.clear();
+                self.recovery_id = RecoveryStore::new_id();
+                self.recovery_written = false;
+                self.recovery_pending = false;
                 Task::none()
             }
         }
@@ -202,8 +242,57 @@ impl App {
                 self.preferred_column = None;
                 self.opening = false;
                 self.notice.clear();
+                self.recovery_id = RecoveryStore::new_id();
+                self.recovery_written = false;
+                self.recovery_pending = false;
             }
             Message::OpenUtf8 => return self.path_dialog(PathKind::OpenUtf8),
+            Message::ShowRecovery => self.offer_recovery(true, true),
+            Message::RecoveryTick => self.flush_recovery(),
+            Message::Recover => {
+                if let Some(Dialog::Recovery { candidate, error }) = &mut self.dialog {
+                    let result = self
+                        .recovery_store
+                        .as_ref()
+                        .expect("recovery dialog requires a store")
+                        .restore(candidate);
+                    match result {
+                        Ok(outcome) => {
+                            self.recovery_id = candidate.id.clone();
+                            self.recovery_written = true;
+                            self.recovery_pending = false;
+                            self.session = DocumentSession::Utf8(outcome.session);
+                            self.session_generation += 1;
+                            self.projection = Projection::for_session(&self.session);
+                            self.utf8_top_row = 0;
+                            self.preferred_column = None;
+                            self.opening = false;
+                            self.dialog = None;
+                            self.notice = if outcome.detached {
+                                "Original file changed or is missing. Recovered copy needs Save As."
+                                    .into()
+                            } else {
+                                "Unsaved UTF-8 draft recovered. Save it when ready.".into()
+                            };
+                        }
+                        Err(problem) => *error = format!("Recovery failed: {problem}"),
+                    }
+                }
+            }
+            Message::SkipRecovery => self.dialog = None,
+            Message::DiscardRecovery => {
+                if let Some(Dialog::Recovery { candidate, error }) = &mut self.dialog {
+                    match self
+                        .recovery_store
+                        .as_ref()
+                        .expect("recovery dialog requires a store")
+                        .remove(&candidate.id)
+                    {
+                        Ok(()) => self.dialog = None,
+                        Err(problem) => *error = format!("Could not discard copy: {problem}"),
+                    }
+                }
+            }
             Message::Save(done) => {
                 if self.session.path().is_none() {
                     return self.path_dialog(PathKind::SaveAs { done });
@@ -211,6 +300,10 @@ impl App {
                 match self.session.save() {
                     Ok(()) => {
                         self.notice.clear();
+                        if let Err(error) = self.clear_recovery() {
+                            self.notice = format!("Saved, but recovery cleanup failed: {error}");
+                            return Task::none();
+                        }
                         if done {
                             return self.proceed(Next::Opening);
                         }
@@ -235,6 +328,7 @@ impl App {
                 }
             }
             Message::Submit => {
+                let mut opened_utf8 = false;
                 if let Some(Dialog::Path { kind, value, error }) = &mut self.dialog {
                     if value.is_empty() {
                         *error = "Enter a file path".into();
@@ -269,16 +363,26 @@ impl App {
                     };
                     match result {
                         Ok(()) => {
+                            opened_utf8 = matches!(kind, PathKind::OpenUtf8);
+                            let saved_copy = matches!(kind, PathKind::SaveAs { .. });
                             if matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8) {
                                 self.session_generation += 1;
                                 self.utf8_top_row = 0;
                                 self.preferred_column = None;
+                                self.recovery_id = RecoveryStore::new_id();
+                                self.recovery_written = false;
+                                self.recovery_pending = false;
                             }
                             let done = matches!(kind, PathKind::SaveAs { done: true });
                             self.opening = false;
                             self.dialog = None;
                             self.notice.clear();
                             self.projection = Projection::for_session(&self.session);
+                            if saved_copy && let Err(problem) = self.clear_recovery() {
+                                self.notice =
+                                    format!("Saved, but recovery cleanup failed: {problem}");
+                                return Task::none();
+                            }
                             if done {
                                 return self.proceed(Next::Opening);
                             }
@@ -292,6 +396,9 @@ impl App {
                         }
                     }
                 }
+                if opened_utf8 {
+                    self.offer_recovery(false, false);
+                }
             }
             Message::Cancel => {
                 self.dialog = None;
@@ -300,6 +407,7 @@ impl App {
             }
             Message::Discard => {
                 if let Some(Dialog::Discard(next)) = self.dialog.take() {
+                    let _ = self.clear_recovery();
                     return self.proceed(next);
                 }
             }
@@ -378,6 +486,7 @@ impl App {
                                 Key::Named(Named::F1)=>return self.update(Message::Help),
                                 Key::Named(Named::F2)=>return self.update(Message::NewUtf8),
                                 Key::Named(Named::F3)=>return self.update(Message::OpenUtf8),
+                                Key::Named(Named::F4)=>return self.update(Message::ShowRecovery),
                                 _=>self.notice="This opening-menu command is not implemented. D opens a document.".into(),
                             }
                         }
@@ -453,6 +562,7 @@ impl App {
                 self.preferred_column = None;
                 self.keep_utf8_cursor_visible();
                 self.notice.clear();
+                self.mark_recovery_changed();
             }
             Err(message) => self.notice = message,
         }
@@ -464,6 +574,79 @@ impl App {
             Ok(false) => self.notice = empty_notice.into(),
             Err(message) => self.notice = message,
         }
+    }
+
+    fn offer_recovery(&mut self, all: bool, announce_empty: bool) {
+        let Some(store) = &self.recovery_store else {
+            self.notice = "Recovery storage is unavailable".into();
+            return;
+        };
+        let path = if all { None } else { self.session.path() };
+        match store.find(path) {
+            Ok(scan) => {
+                if let Some(candidate) = scan.candidate {
+                    self.dialog = Some(Dialog::Recovery {
+                        candidate: Box::new(candidate),
+                        error: String::new(),
+                    });
+                } else if announce_empty {
+                    self.notice = "No unsaved UTF-8 draft found".into();
+                }
+                if scan.invalid_files > 0 {
+                    self.notice = format!(
+                        "{} unreadable recovery file(s) retained in recovery storage",
+                        scan.invalid_files
+                    );
+                }
+            }
+            Err(error) => self.notice = format!("Recovery scan failed: {error}"),
+        }
+    }
+
+    fn mark_recovery_changed(&mut self) {
+        if !self.session.is_utf8() {
+            return;
+        }
+        if !self.session.modified() {
+            if let Err(error) = self.clear_recovery() {
+                self.notice = format!("Recovery cleanup failed: {error}");
+            }
+            return;
+        }
+        self.recovery_pending = true;
+        if !self.recovery_written {
+            self.flush_recovery();
+        }
+    }
+
+    fn flush_recovery(&mut self) {
+        if !self.recovery_pending || !self.session.modified() {
+            return;
+        }
+        let DocumentSession::Utf8(session) = &self.session else {
+            return;
+        };
+        let Some(store) = &self.recovery_store else {
+            return;
+        };
+        match store.write(&self.recovery_id, session) {
+            Ok(()) => {
+                self.recovery_written = true;
+                self.recovery_pending = false;
+            }
+            Err(error) => self.notice = format!("Recovery snapshot failed: {error}"),
+        }
+    }
+
+    fn clear_recovery(&mut self) -> std::io::Result<()> {
+        if self.recovery_written
+            && let Some(store) = &self.recovery_store
+        {
+            store.remove(&self.recovery_id)?;
+        }
+        self.recovery_written = false;
+        self.recovery_pending = false;
+        Ok(())
     }
 
     fn keep_utf8_cursor_visible(&mut self) {
@@ -494,6 +677,7 @@ impl App {
         self.preferred_column = Some(column);
         self.keep_utf8_cursor_visible();
         self.notice.clear();
+        self.mark_recovery_changed();
     }
     fn view(&self) -> Element<'_, Message> {
         if let Some(dialog) = &self.dialog {
@@ -509,15 +693,20 @@ impl App {
                 },
                 Dialog::Discard(_)=>column![text("Unsaved changes").size(24),text("Keep editing to save, or discard your changes and continue."),
                     row![button("Keep editing").on_press(Message::Cancel),button("Discard changes").on_press(Message::Discard)].spacing(18)].spacing(24).into(),
+                Dialog::Recovery{candidate,error}=>column![text("RECOVER UNSAVED UTF-8 DRAFT").size(24),
+                    text(candidate.path.as_ref().map(|path|path.display().to_string()).unwrap_or_else(||"Untitled document".into())),
+                    text("Restore the separate copy without writing the original. If the original changed or disappeared, the copy opens without a file name and needs Save As."),
+                    text(error),
+                    row![button("Restore copy").on_press(Message::Recover),button("Later").on_press(Message::SkipRecovery),button("Discard copy").on_press(Message::DiscardRecovery)].spacing(18)].spacing(20).into(),
                 Dialog::Help=>column![text("NORTHSTAR HELP").size(24),
                     text(if self.session.is_utf8() {
                         "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-Z undoes; Ctrl-Y or Ctrl-Shift-Z redoes. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {
                         "WordStar: Ctrl-S/Ctrl-D move, Ctrl-Q R starts document, Ctrl-V toggles insert, Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
                     }),
-                    text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, and X to exit."),
+                    text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, F4 for recovery, and X to exit."),
                     text(if self.session.is_utf8() {
-                        "Modern UTF-8 keeps exact text bytes. The screen wraps words without inserting line breaks. Movement and deletion follow graphemes. Wide or unsupported glyphs show a square placeholder. Overwrite and crash recovery remain unfinished."
+                        "Modern UTF-8 keeps exact text bytes. The screen wraps words without inserting line breaks. Movement and deletion follow graphemes. Wide or unsupported glyphs show a square placeholder. A separate recovery copy captures unsaved edits. Overwrite remains unfinished."
                     } else {
                         "Legacy editing supports printable ASCII only. Norwegian letters, IME, clipboard text, deletion, vertical movement, blocks and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
                     }),
@@ -530,7 +719,12 @@ impl App {
         }
         let mut screen = if self.opening {
             let mut screen = Screen::opening();
-            screen.put(13, 0, "F2 new UTF-8 document   F3 open UTF-8 file", 7);
+            screen.put(
+                13,
+                0,
+                "F2 new UTF-8 document   F3 open UTF-8 file   F4 recovery",
+                7,
+            );
             screen
         } else {
             let label = self
@@ -593,10 +787,83 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{
+        fs,
+        sync::atomic::{AtomicUsize, Ordering},
+    };
+
+    struct Scratch(PathBuf);
+    impl Scratch {
+        fn new() -> Self {
+            static SERIAL: AtomicUsize = AtomicUsize::new(0);
+            let path = std::env::temp_dir().join(format!(
+                "northstar-app-recovery-{}-{}",
+                std::process::id(),
+                SERIAL.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            fs::remove_dir_all(&self.0).unwrap();
+        }
+    }
+
+    #[test]
+    fn app_snapshots_unsaved_utf8_text_and_offers_it_after_restart() {
+        let scratch = Scratch::new();
+        let root = scratch.0.join("recovery");
+        let mut app = App::new_with_recovery(Some(RecoveryStore::new(root.clone())), None);
+        let _ = app.update(Message::NewUtf8);
+        let result = app.session.insert_text("æøå");
+        app.record_edit(result);
+        assert!(app.recovery_written);
+        let result = app.session.insert_text(" B");
+        app.record_edit(result);
+        assert!(app.recovery_pending);
+        let first = RecoveryStore::new(root.clone())
+            .find(None)
+            .unwrap()
+            .candidate
+            .unwrap();
+        assert_eq!(
+            RecoveryStore::new(root.clone())
+                .restore(&first)
+                .unwrap()
+                .session
+                .editor
+                .text(),
+            "æøå"
+        );
+        let _ = app.update(Message::RecoveryTick);
+        drop(app);
+
+        let mut restarted = App::new_with_recovery(Some(RecoveryStore::new(root.clone())), None);
+        assert!(matches!(restarted.dialog, Some(Dialog::Recovery { .. })));
+        let _ = restarted.update(Message::Recover);
+        let DocumentSession::Utf8(session) = &restarted.session else {
+            panic!("Recovery must open the UTF-8 editor")
+        };
+        assert_eq!(session.editor.text(), "æøå B");
+        assert!(restarted.session.modified());
+        let copy = scratch.0.join("recovered.txt");
+        restarted.session.save_as(&copy).unwrap();
+        restarted.clear_recovery().unwrap();
+        assert_eq!(fs::read(copy).unwrap(), "æøå B".as_bytes());
+        assert!(
+            RecoveryStore::new(root)
+                .find(None)
+                .unwrap()
+                .candidate
+                .is_none()
+        );
+    }
 
     #[test]
     fn modern_mode_accepts_ime_commit_and_ignores_late_clipboard_result() {
-        let mut app = App::new();
+        let mut app = App::new_with_recovery(None, None);
         let _ = app.update(Message::NewUtf8);
         app.window_focused = true;
         let id = window::Id::unique();
@@ -621,7 +888,7 @@ mod tests {
 
     #[test]
     fn vertical_movement_keeps_the_preferred_column_and_scrolls_only_at_edges() {
-        let mut app = App::new();
+        let mut app = App::new_with_recovery(None, None);
         let _ = app.update(Message::NewUtf8);
         let result = app.session.insert_text("123456789\nx\nabcdefghi");
         app.record_edit(result);

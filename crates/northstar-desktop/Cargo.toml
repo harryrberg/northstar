@@ -8,11 +8,10 @@ repository.workspace = true
 
 [dependencies]
 northstar-core = { path = "../northstar-core" }
-iced = { version = "=0.14.0", default-features = false, features = ["advanced", "wgpu", "tiny-skia", "canvas", "thread-pool", "x11", "wayland"] }
+iced = { version = "=0.14.0", default-features = false, features = ["advanced", "wgpu", "tiny-skia", "canvas", "tokio", "x11", "wayland"] }
 unicode-normalization = "0.1.25"
 unicode-width = "0.2.2"
-
-[dev-dependencies]
+serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 

@@ -232,9 +232,13 @@ impl Utf8Session {
         self.editor.mark_saved();
         Ok(())
     }
+
+    pub(crate) fn baseline(&self) -> Option<&[u8]> {
+        self.baseline.as_deref()
+    }
 }
 
-fn read_document(path: &Path) -> io::Result<Vec<u8>> {
+pub(crate) fn read_document(path: &Path) -> io::Result<Vec<u8>> {
     let file = File::open(path)?;
     if !file.metadata()?.is_file() {
         return Err(io::Error::other("Choose a regular document file"));
@@ -353,12 +357,12 @@ fn save_current(
 
 static NEXT_STAGE: AtomicU64 = AtomicU64::new(0);
 
-struct StagedFile {
-    path: PathBuf,
+pub(crate) struct StagedFile {
+    pub(crate) path: PathBuf,
 }
 
 impl StagedFile {
-    fn write(
+    pub(crate) fn write(
         destination: &Path,
         bytes: &[u8],
         metadata: Option<&fs::Metadata>,
@@ -398,7 +402,7 @@ impl Drop for StagedFile {
 }
 
 #[cfg(windows)]
-fn replace_existing(destination: &Path, staged: &Path) -> io::Result<()> {
+pub(crate) fn replace_existing(destination: &Path, staged: &Path) -> io::Result<()> {
     use std::{os::windows::ffi::OsStrExt, ptr};
     use windows_sys::Win32::Storage::FileSystem::ReplaceFileW;
     let wide = |path: &Path| {
@@ -428,6 +432,6 @@ fn replace_existing(destination: &Path, staged: &Path) -> io::Result<()> {
 }
 
 #[cfg(not(windows))]
-fn replace_existing(destination: &Path, staged: &Path) -> io::Result<()> {
+pub(crate) fn replace_existing(destination: &Path, staged: &Path) -> io::Result<()> {
     fs::rename(staged, destination)
 }

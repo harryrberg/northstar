@@ -1,6 +1,6 @@
 # Windows MSI
 
-`NorthStar.wxs` packages the 64-bit desktop prototype for the current Windows user. It installs the executable, project license, font notices, IBM Plex license, and prototype guide under the user's local application data. It creates a Start menu shortcut and a normal Windows uninstall entry. It does not associate document extensions or touch user documents.
+`NorthStar.wxs` packages the 64-bit desktop prototype for the current Windows user. It installs the executable, project license, font notices, IBM Plex license, prototype guide, and UTF-8 recovery guide under the user's local application data. It creates a Start menu shortcut and a normal Windows uninstall entry. It does not associate document extensions or touch user documents. Recovery copies live in a separate directory and are retained by uninstall.
 
 The package is an unsigned prototype. It includes only the desktop application; no Rust, .NET, or WiX runtime is required on the target machine. The desktop can now save an existing file with a backup and an external-change check; many WordStar commands remain unimplemented. Read `WINDOWS_PROTOTYPE.md` before editing important files.
 

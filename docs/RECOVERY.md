@@ -1,0 +1,11 @@
+# UTF-8 draft recovery
+
+NorthStar keeps a separate copy of unsaved UTF-8 text. On Windows it lives in `%LOCALAPPDATA%\NorthStar-Recovery`, outside the MSI installation directory. Other desktop builds use `XDG_STATE_HOME/northstar/recovery` or `~/.local/state/northstar/recovery`. Each editing session has its own file. WordStar documents do not use this mechanism.
+
+The first edit that makes a document dirty writes a snapshot immediately. Later changes are written on a two-second timer. Each snapshot contains the exact UTF-8 text, cursor byte position, last saved text, source path and its resolved path, plus hashes used to check the snapshot and the source file. A write stages and syncs a new file before publishing it. A crash can lose changes made since the last completed snapshot. Power-loss durability and directory synchronization have not been verified.
+
+At startup, NorthStar offers the newest valid unsaved copy. F4 on the opening menu offers one again. Opening a particular UTF-8 file also checks for a copy associated with that path. **Restore copy** opens the text without writing the original. If the source still has the bytes from which the draft started, the restored document keeps that path and a later, explicit save may replace it under the normal backup and external-change checks. If the source is missing or changed, the draft opens without a file name and requires Save As. **Later** leaves the copy on disk. **Discard copy** removes only that recovery file. A successful save, undo back to the saved text, or deliberate discard of edits removes the active copy.
+
+The record format is bounded to 16 MiB. The current desktop document limit remains 1 MiB for both edited and saved text. A scan examines at most 128 recovery files. Malformed files are reported and retained for inspection. Undo history is not restored. A copy whose text already matches the source file is skipped. Exact path spelling matters for matching a selected file; the opening-menu F4 route can still find a copy created under another spelling.
+
+Tests simulate an interrupted session, exact reopen and save, changed and missing sources, an empty recovered draft, and a truncated recovery record. The Windows UI and MSI checks are recorded in [the prototype guide](WINDOWS_PROTOTYPE.md). This is a modern UTF-8 feature, not a claim about WordStar 4.0 behavior.
