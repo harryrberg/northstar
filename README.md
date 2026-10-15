@@ -55,6 +55,12 @@ Completion requires passing declared differential cases for document bytes, curs
 
 Original executables, dictionaries, proprietary resources, decompiled source, and the bulk investigation archive are not included in this repository.
 
+## Dedication
+
+To George R. R. Martin and the world of *Game of Thrones*—for the stories, and for reminding us that great writing needs room to breathe.
+
+Inspired by WordStar 4.0 and the quiet focus of a distraction-free writing environment, NorthStar carries that spirit forward: a place for the writer, the words, and the world taking shape.
+
 ## License
 
 NorthStar is licensed under the GNU General Public License, version 3 only (SPDX: `GPL-3.0-only`). See [LICENSE](LICENSE) for the complete terms. This applies to the project's original code and documentation, not to the original WordStar software or third-party material.
