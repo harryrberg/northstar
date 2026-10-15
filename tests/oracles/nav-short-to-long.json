@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-vertical-navigation-v1",
+  "id": "nav-short-to-long",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-nav-01/files/NAV1.DOC",
+        "sha256": "0370f3f91599a1b662bb66efb0a09fd5a95e94b1443fd382baddc831e9d99050"
+      },
+      {
+        "path": "runtime-northstar-nav-01/events.json",
+        "sha256": "7749bbd3db6b692d531568a8ee4853c6d1caa2a4bdd6385e2b6cf9e056929923"
+      },
+      {
+        "path": "runtime-northstar-nav-01/nav-b-c11.png",
+        "sha256": "612945f93cd4b76bd040260f1390cafaf38d9a4ce131866a7ed1877e862501f0"
+      },
+      {
+        "path": "runtime-northstar-nav-01/nav-b-short.png",
+        "sha256": "e02f4e767666bc1be5a0b6dc41578c2788b416bafecdeb18f91075546832f064"
+      },
+      {
+        "path": "runtime-northstar-nav-01/nav-b-long.png",
+        "sha256": "1e865c7a507bceeb421839b8239c3a651d8003dc57592948c1528018b206598e"
+      }
+    ],
+    "limitations": [
+      "Synthetic document opened in an isolated DOSBox copy on 2026-10-15.",
+      "Cursor byte offsets are derived from observed L/C status and one-byte cells in the named screenshots.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Compares vertical navigation and unchanged NorthStar carrier bytes; not a claim about unrelated formatting or commands.",
+      "Page-marked breaks, control cells, dot commands and horizontal scrolling remain outside this profile."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "414c50484120424554412047414d4d410d0a580d0a4c4f4e47205345434f4e44205041524147524150480d0a5448495244204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a464f55525448204c494e450d0a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 10,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_line"
+    },
+    {
+      "command": "next_line"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "0370f3f91599a1b662bb66efb0a09fd5a95e94b1443fd382baddc831e9d99050",
+    "cursor_byte": 22,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

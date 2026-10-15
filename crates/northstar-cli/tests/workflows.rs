@@ -76,7 +76,7 @@ fn retained_enter_scenarios_pass_through_the_real_cli() {
 }
 
 #[test]
-fn retained_editing_and_reformat_scenarios_match_saved_bytes_cursor_and_modes() {
+fn retained_editing_reformat_and_navigation_scenarios_match_bytes_cursor_and_modes() {
     use sha2::{Digest, Sha256};
     let scratch = Scratch::new();
     let mut paths: Vec<_> = fs::read_dir(oracle("unused").parent().unwrap())
@@ -84,7 +84,10 @@ fn retained_editing_and_reformat_scenarios_match_saved_bytes_cursor_and_modes() 
         .map(|entry| entry.unwrap().path())
         .filter(|path| {
             let name = path.file_name().unwrap().to_string_lossy();
-            name.starts_with("reformat-") || name.starts_with("edit-") || name.starts_with("wrap-")
+            name.starts_with("reformat-")
+                || name.starts_with("edit-")
+                || name.starts_with("wrap-")
+                || name.starts_with("nav-")
         })
         .collect();
     paths.sort();
@@ -112,6 +115,36 @@ fn retained_editing_and_reformat_scenarios_match_saved_bytes_cursor_and_modes() 
             assert_eq!(report["state"][field], spec["expected"][field]);
         }
         assert_eq!(report["target_executed"], false);
+    }
+}
+
+#[test]
+fn navigation_profile_does_not_admit_unqualified_commands() {
+    let scratch = Scratch::new();
+    for (index, (profile, command)) in [
+        ("ws4-vertical-navigation-v1", json!({"command":"reformat"})),
+        ("ws4-ascii-edit-v1", json!({"command":"next_line"})),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let mut spec = case("nav-clamp-short");
+        spec["profile"] = json!(profile);
+        spec["commands"] = json!([command]);
+        let input = scratch.path(&format!("invalid-navigation-{index}.json"));
+        let output = scratch.path(&format!("invalid-navigation-{index}.doc"));
+        fs::write(&input, serde_json::to_vec(&spec).unwrap()).unwrap();
+        assert!(
+            !run(&[
+                "replay".as_ref(),
+                input.as_os_str(),
+                "--output".as_ref(),
+                output.as_os_str(),
+            ])
+            .status
+            .success()
+        );
+        assert!(!output.exists());
     }
 }
 

@@ -167,12 +167,84 @@ impl Document {
         }
         Ok(line)
     }
+
+    fn vertical_target(&self, cursor: usize, down: bool) -> Result<Option<usize>, EditError> {
+        let active_end = self.active_end();
+        let mut lines = Vec::new();
+        let mut start = 0;
+        let mut unsupported = None;
+        for token in self
+            .tokens()
+            .take_while(|token| token.range.start < active_end)
+        {
+            match token.kind {
+                TokenKind::Text { .. } | TokenKind::SoftSpace => {}
+                TokenKind::LineBreak { page_marker, .. } => {
+                    lines.push(NavigationLine {
+                        start,
+                        end: token.range.start,
+                        unsupported,
+                        page_break_after: page_marker,
+                    });
+                    start = token.range.end;
+                    unsupported = None;
+                }
+                _ => {
+                    unsupported.get_or_insert(token.range.start);
+                }
+            }
+        }
+        lines.push(NavigationLine {
+            start,
+            end: active_end,
+            unsupported,
+            page_break_after: false,
+        });
+        let current = lines
+            .iter()
+            .position(|line| line.start <= cursor && cursor <= line.end)
+            .expect("validated cursor belongs to a physical line");
+        let next = if down {
+            current.checked_add(1).filter(|index| *index < lines.len())
+        } else {
+            current.checked_sub(1)
+        };
+        let Some(next) = next else {
+            return Ok(None);
+        };
+        if lines[if down { current } else { next }].page_break_after {
+            return Err(EditError::UnqualifiedOperation("page-marked line break"));
+        }
+        for line in [&lines[current], &lines[next]] {
+            if let Some(offset) = line.unsupported {
+                return Err(EditError::UnsupportedDocument { offset });
+            }
+            if self
+                .bytes
+                .get(line.start)
+                .is_some_and(|byte| byte & 0x7f == b'.')
+            {
+                return Err(EditError::UnqualifiedOperation("dot commands"));
+            }
+        }
+        let column = cursor - lines[current].start;
+        Ok(Some(
+            lines[next].start + column.min(lines[next].end - lines[next].start),
+        ))
+    }
 }
 
 struct AsciiLine {
     start: usize,
     end: usize,
     next: Option<usize>,
+}
+
+struct NavigationLine {
+    start: usize,
+    end: usize,
+    unsupported: Option<usize>,
+    page_break_after: bool,
 }
 
 /// Complete operation result; errors are returned before anything is committed.
@@ -190,6 +262,8 @@ pub enum Command {
     DocumentStart,
     NextCharacter,
     PreviousCharacter,
+    NextLine,
+    PreviousLine,
     Reformat,
 }
 
@@ -312,6 +386,14 @@ impl Editor {
                     .last()
                 {
                     self.cursor = token.range.start;
+                }
+            }
+            Command::NextLine | Command::PreviousLine => {
+                if let Some(cursor) = self
+                    .document
+                    .vertical_target(self.cursor, matches!(command, Command::NextLine))?
+                {
+                    self.cursor = cursor;
                 }
             }
             Command::Enter => {

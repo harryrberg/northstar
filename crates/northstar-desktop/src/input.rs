@@ -94,8 +94,16 @@ impl Keyboard {
                 }
                 "s" => Some(Action::Edit(Command::PreviousCharacter)),
                 "d" => Some(Action::Edit(Command::NextCharacter)),
-                "e" if utf8 => Some(Action::MoveVertical(-1)),
-                "x" if utf8 => Some(Action::MoveVertical(1)),
+                "e" => Some(if utf8 {
+                    Action::MoveVertical(-1)
+                } else {
+                    Action::Edit(Command::PreviousLine)
+                }),
+                "x" => Some(if utf8 {
+                    Action::MoveVertical(1)
+                } else {
+                    Action::Edit(Command::NextLine)
+                }),
                 "z" if utf8 && !repeat && modifiers.shift() => Some(Action::Redo),
                 "z" if utf8 && !repeat => Some(Action::Undo),
                 "y" if utf8 && !repeat => Some(Action::Redo),
@@ -121,8 +129,16 @@ impl Keyboard {
         match key {
             Key::Named(Named::ArrowLeft) => Some(Action::Edit(Command::PreviousCharacter)),
             Key::Named(Named::ArrowRight) => Some(Action::Edit(Command::NextCharacter)),
-            Key::Named(Named::ArrowUp) if utf8 => Some(Action::MoveVertical(-1)),
-            Key::Named(Named::ArrowDown) if utf8 => Some(Action::MoveVertical(1)),
+            Key::Named(Named::ArrowUp) => Some(if utf8 {
+                Action::MoveVertical(-1)
+            } else {
+                Action::Edit(Command::PreviousLine)
+            }),
+            Key::Named(Named::ArrowDown) => Some(if utf8 {
+                Action::MoveVertical(1)
+            } else {
+                Action::Edit(Command::NextLine)
+            }),
             Key::Named(Named::Backspace) => Some(Action::Backspace),
             Key::Named(Named::Delete) => Some(Action::Delete),
             Key::Named(Named::Enter) => Some(Action::Edit(Command::Enter)),

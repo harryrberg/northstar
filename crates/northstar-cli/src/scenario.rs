@@ -60,6 +60,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-ascii-reformat-v1"
                 | "ws4-ascii-edit-v1"
                 | "ws4-ascii-wrap-v1"
+                | "ws4-vertical-navigation-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
@@ -69,6 +70,13 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     }
     if spec.profile == "ws4-ascii-enter-v1" && spec.commands.contains(&Command::Reformat) {
         return Err("reformat is outside the declared Enter profile".into());
+    }
+    let vertical = |command: &Command| matches!(command, Command::NextLine | Command::PreviousLine);
+    if (spec.profile == "ws4-vertical-navigation-v1"
+        && spec.commands.iter().any(|command| !vertical(command)))
+        || (spec.profile != "ws4-vertical-navigation-v1" && spec.commands.iter().any(vertical))
+    {
+        return Err("vertical movement requires its declared navigation profile".into());
     }
     if spec.commands.len() > 10_000 {
         return Err("scenario exceeds the 10000-command resource bound".into());

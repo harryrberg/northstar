@@ -64,7 +64,11 @@ impl DocumentSession {
                     Command::PreviousCharacter => editor.previous(),
                     Command::NextCharacter => editor.next(),
                     Command::Enter => editor.enter(),
-                    Command::InsertAscii { .. } | Command::ToggleInsert | Command::Reformat => {
+                    Command::InsertAscii { .. }
+                    | Command::ToggleInsert
+                    | Command::Reformat
+                    | Command::NextLine
+                    | Command::PreviousLine => {
                         return Err("This WordStar command is not available in UTF-8 mode".into());
                     }
                 }

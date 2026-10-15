@@ -109,6 +109,8 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 Command::PreviousCharacter => {
                     dispatch(&mut keyboard, &mut session, ctrl("s", false))
                 }
+                Command::NextLine => dispatch(&mut keyboard, &mut session, ctrl("x", false)),
+                Command::PreviousLine => dispatch(&mut keyboard, &mut session, ctrl("e", false)),
                 Command::Enter => dispatch(
                     &mut keyboard,
                     &mut session,
@@ -142,6 +144,62 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         );
         assert_eq!(fs::read(source).unwrap(), carrier);
     }
+}
+
+#[test]
+fn legacy_vertical_keys_follow_observed_clamping_and_preserve_the_file() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("NAV4.DOC");
+    let mut carrier = b"ABCDE\r\nX\r\n\r\nLONG LINE HERE".to_vec();
+    carrier.resize(128, 0x1a);
+    fs::write(&source, &carrier).unwrap();
+    let mut session = Session::open(&source).unwrap();
+    let mut keyboard = Keyboard::default();
+    for _ in 0..4 {
+        dispatch(&mut keyboard, &mut session, ctrl("d", false));
+    }
+    assert_eq!(session.editor.snapshot().cursor_byte, 4);
+    for (event, expected) in [
+        (ctrl("x", false), 8),
+        (
+            press(
+                Key::Named(Named::ArrowDown),
+                Modifiers::empty(),
+                None,
+                false,
+            ),
+            10,
+        ),
+        (ctrl("x", false), 12),
+        (
+            press(
+                Key::Named(Named::ArrowDown),
+                Modifiers::empty(),
+                None,
+                false,
+            ),
+            12,
+        ),
+        (ctrl("e", false), 10),
+        (
+            press(Key::Named(Named::ArrowUp), Modifiers::empty(), None, false),
+            7,
+        ),
+        (ctrl("e", false), 0),
+    ] {
+        dispatch(&mut keyboard, &mut session, event);
+        assert_eq!(session.editor.snapshot().cursor_byte, expected);
+        assert_eq!(session.editor.document().bytes(), carrier);
+    }
+    assert!(!session.editor.snapshot().modified);
+    let copy = scratch.0.join("NAV4-COPY.DOC");
+    session.save_as(&copy).unwrap();
+    assert_eq!(fs::read(&source).unwrap(), carrier);
+    assert_eq!(fs::read(&copy).unwrap(), carrier);
+    assert_eq!(
+        Session::open(&copy).unwrap().editor.document().bytes(),
+        carrier
+    );
 }
 
 #[test]

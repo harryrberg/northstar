@@ -93,6 +93,16 @@ fn long_document_scroll_matches_retained_dos_screens() {
         format!("{:x}", Sha256::digest(&carrier)),
         "0370f3f91599a1b662bb66efb0a09fd5a95e94b1443fd382baddc831e9d99050"
     );
+    let mut editor = Editor::restore_with_formatting(
+        Document::from_bytes(carrier),
+        starts[0],
+        true,
+        Formatting {
+            right_justify: false,
+            ..Formatting::default()
+        },
+    )
+    .unwrap();
     for (line, name, expected) in [
         (
             12,
@@ -110,16 +120,10 @@ fn long_document_scroll_matches_retained_dos_screens() {
             "376bef6bb75110cea334adde75b6cb33c6bea6e9554091e59f8114a4dccd7c4b",
         ),
     ] {
-        let editor = Editor::restore_with_formatting(
-            Document::from_bytes(carrier.clone()),
-            starts[line - 1],
-            true,
-            Formatting {
-                right_justify: false,
-                ..Formatting::default()
-            },
-        )
-        .unwrap();
+        while editor.snapshot().cursor_byte < starts[line - 1] {
+            editor.apply(&Command::NextLine).unwrap();
+        }
+        assert_eq!(editor.snapshot().cursor_byte, starts[line - 1]);
         compare_screen(
             &screen_bytes(&editor, "C:NAV1.DOC"),
             name,

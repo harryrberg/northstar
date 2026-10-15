@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-vertical-navigation-v1",
+  "id": "nav-cross-soft-break",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-nav-03/nav2-source.bin",
+        "sha256": "3506567d32feff6f02554179ee2204ff868fd305de473f24560f39579f4e50a6"
+      },
+      {
+        "path": "runtime-northstar-nav-03/events.json",
+        "sha256": "09c1e4c16ea57b50659d840ec6cc1b604fa9784f0edb109fe23556f32dc989a8"
+      },
+      {
+        "path": "runtime-northstar-nav-03/nav2-line4.png",
+        "sha256": "279c756299332affabd1df752d84b453f2ada148a858ab3e35835afaa7ac5337"
+      },
+      {
+        "path": "runtime-northstar-nav-03/nav2-line5.png",
+        "sha256": "80d27715efe741c32d3e5aaed27d8a2349e0800f8825d55ed8d66ee656df990d"
+      }
+    ],
+    "limitations": [
+      "Synthetic document opened in an isolated DOSBox copy on 2026-10-15.",
+      "Cursor byte offsets are derived from observed L/C status and one-byte cells in the named screenshots.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Compares vertical navigation and unchanged NorthStar carrier bytes; not a claim about unrelated formatting or commands.",
+      "The same synthetic source also had a later page-marked break that WordStar normalized on a subsequent save; this scenario does not cross that break or compare original save bytes."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "414c50484120424554412047414d4d410d0a580d0a0d0a534f46542046495253548d0a534f4654205345434f4e44204c4f4e470d0a50414745204245464f52450d8a504147452041465445520d0a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 23,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_line"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "3506567d32feff6f02554179ee2204ff868fd305de473f24560f39579f4e50a6",
+    "cursor_byte": 35,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

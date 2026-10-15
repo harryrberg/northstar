@@ -49,6 +49,10 @@ The scanner includes the existing byte under the cursor, so a space, letter or E
 
 Nonspace typing beyond the margin with right justification on, hyphen wrapping and the existing unsupported document/formatting conditions return explicit errors. Every typed batch stages its mutations and commits once.
 
+## Vertical navigation: ws4-vertical-navigation-v1
+
+Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synthetic input identities. On ordinary one-cell physical lines, the current column is clamped to the destination's end. The clamped column is used by the next move; there is no retained preferred column. Empty lines, the first and last line, and one observed soft-break transition are included. The core moves without changing carrier bytes or Insert mode. The Windows adapter routes Ctrl-E/Ctrl-X and Up/Down to the same core commands. [Observed sequences and limits](NAVIGATION.md) record the evidence. Page-marked breaks, dot commands, and opaque selected lines are rejected until their navigation semantics are qualified.
+
 ## Carrier serialization
 
 Explicit insertion, Enter and Ctrl-B serialize active bytes with at least two 1A bytes, padded to a multiple of 128 bytes. The old one-byte minimum was corrected using DOS captures at active lengths 126, 127, 128 and 129: their saved sizes are 128, 256, 256 and 256 bytes. The two-byte rule is a reconstruction generalized from these captures, not proof of every original save path or record boundary.
@@ -63,4 +67,4 @@ Ctrl-B also normalizes padding when active text is unchanged: 127 spaces grow fr
 
 ## Remaining first-milestone work
 
-General Ctrl-B behavior, right-justified and hyphen-aware wrapping, vertical cursor behavior, and full file-save semantics remain unfinished. Ctrl-K S now saves the current file and creates a `.BAK` in the bounded local-file flow; concurrent writes and crash recovery remain unverified. [Observed save sequence and open questions](SAVING.md). The Windows interactive prototype has a bounded 80x25 screen comparison, including three scroll positions through line 14; later automatic page numbering is unknown. CP437 glyph rendering outside the tested screen, Unicode, input-method composition, accessibility, undo/recovery, PDF, and printing are separate work. Passing these profiles does not establish those features or general compatibility.
+General Ctrl-B behavior, right-justified and hyphen-aware wrapping, vertical movement outside the declared profile, and full file-save semantics remain unfinished. Ctrl-K S now saves the current file and creates a `.BAK` in the bounded local-file flow; concurrent writes and crash recovery remain unverified. [Observed save sequence and open questions](SAVING.md). The Windows interactive prototype has a bounded 80x25 screen comparison, including three scroll positions through line 14; later automatic page numbering is unknown. CP437 glyph rendering outside the tested screen, Unicode, input-method composition, accessibility, undo/recovery, PDF, and printing are separate work. Passing these profiles does not establish those features or general compatibility.
