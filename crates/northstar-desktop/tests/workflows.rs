@@ -7,7 +7,7 @@ use northstar_core::{Command, Document, Editor};
 use northstar_desktop::{
     input::{Action, Keyboard},
     projection::Projection,
-    session::{DOCUMENT_LIMIT, Session},
+    session::{DOCUMENT_LIMIT, DocumentSession, Session, Utf8Session},
 };
 use sha2::{Digest, Sha256};
 use std::{
@@ -244,4 +244,79 @@ fn oversized_open_is_rejected_without_loading_a_partial_document() {
         .set_len(DOCUMENT_LIMIT as u64 + 1)
         .unwrap();
     assert!(Session::open(&source).is_err());
+}
+
+#[test]
+fn utf8_keyboard_save_reopen_and_projection_preserve_text() {
+    let scratch = Scratch::new();
+    let mut session = DocumentSession::Utf8(Utf8Session::new_at(None));
+    let mut keyboard = Keyboard::default();
+    let Some(Action::Text(text)) = keyboard.handle_mode(&type_text("Blåbær og æøå"), true)
+    else {
+        panic!("modern text was not routed to the UTF-8 editor")
+    };
+    session.insert_text(&text).unwrap();
+    session.apply_command(&Command::Enter).unwrap();
+    assert_eq!(
+        keyboard.handle_mode(&ctrl("v", false), true),
+        Some(Action::Paste)
+    );
+    session.insert_text("Cafe\u{301} 👩‍💻").unwrap();
+    assert!(session.modified());
+
+    let destination = scratch.0.join("draft.txt");
+    session.save_as(&destination).unwrap();
+    assert!(!session.modified());
+    assert_eq!(
+        fs::read(&destination).unwrap(),
+        "Blåbær og æøå\nCafe\u{301} 👩‍💻".as_bytes()
+    );
+    assert_eq!(
+        session.save_as(&destination).unwrap_err().kind(),
+        std::io::ErrorKind::AlreadyExists
+    );
+
+    let reopened = Utf8Session::open(&destination).unwrap();
+    assert_eq!(reopened.editor.text(), "Blåbær og æøå\nCafe\u{301} 👩‍💻");
+    let projection = Projection::utf8(&reopened.editor);
+    let rows = projection
+        .rows
+        .iter()
+        .map(|row| row.iter().map(|c| c.glyph).collect::<String>())
+        .collect::<Vec<_>>();
+    assert_eq!(rows, ["Blåbær og æøå¶", "Café □"]);
+}
+
+#[test]
+fn utf8_mode_is_explicit_and_rejects_invalid_files_without_touching_legacy_bytes() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("legacy.doc");
+    let bytes = b"A\xff\x1a\x1a";
+    fs::write(&source, bytes).unwrap();
+    assert_eq!(
+        Utf8Session::open(&source).err().unwrap().kind(),
+        std::io::ErrorKind::InvalidData
+    );
+    assert_eq!(
+        Session::open(&source).unwrap().editor.document().bytes(),
+        bytes
+    );
+    assert_eq!(fs::read(&source).unwrap(), bytes);
+}
+
+#[test]
+fn utf8_size_limit_rejects_an_entire_insert_without_changing_the_document() {
+    let mut session = DocumentSession::Utf8(Utf8Session::new_at(None));
+    session.insert_text(&"a".repeat(DOCUMENT_LIMIT)).unwrap();
+    assert!(session.insert_text("æ").is_err());
+    assert!(
+        session
+            .apply_command(&Command::InsertAscii { text: "x".into() })
+            .is_err()
+    );
+    let DocumentSession::Utf8(session) = session else {
+        panic!()
+    };
+    assert_eq!(session.editor.text().len(), DOCUMENT_LIMIT);
+    assert_eq!(session.editor.snapshot().cursor_byte, DOCUMENT_LIMIT);
 }

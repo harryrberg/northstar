@@ -78,6 +78,20 @@ impl Screen {
         label: &str,
         prefix: Option<char>,
     ) -> Self {
+        Self::editor_view(projection, state.insert, label, prefix, false)
+    }
+
+    pub fn utf8_editor(projection: &Projection, label: &str, prefix: Option<char>) -> Self {
+        Self::editor_view(projection, true, label, prefix, true)
+    }
+
+    fn editor_view(
+        projection: &Projection,
+        insert_mode: bool,
+        label: &str,
+        prefix: Option<char>,
+        utf8: bool,
+    ) -> Self {
         let mut s = Self::default();
         s.cells[0].fill(Cell {
             glyph: ' ',
@@ -87,7 +101,7 @@ impl Screen {
         let (row, column) = projection.cursor;
         // The retained DOS captures establish P01 through L14. Later automatic
         // page transitions are not yet qualified, so do not guess their number.
-        let page = if row < 14 && !projection.page_unknown_before_cursor {
+        let page = if !utf8 && row < 14 && !projection.page_unknown_before_cursor {
             "01"
         } else {
             "??"
@@ -98,10 +112,13 @@ impl Screen {
             &format!("P{page} L{:02} C{:02}", row + 1, column + 1),
             0x70,
         );
-        if state.insert {
+        if insert_mode {
             s.put(0, 35, "Insert", 0x70);
         }
-        s.put(0, 42, "Align", 0x70);
+        s.put(0, 42, if utf8 { "Text " } else { "Align" }, 0x70);
+        if utf8 {
+            s.put(0, 60, "UTF-8", 0x70);
+        }
         if let Some(prefix) = prefix {
             s.put(0, 0, &prefix.to_string(), 0x70);
         }
@@ -117,17 +134,30 @@ impl Screen {
                 cell.attribute = 15;
             }
         }
-        let insert = if state.insert { "off" } else { "on " };
-        let lines = [
-            " ^E up       ^W up         ^G char    ^J help             ^O onscreen format".into(),
-            " ^X down     ^Z down       ^T word    ^I tab              ^K block & save".into(),
-            format!(
-                " ^S left     ^R up screen  ^Y line    ^V turn insert {insert}  ^P print controls"
-            ),
-            " ^D right    ^C down      Del char    ^B align paragraph  ^Q quick functions".into(),
-            " ^A word left   screen     ^U unerase ^N split the line  Esc shorthand".into(),
-            " ^F word right                        ^L find/replace again".into(),
-        ];
+        let lines: [String; 6] = if utf8 {
+            [
+                " ^S left       ^D right        ^Q R document start".into(),
+                " Backspace     Delete          Enter new line".into(),
+                " ^V paste      ^K S save as    ^K D save and done".into(),
+                " ^K Q done     ^J help         F1 help".into(),
+                " F11 full screen              F12 change font".into(),
+                " UTF-8 text is stored exactly as entered".into(),
+            ]
+        } else {
+            let insert = if insert_mode { "off" } else { "on " };
+            [
+                " ^E up       ^W up         ^G char    ^J help             ^O onscreen format"
+                    .into(),
+                " ^X down     ^Z down       ^T word    ^I tab              ^K block & save".into(),
+                format!(
+                    " ^S left     ^R up screen  ^Y line    ^V turn insert {insert}  ^P print controls"
+                ),
+                " ^D right    ^C down      Del char    ^B align paragraph  ^Q quick functions"
+                    .into(),
+                " ^A word left   screen     ^U unerase ^N split the line  Esc shorthand".into(),
+                " ^F word right                        ^L find/replace again".into(),
+            ]
+        };
         for (index, line) in lines.iter().enumerate() {
             let r = index + 3;
             s.put(r, 1, line, 7);
@@ -136,15 +166,19 @@ impl Screen {
                 s.cells[r][c + 2].attribute = 15;
             }
         }
-        for cell in &mut s.cells[6][27..30] {
-            cell.attribute = 15;
-        }
-        for cell in &mut s.cells[7][58..61] {
-            cell.attribute = 15;
-        }
-        s.put(10, 0, &format!("L{}R", "-".repeat(63)), 7);
-        for column in (5..=55).step_by(5) {
-            s.cells[10][column].glyph = '!';
+        if utf8 {
+            s.put(10, 0, &"-".repeat(80), 7);
+        } else {
+            for cell in &mut s.cells[6][27..30] {
+                cell.attribute = 15;
+            }
+            for cell in &mut s.cells[7][58..61] {
+                cell.attribute = 15;
+            }
+            s.put(10, 0, &format!("L{}R", "-".repeat(63)), 7);
+            for column in (5..=55).step_by(5) {
+                s.cells[10][column].glyph = '!';
+            }
         }
         let top = row.saturating_sub(11);
         let left = column.saturating_sub(78);
@@ -170,18 +204,28 @@ impl Screen {
             s.put(screen_row, 79, &indicator.to_string(), 7);
         }
         s.cursor = Some((11 + row - top, column - left));
-        s.put(
-            23,
-            0,
-            " Display Center  ChkRest ChkWord Del Blk HideBlk MoveBlk CopyBlk Beg Blk1End Blk",
-            7,
-        );
-        s.put(
-            24,
-            0,
-            "1Help   2Undo   3Undrlin4Bold   5DelLine6DelWord7Align  8Ruler  9Save & 0Done   ",
-            7,
-        );
+        if utf8 {
+            s.put(23, 0, " UTF-8 document. Save As creates a new file.", 7);
+            s.put(
+                24,
+                0,
+                "1Help                                   9Save      0Save & done",
+                7,
+            );
+        } else {
+            s.put(
+                23,
+                0,
+                " Display Center  ChkRest ChkWord Del Blk HideBlk MoveBlk CopyBlk Beg Blk1End Blk",
+                7,
+            );
+            s.put(
+                24,
+                0,
+                "1Help   2Undo   3Undrlin4Bold   5DelLine6DelWord7Align  8Ruler  9Save & 0Done   ",
+                7,
+            );
+        }
         for r in [23, 24] {
             for c in 0..80 {
                 if c % 8 != 0 {

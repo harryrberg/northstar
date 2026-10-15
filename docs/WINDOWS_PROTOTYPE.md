@@ -4,7 +4,9 @@ Build with Rust 1.99 and run `cargo run -p northstar-desktop -- path/to/document
 
 The implemented editing commands are Ctrl-S and Ctrl-D for left/right, Ctrl-Q R for document start, Ctrl-V for insert/overwrite, Ctrl-B for paragraph alignment, Enter for a line break, and Ctrl-K S for Save As. Ctrl-K D saves to a new path and returns to the main menu. Ctrl-K Q returns to the menu after an unsaved-change check. Arrow Left/Right, Insert, F1, F7, F9, and F10 are additional prototype shortcuts. The DOS menu still displays commands that are not implemented. F1 lists the current subset.
 
-Saving creates a **new** file and refuses to overwrite an existing path. The dialog initially shows the current path; replace it with a new one. Reading is limited to 1 MiB. The prototype handles printable ASCII. Norwegian letters, IME, pasted document text, deletion, vertical navigation, blocks, undo, scrolling, and general WordStar formatting remain unfinished. Original data after EOF remains in the saved carrier but is not displayed. Unsupported control glyphs are not yet qualified. No accessibility or multi-display claim has been verified.
+F2 at the opening menu starts an empty native UTF-8 document. F3 opens a selected UTF-8 file or starts a new document at a missing path. `northstar-desktop --utf8 FILE` opens an existing UTF-8 file explicitly. In this mode, typing, Ctrl-V paste, IME commit events, Left/Right or Ctrl-S/Ctrl-D, Backspace/Delete, Enter, and Ctrl-Q R edit plain UTF-8. Ctrl-K S saves to a new path. Existing UTF-8 bytes are not normalized. One-cell characters such as æ, ø and å display directly; unsupported or wide graphemes display a square without changing the stored text. See [the format decision](decisions/0002-utf8-documents.md) for the exact boundary.
+
+Saving creates a **new** file and refuses to overwrite an existing path. The dialog initially shows the current path; replace it with a new one. Reading is limited to 1 MiB. The WordStar mode handles printable ASCII. Norwegian letters, IME, pasted document text, deletion, vertical navigation, blocks, undo, scrolling, and general WordStar formatting remain unfinished there. UTF-8 mode supports the bounded text operations above, but lacks word wrap, vertical movement, undo and same-path saving. Original legacy data after EOF remains in the saved carrier but is not displayed. Unsupported control glyphs are not yet qualified. No accessibility or multi-display claim has been verified.
 
 ## Retained comparison
 
@@ -14,7 +16,7 @@ The portable `screen_oracle` test compares the screen's full 4,000-byte characte
 
 Before the shared-grid change, full screen and both fonts were inspected in the native Windows window at 2048x1152. The horizontally compressed Plex layout was inspected at 1120x700. The current proportional Plex layout retains the shared grid and is checked by a layout test. Its full-screen pixel output, other display resolutions, scaling settings, and platforms have not been tested after this change. The screen comparison proves cell content for the declared fixture, not pixel-level identity across fonts or displays.
 
-The 0.1.2 MSI includes the proportional Plex layout. The earlier 0.1.1 MSI used horizontal compression.
+The 0.1.3 MSI includes the separate native UTF-8 mode and proportional Plex layout. The earlier 0.1.2 MSI used the same font layout but supported only ASCII editing.
 
 After saving, a further unsaved edit was made in the native window. Alt-F4 showed the unsaved-change prompt, and Escape returned to the edited document without writing it. The test window was then closed by explicitly discarding that extra edit.
 

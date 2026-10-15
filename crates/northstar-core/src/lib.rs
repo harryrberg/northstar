@@ -10,7 +10,9 @@ use std::{error::Error, fmt, ops::Range};
 mod formatting;
 mod reformat;
 mod typing;
+mod utf8;
 pub use formatting::Formatting;
+pub use utf8::{Utf8Editor, Utf8Error, Utf8Snapshot};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]

@@ -6,7 +6,7 @@ Its behavior is checked against binary analysis, controlled runs of the DOS orig
 
 ## Current status
 
-The repository contains a portable Rust editing core, a comparison CLI, and a runnable Windows desktop prototype. The desktop view reproduces the observed 80-column, 25-row DOS screen on black. Its initial editing flow has been checked against a retained WordStar 4.0 session, including a file saved in NorthStar and reopened in the DOS original. This is a bounded prototype; many WordStar commands remain unimplemented.
+The repository contains a portable Rust editing core, a comparison CLI, and a runnable Windows desktop prototype. The desktop view reproduces the observed 80-column, 25-row DOS screen on black. Its initial legacy editing flow has been checked against a retained WordStar 4.0 session, including a file saved in NorthStar and reopened in the DOS original. A separate UTF-8 mode now supports a bounded modern writing flow. Many WordStar commands and author workflow features remain unimplemented.
 
 ## Build and try the prototype
 
@@ -25,9 +25,9 @@ cargo run -p northstar-desktop -- path/to/document.doc
 
 Replay compares local Rust behavior with declared retained DOS observations. It does not execute the original program. Add `--output NEW_FILE` to write the scenario result to a new path; existing files are never overwritten. Inspection is read-only.
 
-The desktop prototype accepts an optional document path. Without one, press D at the opening menu and enter a path. In the editor, Ctrl-S/Ctrl-D move the cursor, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to a **new** path; existing files cannot be overwritten. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
+The desktop prototype accepts an optional WordStar document path. Without one, press D at the opening menu and enter a path. F2 starts a new UTF-8 document, and F3 opens a UTF-8 file; `--utf8 FILE` explicitly selects that mode from the command line. UTF-8 mode supports Norwegian text, paste, grapheme-aware left/right movement and deletion, Enter, and Save As. In the legacy editor, Ctrl-S/Ctrl-D move the cursor, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to a **new** path in either mode; existing files cannot be overwritten. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
 
-An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.2-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
+An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.3-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
 
 ## Direction
 
@@ -57,6 +57,7 @@ Automatic wrapping adds 44 comparisons with right justification off, including c
 ## Project documents
 
 - [Architecture decision](docs/decisions/0001-rust-windows-first.md)
+- [UTF-8 document decision](docs/decisions/0002-utf8-documents.md)
 - [Delivery plan](docs/ROADMAP.md)
 - [Fidelity and evidence rules](docs/FIDELITY.md)
 - [Analysis provenance](docs/PROVENANCE.md)

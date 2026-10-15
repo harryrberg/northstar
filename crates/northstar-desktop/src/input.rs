@@ -5,6 +5,10 @@ use northstar_core::Command;
 #[derive(Debug, PartialEq, Eq)]
 pub enum Action {
     Edit(Command),
+    Text(String),
+    Backspace,
+    Delete,
+    Paste,
     SaveAs,
     SaveAndDone,
     Done,
@@ -29,6 +33,10 @@ impl Keyboard {
     }
 
     pub fn handle(&mut self, event: &Event) -> Option<Action> {
+        self.handle_mode(event, false)
+    }
+
+    pub fn handle_mode(&mut self, event: &Event, utf8: bool) -> Option<Action> {
         let Event::KeyPressed {
             key,
             modifiers,
@@ -80,15 +88,20 @@ impl Keyboard {
                 }
                 "s" => Some(Action::Edit(Command::PreviousCharacter)),
                 "d" => Some(Action::Edit(Command::NextCharacter)),
-                "v" if !repeat => Some(Action::Edit(Command::ToggleInsert)),
+                "v" if !repeat => Some(if utf8 {
+                    Action::Paste
+                } else {
+                    Action::Edit(Command::ToggleInsert)
+                }),
                 "b" if !repeat => Some(Action::Edit(Command::Reformat)),
                 "j" if !repeat => Some(Action::Help),
                 "v" | "b" | "j" => None,
                 _ => Some(Action::Notice("This control command is not implemented")),
             };
         }
-        // No Alt/AltGr conversion is inferred in this legacy ASCII experiment.
-        if modifiers.alt() || modifiers.logo() {
+        // Modern text uses the produced text, including AltGr combinations.
+        // Legacy input retains its strict ASCII boundary.
+        if modifiers.logo() || (modifiers.alt() && !utf8) {
             return Some(Action::Notice(
                 "Alt/AltGr input is not supported in this prototype",
             ));
@@ -96,17 +109,25 @@ impl Keyboard {
         match key {
             Key::Named(Named::ArrowLeft) => Some(Action::Edit(Command::PreviousCharacter)),
             Key::Named(Named::ArrowRight) => Some(Action::Edit(Command::NextCharacter)),
+            Key::Named(Named::Backspace) => Some(Action::Backspace),
+            Key::Named(Named::Delete) => Some(Action::Delete),
             Key::Named(Named::Enter) => Some(Action::Edit(Command::Enter)),
-            Key::Named(Named::Insert) if !repeat => Some(Action::Edit(Command::ToggleInsert)),
+            Key::Named(Named::Insert) if !repeat && !utf8 => {
+                Some(Action::Edit(Command::ToggleInsert))
+            }
             Key::Named(Named::F1) if !repeat => Some(Action::Help),
             Key::Named(Named::F7) if !repeat => Some(Action::Edit(Command::Reformat)),
             Key::Named(Named::F9) if !repeat => Some(Action::SaveAs),
             Key::Named(Named::F10) if !repeat => Some(Action::SaveAndDone),
             Key::Named(Named::Insert | Named::F1 | Named::F7 | Named::F9 | Named::F10) => None,
             _ => match text {
-                Some(text) if !text.is_empty() => Some(Action::Edit(Command::InsertAscii {
-                    text: text.to_string(),
-                })),
+                Some(text) if !text.is_empty() => Some(if utf8 {
+                    Action::Text(text.to_string())
+                } else {
+                    Action::Edit(Command::InsertAscii {
+                        text: text.to_string(),
+                    })
+                }),
                 _ => Some(Action::Notice(
                     "This key is not implemented; press F1 for available commands",
                 )),

@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use northstar_core::{Editor, TokenKind};
+use crate::session::DocumentSession;
+use northstar_core::{Editor, TokenKind, Utf8Editor};
+use unicode_normalization::UnicodeNormalization;
+use unicode_width::UnicodeWidthChar;
 
 #[derive(Debug, Clone)]
 pub struct Cell {
@@ -16,6 +19,55 @@ pub struct Projection {
 }
 
 impl Projection {
+    pub fn for_session(session: &DocumentSession) -> Self {
+        match session {
+            DocumentSession::Legacy(session) => Self::new(&session.editor),
+            DocumentSession::Utf8(session) => Self::utf8(&session.editor),
+        }
+    }
+
+    pub fn utf8(editor: &Utf8Editor) -> Self {
+        let cursor = editor.snapshot().cursor_byte;
+        let mut result = Self {
+            rows: vec![vec![]],
+            page_unknown_before_cursor: true,
+            ..Self::default()
+        };
+        for (start, grapheme) in editor.graphemes() {
+            if start == cursor {
+                result.cursor = (result.rows.len() - 1, result.rows.last().unwrap().len());
+            }
+            if matches!(grapheme, "\n" | "\r\n") {
+                result.rows.last_mut().unwrap().push(Cell {
+                    glyph: '¶',
+                    marker: true,
+                });
+                result.rows.push(vec![]);
+                continue;
+            }
+            // The fixed DOS grid can display one-cell glyphs. Keep every other
+            // grapheme intact in the editor, but show a visible placeholder.
+            let composed = grapheme.nfc().collect::<String>();
+            let glyph = if let Some(ch) = composed.chars().next()
+                && composed.chars().count() == 1
+                && !ch.is_control()
+                && UnicodeWidthChar::width(ch) == Some(1)
+            {
+                ch
+            } else {
+                '□'
+            };
+            result.rows.last_mut().unwrap().push(Cell {
+                glyph,
+                marker: glyph == '□',
+            });
+        }
+        if cursor == editor.text().len() {
+            result.cursor = (result.rows.len() - 1, result.rows.last().unwrap().len());
+        }
+        result
+    }
+
     /// A structural view, not reconstructed DOS pagination or glyph layout.
     /// Each non-break token gets one cell, including explicit placeholders.
     pub fn new(editor: &Editor) -> Self {
