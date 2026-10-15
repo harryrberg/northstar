@@ -8,7 +8,7 @@ The Rust core owns exact document carrier bytes, a zero-based cursor byte offset
 
 Parsing partitions every input byte without rewriting it. It distinguishes hard/soft CR paired with ordinary/page-marked LF, 1B/9B framing, high-bit text/control values, soft spaces, tabs, padding candidates, and unresolved input. These are structural interpretations from the local investigation. Recognizing a structure does not establish its rendering or editing behavior.
 
-The first padding token is the bounded editing profile's active end. The entire carrier, including material after that token, is retained. Text mutations reject post-EOF payload. Enter/insertion validate the plain ASCII document; Ctrl-B validates its selected paragraph and preserves other paragraphs exactly. Structural navigation and mode toggling do not require text to be editable. Inspection remains available.
+The first padding token is the bounded editing profile's active end. The entire carrier, including material after that token, is retained. Text mutations reject post-EOF payload. Typing and Enter validate the selected physical line; Ctrl-B validates its selected paragraph. Other active content retains its bytes. Structural navigation and mode toggling do not require text to be editable. Inspection remains available.
 
 ## Enter: ws4-ascii-enter-v1
 
@@ -23,9 +23,17 @@ The insert-on scenario's empty initial carrier is a synthetic representation of 
 
 The expected carrier is constructed as ASCII `ALPHA`, `0D 0A`, ASCII `BETA`, and 117 `1A` bytes, then checked against the retained captures. Original software, screenshots, dictionaries, and decompiled code are not included.
 
-## Implemented policy beyond the two comparisons
+## ASCII editing: ws4-ascii-edit-v1
 
-Short printable ASCII insertion, token-boundary movement, document-start navigation, and insert-mode toggling support the replay harness. Their general behavior is not yet individually qualified against DOS. Editing error returns leave state unchanged. Enter/insertion require document mode, single spacing and margins 1/65. Overwrite typing, overwrite Enter at a final line without CRLF, and insertion that would grow a line beyond 64 ASCII columns return explicit unsupported errors. This limit keeps the prototype away from unimplemented automatic wrapping; it is not a general WordStar format limit.
+Forty-six additional scenarios qualify typing and Enter in plain or formatted text, including three sequences combining these operations with Ctrl-B. Each compares the saved carrier, final cursor, Insert mode, and declared formatting. The profile requires explicit initial formatting: document mode, single spacing and margins 1/65. Right justification may be on or off for local typing and Enter; Ctrl-B retains its separate justification-off restriction. The reference setup has word wrap enabled and CTLNFL=FF.
+
+`insert_ascii` represents typed printable ASCII and obeys Insert mode. With Insert off it replaces text cells, then inserts any remaining characters before an intact hard/soft CRLF or at EOF. A typed space marks the preceding nonspace byte; ordinary typing preserves existing markers except where overwritten. The selected physical line may contain ASCII with highbit markers and A0 soft spaces. Other lines may contain opaque data and remain exact.
+
+Every typed character must start at a column from 1 through 65. A command containing any later character is rejected atomically. This is a cursor-position bound, not a line-length bound: insertion near the start can extend an already long line. The original also accepts a space at column 66 without marking its predecessor; that retained observation remains outside this implementation. Automatic wrapping is not yet reconstructed.
+
+Enter with Insert on inserts a hard CRLF at the cursor, preserving any existing break. With Insert off it moves past the next hard/soft CRLF without changing bytes; on a final unterminated line it appends CRLF at that line's end, including when invoked from the middle. Selected-line controls, tabs, framed characters, page-marked breaks, malformed data, and dot-command lines are unsupported. Errors leave bytes, cursor and modes unchanged. [Exact rules, comparisons and reopen evidence](EDITING.md).
+
+Token-boundary movement, document-start navigation, and insert-mode toggling support replay. Their use in the declared sequences is compared; arbitrary visual navigation is not qualified.
 
 ## Ctrl-B: ws4-ascii-reformat-v1
 
@@ -37,7 +45,7 @@ Formatting settings remain explicit in snapshots and can be compared by replay. 
 
 Explicit insertion, Enter and Ctrl-B serialize active bytes with at least two 1A bytes, padded to a multiple of 128 bytes. The old one-byte minimum was corrected using DOS captures at active lengths 126, 127, 128 and 129: their saved sizes are 128, 256, 256 and 256 bytes. The two-byte rule is a reconstruction generalized from these captures, not proof of every original save path or record boundary.
 
-Ctrl-B also normalizes padding when active text is unchanged: 127 spaces grow from a 128-byte to a 256-byte carrier, while a 512-byte carrier containing only ALPHA shrinks to 128 bytes. Inspection, navigation and mode toggling preserve the exact original carrier. Selected Rust outputs have been reopened and saved in the original; see the Ctrl-B report for the tested scope.
+Ctrl-B also normalizes padding when active text is unchanged: 127 spaces grow from a 128-byte to a 256-byte carrier, while a 512-byte carrier containing only ALPHA shrinks to 128 bytes. Inspection, navigation, mode toggling, empty typing, and Enter that only moves the cursor preserve the exact original carrier. Selected Rust outputs have been reopened and saved in the original; see the Ctrl-B and editing reports for the tested scope.
 
 ## CLI and resource limits
 
@@ -47,4 +55,4 @@ Ctrl-B also normalizes padding when active text is unchanged: 127 spaces grow fr
 
 ## Remaining first-milestone work
 
-General Ctrl-B behavior, automatic wrapping while typing, right justification, overwrite typing, visual cursor behavior, full file-save semantics, and a Windows interactive adapter remain unfinished. CP437 glyph rendering, Unicode, input-method composition, accessibility, undo/recovery, PDF, and printing are separate work. Passing these profiles does not establish those features or general compatibility.
+General Ctrl-B behavior, automatic wrapping while typing, right-justified reformatting, visual cursor behavior, full file-save semantics, and a Windows interactive adapter remain unfinished. CP437 glyph rendering, Unicode, input-method composition, accessibility, undo/recovery, PDF, and printing are separate work. Passing these profiles does not establish those features or general compatibility.

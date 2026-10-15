@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-edit-v1",
+  "id": "edit-create-overwrite-reformat-chain",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-edit-02/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-edit-02/fixtures.json",
+        "sha256": "45bf6c83e232eec98a66fcc9ce48209b5d1b2114afcd423909e269865c9bc2be"
+      },
+      {
+        "path": "runtime-northstar-edit-02/events.json",
+        "sha256": "a64ecee70fb639d8db6faf85dae84fe6450e3e9f47ef8217c10d1aeacf9abc9c"
+      },
+      {
+        "path": "runtime-northstar-edit-02/PIPE3.input.DOC",
+        "sha256": "6fca86c50b7426e5da476d35a0ce2d64a6cd4db0925f002ab259842a9465a345"
+      },
+      {
+        "path": "runtime-northstar-edit-02/files/PIPE3.DOC",
+        "sha256": "b641cbb191e9885fb92fd052954d9a5a504e01b2f5d4785ea65571c0f7c4f16e"
+      },
+      {
+        "path": "runtime-northstar-edit-02/PIPE3-before-screen.bin",
+        "sha256": "b0cd5ede1eb3e8990a555c7d4b1c28276a3200a07b7775f08e0f5d0a7c9996ef"
+      },
+      {
+        "path": "runtime-northstar-edit-02/PIPE3-after-screen.bin",
+        "sha256": "c7e1ea6d1876c2dc9445efec890dd2c795058063a8474e894ca63e4ccf3de159"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15. Original input and output remain separately retained.",
+      "Default document mode, word wrap enabled, single spacing, margins 1/65; right justification turned off after file open.",
+      "Cursor offsets are derived from captured before/after status lines and one-byte text cells in the selected physical line. Insert state is checked in those captures.",
+      "No full screen rendering comparison or automatic wrapping qualification."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "insert_ascii",
+      "text": "ALPHA BETA"
+    },
+    {
+      "command": "enter"
+    },
+    {
+      "command": "insert_ascii",
+      "text": "GAMMA DELTA"
+    },
+    {
+      "command": "document_start"
+    },
+    {
+      "command": "toggle_insert"
+    },
+    {
+      "command": "insert_ascii",
+      "text": "XY"
+    },
+    {
+      "command": "enter"
+    },
+    {
+      "command": "insert_ascii",
+      "text": "ZZ"
+    },
+    {
+      "command": "document_start"
+    },
+    {
+      "command": "reformat"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "b641cbb191e9885fb92fd052954d9a5a504e01b2f5d4785ea65571c0f7c4f16e",
+    "cursor_byte": 12,
+    "insert": false,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

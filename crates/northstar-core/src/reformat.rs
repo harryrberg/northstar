@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //! Bounded reconstruction of Ctrl-B. See docs/CTRL_B.md for evidence and limits.
-use crate::{Document, EditError, TokenKind};
+use crate::{Document, Edit, EditError, TokenKind};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,16 +25,11 @@ impl Default for Formatting {
     }
 }
 
-pub(super) struct Change {
-    pub active: Vec<u8>,
-    pub cursor: usize,
-}
-
 pub(super) fn paragraph(
     document: &Document,
     cursor: usize,
     formatting: Formatting,
-) -> Result<Change, EditError> {
+) -> Result<Edit, EditError> {
     if formatting
         != (Formatting {
             right_justify: false,
@@ -45,16 +40,11 @@ pub(super) fn paragraph(
             "Ctrl-B requires document mode, single spacing, margins 1/65, and right justification off",
         ));
     }
-    let active_end = document.active_end();
+    let active_end = document.checked_active_end()?;
     let mut is_start = cursor == 0;
     let mut end = active_end;
     let mut next_paragraph = active_end;
     for token in document.tokens() {
-        if token.kind == TokenKind::PaddingCandidate && token.range.end != document.bytes().len() {
-            return Err(EditError::UnsupportedDocument {
-                offset: token.range.start,
-            });
-        }
         if token.kind
             == (TokenKind::LineBreak {
                 soft: false,
@@ -158,7 +148,7 @@ pub(super) fn paragraph(
     let mut active = document.bytes()[..cursor].to_vec();
     active.extend_from_slice(&formatted);
     active.extend_from_slice(&document.bytes()[end..active_end]);
-    Ok(Change {
+    Ok(Edit::Replace {
         active,
         cursor: new_cursor,
     })

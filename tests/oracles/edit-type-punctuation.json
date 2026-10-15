@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-edit-v1",
+  "id": "edit-type-punctuation",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-edit-02/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-edit-02/fixtures.json",
+        "sha256": "45bf6c83e232eec98a66fcc9ce48209b5d1b2114afcd423909e269865c9bc2be"
+      },
+      {
+        "path": "runtime-northstar-edit-02/events.json",
+        "sha256": "a64ecee70fb639d8db6faf85dae84fe6450e3e9f47ef8217c10d1aeacf9abc9c"
+      },
+      {
+        "path": "runtime-northstar-edit-02/HYPHEN.input.DOC",
+        "sha256": "6fca86c50b7426e5da476d35a0ce2d64a6cd4db0925f002ab259842a9465a345"
+      },
+      {
+        "path": "runtime-northstar-edit-02/files/HYPHEN.DOC",
+        "sha256": "e2b4ab83cbc42c5055c7d22251987ef1da5c234ad382dadca2a3c5e24eb7b3e7"
+      },
+      {
+        "path": "runtime-northstar-edit-02/HYPHEN-before-screen.bin",
+        "sha256": "e916f0bce5ff0faaccdda4688e8e0a860cebe749e0d3baa4cc170f17f549d6b2"
+      },
+      {
+        "path": "runtime-northstar-edit-02/HYPHEN-after-screen.bin",
+        "sha256": "e3cb62a09ad8684a4ad8a1bdf0f6c2702e213676a98a56ae3a2d7150b57e19a4"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15. Original input and output remain separately retained.",
+      "Default document mode, word wrap enabled, single spacing, margins 1/65; right justification turned off after file open.",
+      "Cursor offsets are derived from captured before/after status lines and one-byte text cells in the selected physical line. Insert state is checked in those captures.",
+      "No full screen rendering comparison or automatic wrapping qualification."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "insert_ascii",
+      "text": "ALPHA-BETA GAMMA. DELTA, "
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "e2b4ab83cbc42c5055c7d22251987ef1da5c234ad382dadca2a3c5e24eb7b3e7",
+    "cursor_byte": 25,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

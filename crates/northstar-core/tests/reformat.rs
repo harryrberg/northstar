@@ -92,10 +92,6 @@ fn formatted_documents_allow_structural_navigation_and_mode_changes() {
     editor.apply(&Command::ToggleInsert).unwrap();
     assert!(!editor.snapshot().insert);
     assert_eq!(editor.document().bytes(), saved);
-    let before = editor.snapshot();
-    assert!(editor.apply(&Command::Enter).is_err());
-    assert_eq!(editor.snapshot(), before);
-    assert_eq!(editor.document().bytes(), saved);
 }
 
 #[test]

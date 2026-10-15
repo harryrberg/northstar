@@ -2,7 +2,7 @@
 
 ## Current state
 
-Initial Rust implementation: byte-preserving document inspection, bounded ASCII/Enter editing, and Ctrl-B at hard paragraph starts with default margins and right justification off. The CLI compares two Enter and 27 Ctrl-B scenarios with retained DOS observations. Actual Rust outputs have also been reopened in the DOS original. This is a tested foundation, not a complete editor. The REA analysis package remains in its original local investigation directory. [Current compatibility profiles](COMPATIBILITY_PROFILE.md) and [Ctrl-B evidence](CTRL_B.md).
+Initial Rust implementation: byte-preserving document inspection, bounded ASCII insert/overwrite and Enter on formatted lines, and Ctrl-B at hard paragraph starts with default margins and right justification off. The CLI compares 75 scenarios with retained DOS observations: two original Enter cases, 27 Ctrl-B cases and 46 further editing cases. Actual Rust outputs have also been reopened in the DOS original, including combined editing/reformatting sequences. The interactive Windows adapter, automatic wrapping and full screen comparison remain first-milestone work. The REA analysis package remains in its original local investigation directory. [Current compatibility profiles](COMPATIBILITY_PROFILE.md), [Ctrl-B evidence](CTRL_B.md) and [editing evidence](EDITING.md).
 
 ## M0: Reconstruction contract
 

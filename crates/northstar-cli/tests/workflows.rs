@@ -76,17 +76,15 @@ fn retained_enter_scenarios_pass_through_the_real_cli() {
 }
 
 #[test]
-fn retained_reformat_scenarios_match_saved_bytes_cursor_and_modes() {
+fn retained_editing_and_reformat_scenarios_match_saved_bytes_cursor_and_modes() {
     use sha2::{Digest, Sha256};
     let scratch = Scratch::new();
     let mut paths: Vec<_> = fs::read_dir(oracle("unused").parent().unwrap())
         .unwrap()
         .map(|entry| entry.unwrap().path())
         .filter(|path| {
-            path.file_name()
-                .unwrap()
-                .to_string_lossy()
-                .starts_with("reformat-")
+            let name = path.file_name().unwrap().to_string_lossy();
+            name.starts_with("reformat-") || name.starts_with("edit-")
         })
         .collect();
     paths.sort();
@@ -155,6 +153,42 @@ fn reformat_requires_explicit_profile_and_formatting_without_publishing_failures
             ])
             .status
             .success()
+        );
+        assert!(!saved.exists());
+    }
+}
+
+#[test]
+fn editing_requires_declared_formatting_and_does_not_publish_unsupported_batches() {
+    let scratch = Scratch::new();
+    for (index, condition) in ["missing_formatting", "beyond_margin"].iter().enumerate() {
+        let mut spec = case("edit-type-column-65");
+        if *condition == "missing_formatting" {
+            spec["initial"]
+                .as_object_mut()
+                .unwrap()
+                .remove("formatting");
+        } else {
+            spec["commands"] = json!([{"command": "insert_ascii", "text": " X"}]);
+        }
+        let input = scratch.path(&format!("editing-{index}.json"));
+        let saved = scratch.path(&format!("editing-{index}.doc"));
+        fs::write(&input, serde_json::to_vec(&spec).unwrap()).unwrap();
+        let output = run(&[
+            "replay".as_ref(),
+            input.as_os_str(),
+            "--output".as_ref(),
+            saved.as_os_str(),
+        ]);
+        assert!(!output.status.success());
+        let error = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            error.contains(if *condition == "missing_formatting" {
+                "formatting"
+            } else {
+                "typing beyond column 65"
+            }),
+            "{error}"
         );
         assert!(!saved.exists());
     }

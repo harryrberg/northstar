@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //! Byte-preserving legacy documents and a deliberately bounded editing profile.
 //!
-//! Only declared Enter and ASCII reformat scenarios are currently qualified. Parsing a token
+//! Only declared ASCII editing and reformat scenarios are currently qualified. Parsing a token
 //! does not establish editing, layout, or rendering semantics for that token.
 
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, ops::Range};
 
 mod reformat;
+mod typing;
 pub use reformat::Formatting;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -108,30 +109,73 @@ impl Document {
             .map_or(self.bytes.len(), |t| t.range.start)
     }
 
-    fn check_editable(&self) -> Result<(), EditError> {
-        let end = self.active_end();
+    /// Mutations must not discard data after an EOF candidate.
+    fn checked_active_end(&self) -> Result<usize, EditError> {
         for token in self.tokens() {
-            let supported = match token.kind {
-                TokenKind::Text {
-                    high_bit: false, ..
+            if token.kind == TokenKind::PaddingCandidate {
+                if token.range.end != self.bytes.len() {
+                    return Err(EditError::UnsupportedDocument {
+                        offset: token.range.start,
+                    });
                 }
-                | TokenKind::LineBreak {
-                    soft: false,
-                    page_marker: false,
-                } => token.range.start < end,
-                TokenKind::PaddingCandidate => {
-                    token.range.start == end && token.range.end == self.bytes.len()
+                return Ok(token.range.start);
+            }
+        }
+        Ok(self.bytes.len())
+    }
+
+    /// A physical line whose text cells are all one-byte ASCII or soft spaces.
+    /// Other lines are retained without imposing this line's editing contract.
+    fn ascii_line(&self, cursor: usize, active_end: usize) -> Result<AsciiLine, EditError> {
+        let mut line = AsciiLine {
+            start: 0,
+            end: active_end,
+            next: None,
+        };
+        for token in self.tokens() {
+            if let TokenKind::LineBreak { page_marker, .. } = token.kind {
+                if token.range.end <= cursor {
+                    line.start = token.range.end;
+                } else {
+                    if page_marker {
+                        return Err(EditError::UnsupportedDocument {
+                            offset: token.range.start,
+                        });
+                    }
+                    line.end = token.range.start;
+                    line.next = Some(token.range.end);
+                    break;
                 }
-                _ => false,
-            };
-            if !supported {
+            }
+        }
+        for token in self
+            .tokens()
+            .skip_while(|t| t.range.start < line.start)
+            .take_while(|t| t.range.start < line.end)
+        {
+            if !matches!(token.kind, TokenKind::Text { .. } | TokenKind::SoftSpace) {
                 return Err(EditError::UnsupportedDocument {
                     offset: token.range.start,
                 });
             }
         }
-        Ok(())
+        if self.bytes.get(line.start).is_some_and(|b| b & 0x7f == b'.') {
+            return Err(EditError::UnqualifiedOperation("dot commands"));
+        }
+        Ok(line)
     }
+}
+
+struct AsciiLine {
+    start: usize,
+    end: usize,
+    next: Option<usize>,
+}
+
+/// Complete operation result; errors are returned before anything is committed.
+enum Edit {
+    MoveTo(usize),
+    Replace { active: Vec<u8>, cursor: usize },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -237,17 +281,6 @@ impl Editor {
 
     /// Reject unsupported cases before changing state. Returned errors are atomic.
     pub fn apply(&mut self, command: &Command) -> Result<(), EditError> {
-        if matches!(command, Command::Enter | Command::InsertAscii { .. }) {
-            if (self.formatting.left_margin, self.formatting.right_margin) != (1, 65)
-                || self.formatting.line_spacing != 1
-                || !self.formatting.document_mode
-            {
-                return Err(EditError::UnqualifiedOperation(
-                    "ASCII editing requires document mode, single spacing, and margins 1/65",
-                ));
-            }
-            self.document.check_editable()?;
-        }
         match command {
             Command::ToggleInsert => self.insert = !self.insert,
             Command::DocumentStart => self.cursor = 0,
@@ -271,60 +304,42 @@ impl Editor {
                     self.cursor = token.range.start;
                 }
             }
-            Command::Enter if self.insert => self.insert_bytes(b"\r\n"),
             Command::Enter => {
-                let next = self.document.tokens().find(|t| {
-                    t.range.start >= self.cursor && matches!(t.kind, TokenKind::LineBreak { .. })
-                });
-                match next {
-                    Some(token) => self.cursor = token.range.end,
-                    None => {
-                        return Err(EditError::UnqualifiedOperation(
-                            "overwrite Enter on a final line without CRLF",
-                        ));
-                    }
-                }
+                self.commit_edit(typing::enter(
+                    &self.document,
+                    self.cursor,
+                    self.insert,
+                    self.formatting,
+                )?);
             }
             Command::InsertAscii { text } => {
-                if !text.bytes().all(|b| (0x20..=0x7e).contains(&b)) {
-                    return Err(EditError::UnsupportedInput);
-                }
-                if text.is_empty() {
-                    return Ok(());
-                }
-                // Automatic wrap and overwrite typing require separate evidence.
-                if !self.insert {
-                    return Err(EditError::UnqualifiedOperation("overwrite typing"));
-                }
-                let line_start = self.document.bytes[..self.cursor]
-                    .iter()
-                    .rposition(|b| *b == b'\n')
-                    .map_or(0, |i| i + 1);
-                let line_end = self.document.bytes[self.cursor..self.document.active_end()]
-                    .iter()
-                    .position(|b| *b == b'\r')
-                    .map_or(self.document.active_end(), |i| self.cursor + i);
-                if line_end - line_start + text.len() > 64 {
-                    return Err(EditError::UnqualifiedOperation(
-                        "automatic wrapping at the default right margin",
-                    ));
-                }
-                self.insert_bytes(text.as_bytes());
+                self.commit_edit(typing::type_ascii(
+                    &self.document,
+                    self.cursor,
+                    self.insert,
+                    text,
+                    self.formatting,
+                )?);
             }
             Command::Reformat => {
-                let change = reformat::paragraph(&self.document, self.cursor, self.formatting)?;
-                self.replace_active(change.active);
-                self.cursor = change.cursor;
+                self.commit_edit(reformat::paragraph(
+                    &self.document,
+                    self.cursor,
+                    self.formatting,
+                )?);
             }
         }
         Ok(())
     }
 
-    fn insert_bytes(&mut self, bytes: &[u8]) {
-        let mut active = self.document.bytes[..self.document.active_end()].to_vec();
-        active.splice(self.cursor..self.cursor, bytes.iter().copied());
-        self.cursor += bytes.len();
-        self.replace_active(active);
+    fn commit_edit(&mut self, edit: Edit) {
+        match edit {
+            Edit::MoveTo(cursor) => self.cursor = cursor,
+            Edit::Replace { active, cursor } => {
+                self.replace_active(active);
+                self.cursor = cursor;
+            }
+        }
     }
 
     fn replace_active(&mut self, mut active: Vec<u8>) {

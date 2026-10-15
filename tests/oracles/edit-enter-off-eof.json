@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-edit-v1",
+  "id": "edit-enter-off-eof",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-edit-01/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-edit-01/fixtures.json",
+        "sha256": "b047780fb1c3b8016d61ad53eaf664d7729774359afd17f2673085a211911e6e"
+      },
+      {
+        "path": "runtime-northstar-edit-01/events.json",
+        "sha256": "142bb6ac853cfe923585fc2b761edd244ad4e82c8dc1fc9fb229700165220d91"
+      },
+      {
+        "path": "runtime-northstar-edit-01/EEND.input.DOC",
+        "sha256": "137935aaad5c701491296e68f4d8f8513d919bea4d19f97382cbf9f511410c73"
+      },
+      {
+        "path": "runtime-northstar-edit-01/files/EEND.DOC",
+        "sha256": "53a2b1d8dff98c8a6b1b56edbae2b4499ab7855d6da50900038415bea5592245"
+      },
+      {
+        "path": "runtime-northstar-edit-01/EEND-before-screen.bin",
+        "sha256": "9270a4b5feafff6abf84501e37398f0467673ebfe60b29ed27861abeb15d1fb6"
+      },
+      {
+        "path": "runtime-northstar-edit-01/EEND-after-screen.bin",
+        "sha256": "2291d3f9fad37da3ac53f68cb870399ea494c71bbf3dd66150d7c8d285228167"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15. Original input and output remain separately retained.",
+      "Default document mode, single spacing, margins 1/65; right justification turned off after opening each file.",
+      "Cursor offsets are derived from captured before/after status lines and one-byte text cells in the selected physical line. Insert state is checked in those captures.",
+      "No full screen rendering comparison or automatic wrapping qualification."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "414c5048c120424554c12047414d4d411a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 16,
+    "insert": false,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "enter"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "53a2b1d8dff98c8a6b1b56edbae2b4499ab7855d6da50900038415bea5592245",
+    "cursor_byte": 18,
+    "insert": false,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

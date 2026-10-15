@@ -56,13 +56,13 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     if spec.schema_version != 1
         || !matches!(
             spec.profile.as_str(),
-            "ws4-ascii-enter-v1" | "ws4-ascii-reformat-v1"
+            "ws4-ascii-enter-v1" | "ws4-ascii-reformat-v1" | "ws4-ascii-edit-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
     }
-    if spec.profile == "ws4-ascii-reformat-v1" && spec.initial.formatting.is_none() {
-        return Err("reformat scenarios require explicit initial formatting".into());
+    if spec.profile != "ws4-ascii-enter-v1" && spec.initial.formatting.is_none() {
+        return Err("reformat and editing scenarios require explicit initial formatting".into());
     }
     if spec.profile == "ws4-ascii-enter-v1" && spec.commands.contains(&Command::Reformat) {
         return Err("reformat is outside the declared Enter profile".into());
