@@ -59,6 +59,7 @@ Automatic wrapping adds 44 comparisons with right justification off, including c
 - [Fidelity and evidence rules](docs/FIDELITY.md)
 - [Analysis provenance](docs/PROVENANCE.md)
 - [Recorded source identities](docs/analysis-baseline.json)
+- [Save behavior and open questions](docs/SAVING.md)
 
 Original executables, dictionaries, proprietary resources, decompiled source, and the bulk investigation archive are not included in this repository.
 
