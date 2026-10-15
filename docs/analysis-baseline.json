@@ -1,0 +1,30 @@
+{
+  "recorded_on": "2026-10-15",
+  "reference": "WordStar Professional 4.00 primary floppy edition",
+  "primary_ws_exe_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+  "local_investigation": "C:/Projects/rea/investigations/wordstar",
+  "scope": "Selected summary identities only; not a complete evidence snapshot or a new runtime verification.",
+  "summaries": [
+    {
+      "path": "REPORT.md",
+      "sha256": "a4ccbc4cefe870e8e6d5849dabaf0de538c43bc44019e3ec014a7effabfb6de7",
+      "bytes": 9193
+    },
+    {
+      "path": "STATUS.md",
+      "sha256": "0781d77ffe1f46048a4cd9298caeca2df14a98b0932104626a39b2ad3b4b30b4",
+      "bytes": 1311
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "c42418da491bb67af7ac0249da16078bbf5899281bbde822e3b4459eb5912e55",
+      "bytes": 19554
+    },
+    {
+      "path": "verification-summary.json",
+      "sha256": "c370ba14be6351ac0a468caee21042ddf4b149f7353d10862a149cc91ecd260e",
+      "bytes": 22390
+    }
+  ],
+  "retained_verification_all_passed": true
+}
