@@ -24,7 +24,7 @@ Exit: a runnable Windows 11 build and a reproducible report of passing cases and
 
 ## Windows distribution
 
-An unsigned per-user MSI of the current prototype is checked in at [releases/windows/NorthStar-Prototype-0.1.0-x64.msi](../releases/windows/NorthStar-Prototype-0.1.0-x64.msi). It adds a Start menu entry and uninstall path, carries the project license and font notices, and does not move or remove user documents. The build and install/uninstall checks are in [packaging/windows](../packaging/windows/README.md). For a public Windows release, offer a portable ZIP built from the same executable, finish a useful and safe save workflow, then decide signing and release hosting. MSI does not supply automatic updates; consider MSIX or Store distribution later if that channel becomes useful.
+An unsigned per-user MSI of the current prototype is checked in at [releases/windows/NorthStar-Prototype-0.1.1-x64.msi](../releases/windows/NorthStar-Prototype-0.1.1-x64.msi). It adds a Start menu entry and uninstall path, carries the project license and font notices, and does not move or remove user documents. The build and install/uninstall checks are in [packaging/windows](../packaging/windows/README.md). For a public Windows release, offer a portable ZIP built from the same executable, finish a useful and safe save workflow, then decide signing and release hosting. MSI does not supply automatic updates; consider MSIX or Store distribution later if that channel becomes useful.
 
 ## M2: Working author workflow
 
