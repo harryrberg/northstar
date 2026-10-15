@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-wrap-v1",
+  "id": "wrap-soft-space-anchor",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-wrap-02/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-wrap-02/fixtures.json",
+        "sha256": "38e359b6fdd2b897994f2a2f84f481c09d8342c053d9dbb5b7f43ef6792fe49d"
+      },
+      {
+        "path": "runtime-northstar-wrap-02/events.json",
+        "sha256": "e95a452a4fa17e7431c388bf2d2027d95671115fce684929c8c7bf0b16a4012d"
+      },
+      {
+        "path": "runtime-northstar-wrap-02/ANCHA0.input.DOC",
+        "sha256": "356696d4f32bdd73a0716309b848eda069c2d11bc7e2a6f23f692a6067171781"
+      },
+      {
+        "path": "runtime-northstar-wrap-02/files/ANCHA0.DOC",
+        "sha256": "e1210ae72aa74df71677f3c6d4a62291ace6a5a13207fd3f1765e37b003463db"
+      },
+      {
+        "path": "runtime-northstar-wrap-02/ANCHA0-before-screen.bin",
+        "sha256": "ba5aa3d4977e52ead34b743ffb8e474dc3e8285c50aa9b92bccb3374a633019e"
+      },
+      {
+        "path": "runtime-northstar-wrap-02/ANCHA0-after-screen.bin",
+        "sha256": "a7b2497551b3b5a308bd11da75f6602719e42b316f1b0fe0d5899c4a85cfe993"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15.",
+      "Document mode, word wrap enabled, CTLNFL=FF, single spacing, margins 1/65; right justification explicitly turned off after each open.",
+      "Initial and final cursor offsets are derived from captured status and one-byte cells on the selected physical line. Insert state is observed; formatting is declared setup state.",
+      "No full screen, alternate wrapping modes, hyphen rules or GUI qualification."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "414c50484120414c50484120414c50484120414c50484120414c50484120414c50484120414c50484120414c50484120414c50484120414c504841204245544158a05441494c1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 65,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "insert_ascii",
+      "text": "Y"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "e1210ae72aa74df71677f3c6d4a62291ace6a5a13207fd3f1765e37b003463db",
+    "cursor_byte": 66,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

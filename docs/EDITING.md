@@ -4,7 +4,7 @@ The `ws4-ascii-edit-v1` profile adds 46 synthetic comparisons against WordStar P
 
 ## Supported conditions
 
-Editing requires document mode, single spacing, and margins 1/65. The reference executable has word wrap enabled and CTLNFL=FF. Right justification is turned off after each file open except the explicit justification-on typing case. Combined Ctrl-B sequences use its separate justification-off profile. Alternate newline configuration, special editing modes and automatic wrapping remain outside this reconstruction.
+Editing requires document mode, single spacing, and margins 1/65. The reference executable has word wrap enabled and CTLNFL=FF. Right justification is turned off after each file open except the explicit justification-on typing case. Combined Ctrl-B sequences use its separate justification-off profile. Alternate newline configuration and special editing modes remain outside this reconstruction. The additional [wrapping profile](WRAPPING.md) qualifies automatic wrapping separately.
 
 The selected physical line may contain printable ASCII, highbit ASCII markers and A0 soft spaces, followed by an ordinary hard or soft CRLF or EOF. Other lines are preserved without requiring their content to be editable. The shared document parser owns line boundaries and the active/padding boundary; editing does not rescan raw bytes as a second format parser.
 
@@ -12,7 +12,7 @@ The selected physical line may contain printable ASCII, highbit ASCII markers an
 
 1. `insert_ascii` means typing printable ASCII. Insert on inserts bytes; Insert off replaces text cells. Overwrite stops replacing at the physical line end and inserts remaining characters before its intact CRLF, or extends EOF.
 2. Typing an ordinary space marks the preceding nonspace byte with its highbit, including a preceding character within the same typed sequence. It leaves a preceding ordinary or A0 space unchanged. Other typed characters do not clean stale markers. Overwriting a marked character replaces its highbit as well as its low seven bits.
-3. Each typed character must start in columns 1 through 65. This tests the cursor, not the resulting line length: typing near the beginning of a long line can extend it without reformatting. A batch that crosses the bound is rejected before any character or marker changes.
+3. The local typing branch applies in columns 1 through 65. This tests the cursor, not the resulting line length: typing near the beginning of a long line can extend it without reformatting. Beyond-margin spaces and nonspace typing follow the additional wrapping profile. A batch that reaches an unsupported branch is rejected without committing any of its characters or marker changes.
 4. Enter with Insert on inserts hard CRLF at the cursor and leaves existing markers and breaks intact. Splitting immediately before soft CRLF therefore produces hard CRLF followed by that soft CRLF.
 5. Enter with Insert off moves to the next physical line when a hard/soft CRLF exists. On a final unterminated line it moves to that line's end and appends hard CRLF, even when invoked from the middle. This also applies to an empty document.
 6. Mutations use the [bounded carrier serialization rule](COMPATIBILITY_PROFILE.md#carrier-serialization). Cursor-only Enter preserves the complete carrier. A returned error commits no changes to bytes, cursor, Insert mode or formatting.
@@ -46,8 +46,8 @@ Local evidence is retained under `runtime-northstar-edit-01` and `-02` for the 4
 
 ## Limits and deliberate refusals
 
-Typing beyond column 65 is refused. A separate retained `COL66SP` probe demonstrates that the original accepts a space at column 66 without marking the preceding character; that branch is explicitly unimplemented. Nonspace typing beyond the margin can invoke a different wrapping path. Applying full Ctrl-B after each keystroke would not reconstruct that path.
+The original `COL66SP` probe demonstrated that a space at column 66 is accepted without marking the preceding character. That behavior and nonspace automatic wrapping are now qualified in the [wrapping profile](WRAPPING.md), with fresh comparisons. Its implementation uses the bounded typing path rather than invoking full Ctrl-B after each keystroke.
 
 The selected line rejects tabs, styles, framed characters, page-marked breaks, malformed tokens and dot commands; post-EOF payload rejects mutation. A mutation that would create a dot-command line is also refused. Unsupported formatting and nonprintable/non-ASCII input are rejected atomically. These are implementation boundaries, not claims that the original lacks those features. Core refusal tests and real CLI tests check state preservation and that failed operations do not publish an output file.
 
-Automatic wrapping, general right justification, visual navigation/selection, complete file-save semantics and the interactive Windows editor remain unfinished. This profile establishes bounded editing and file interoperability; it does not complete the first interactive milestone or qualify printing, Unicode, other clients, or performance.
+General right justification, hyphen wrapping, visual navigation/selection, complete file-save semantics and the interactive Windows editor remain unfinished. This profile establishes bounded editing and file interoperability; it does not complete the first interactive milestone or qualify printing, Unicode, other clients, or performance.

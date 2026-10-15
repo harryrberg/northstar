@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-wrap-v1",
+  "id": "wrap-indentation-beyond-margin",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-wrap-01/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/fixtures.json",
+        "sha256": "a40747ba36cc5c3b669f5f1d55d3b09159a1cc889b1b2b8439bcc1a811559b7d"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/events.json",
+        "sha256": "5cb48287afc1c57b3edc484f01c7c6c263a326fbbea7f216c6b8a51f7f60ae45"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/INDENT.input.DOC",
+        "sha256": "2468fa2b9c617dcacc96b9ae0d159600a64f6b2a51505a9af8ee1b9ef248e845"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/files/INDENT.DOC",
+        "sha256": "1cf74938deb0dd1fea2a8ede9d502c187249c6f749b4f1d84149d286d2ee3398"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/INDENT-before-screen.bin",
+        "sha256": "ec642203f79bcfe55d6fe9798949ba98d0292b6a92e96fd9a30a01eab7ecc5cd"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/INDENT-after-screen.bin",
+        "sha256": "04943e3257d4fb3bdb8a4cef8142039ed5bb83cea48cfac42d1c69aebb31cd0d"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15.",
+      "Document mode, word wrap enabled, CTLNFL=FF, single spacing, margins 1/65; right justification explicitly turned off after each open.",
+      "Initial and final cursor offsets are derived from captured status and one-byte cells on the selected physical line. Insert state is observed; formatting is declared setup state.",
+      "No full screen, alternate wrapping modes, hyphen rules or GUI qualification."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "20202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020201a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 65,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "insert_ascii",
+      "text": "X"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "1cf74938deb0dd1fea2a8ede9d502c187249c6f749b4f1d84149d286d2ee3398",
+    "cursor_byte": 66,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

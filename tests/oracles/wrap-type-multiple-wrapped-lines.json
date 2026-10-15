@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-wrap-v1",
+  "id": "wrap-type-multiple-wrapped-lines",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-wrap-01/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/fixtures.json",
+        "sha256": "a40747ba36cc5c3b669f5f1d55d3b09159a1cc889b1b2b8439bcc1a811559b7d"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/events.json",
+        "sha256": "5cb48287afc1c57b3edc484f01c7c6c263a326fbbea7f216c6b8a51f7f60ae45"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/NEW.input.DOC",
+        "sha256": "6fca86c50b7426e5da476d35a0ce2d64a6cd4db0925f002ab259842a9465a345"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/files/NEW.DOC",
+        "sha256": "9876912cf17bed4584a3291bcc79c4bac7443623cf3a772d6747ee2b268a8722"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/NEW-before-screen.bin",
+        "sha256": "b03db35c1276a1ccaaa9761aa44bc3cd42bfff96891f702a7977841ddf6ea455"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/NEW-after-screen.bin",
+        "sha256": "afe695b2268e7e0c6f75fa2ee2dfc5e4d479df3337a7aca865afad6c959ae134"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15.",
+      "Document mode, word wrap enabled, CTLNFL=FF, single spacing, margins 1/65; right justification explicitly turned off after each open.",
+      "Initial and final cursor offsets are derived from captured status and one-byte cells on the selected physical line. Insert state is observed; formatting is declared setup state.",
+      "No full screen, alternate wrapping modes, hyphen rules or GUI qualification."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "insert_ascii",
+      "text": "ONE TWO THREE FOUR FIVE SIX SEVEN EIGHT NINE TEN ONE TWO THREE FOUR FIVE SIX SEVEN EIGHT NINE TEN ONE TWO THREE FOUR FIVE SIX SEVEN EIGHT NINE TEN ONE TWO THREE FOUR FIVE SIX SEVEN EIGHT NINE TEN "
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "9876912cf17bed4584a3291bcc79c4bac7443623cf3a772d6747ee2b268a8722",
+    "cursor_byte": 202,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

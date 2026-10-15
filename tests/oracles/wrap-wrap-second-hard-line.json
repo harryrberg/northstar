@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-wrap-v1",
+  "id": "wrap-wrap-second-hard-line",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-wrap-01/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/fixtures.json",
+        "sha256": "a40747ba36cc5c3b669f5f1d55d3b09159a1cc889b1b2b8439bcc1a811559b7d"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/events.json",
+        "sha256": "5cb48287afc1c57b3edc484f01c7c6c263a326fbbea7f216c6b8a51f7f60ae45"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/SECONDH.input.DOC",
+        "sha256": "29d76d7e6e152c1ba9477beca5ce8ebcf98353d11cdab552940db8b1705034a5"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/files/SECONDH.DOC",
+        "sha256": "4d7dea5156f165d1c9d535f89dc7ed86e29f2b645bc79c7939229360a591e122"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/SECONDH-before-screen.bin",
+        "sha256": "5c1b266592fcc68fdec611026b2b1c5b59d998ff0ddbce727e392687316314ec"
+      },
+      {
+        "path": "runtime-northstar-wrap-01/SECONDH-after-screen.bin",
+        "sha256": "6e87dbce7b4b42cacc503b621ef97419226e58c656950325a09ad4dffabf5496"
+      }
+    ],
+    "limitations": [
+      "Synthetic fixture in an isolated DOSBox copy on 2026-10-15.",
+      "Document mode, word wrap enabled, CTLNFL=FF, single spacing, margins 1/65; right justification explicitly turned off after each open.",
+      "Initial and final cursor offsets are derived from captured status and one-byte cells on the selected physical line. Insert state is observed; formatting is declared setup state.",
+      "No full screen, alternate wrapping modes, hyphen rules or GUI qualification."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "46495253540d0a414c50484120414c50484120414c50484120414c50484120414c50484120414c50484120414c50484120414c50484120414c50484120414c5048412042455441581a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 72,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "insert_ascii",
+      "text": "Y"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "4d7dea5156f165d1c9d535f89dc7ed86e29f2b645bc79c7939229360a591e122",
+    "cursor_byte": 75,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

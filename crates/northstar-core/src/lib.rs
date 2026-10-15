@@ -7,9 +7,10 @@
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, ops::Range};
 
+mod formatting;
 mod reformat;
 mod typing;
-pub use reformat::Formatting;
+pub use formatting::Formatting;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]

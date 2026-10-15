@@ -1,18 +1,51 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use northstar_core::{Command, Document, Editor};
+use northstar_core::{Command, Document, Editor, Formatting};
 
 #[test]
 fn rejected_typing_batches_preserve_bytes_markers_cursor_and_modes() {
     for insert in [false, true] {
         for (raw, cursor, text) in [
             (vec![b'A'; 64], 64, " X"),
-            (vec![b'A'; 65], 65, " "),
             (b"ALPH\xc1 BETA".to_vec(), 5, " X\u{e9}"),
             (b"ALPH\xc1 BETA".to_vec(), 5, " X\n"),
             (b"ALPHA".to_vec(), 0, ".RM 20"),
         ] {
             let mut editor =
                 Editor::restore(Document::from_bytes(raw.clone()), cursor, insert).unwrap();
+            let before = editor.snapshot();
+            assert!(
+                editor
+                    .apply(&Command::InsertAscii { text: text.into() })
+                    .is_err()
+            );
+            assert_eq!(editor.document().bytes(), raw);
+            assert_eq!(editor.snapshot(), before);
+        }
+    }
+}
+
+#[test]
+fn a_late_unqualified_wrap_does_not_commit_earlier_typing_or_normalization() {
+    for (raw, cursor, text) in [
+        (vec![b'A'; 61], 61, " XY-Z"),
+        (
+            [b"ALPHA ".repeat(10), b"BETA ".to_vec()].concat(),
+            65,
+            ".RM",
+        ),
+        ([b"ALPHA ".repeat(10), b".WORD".to_vec()].concat(), 65, "X"),
+    ] {
+        for insert in [false, true] {
+            let mut editor = Editor::restore_with_formatting(
+                Document::from_bytes(raw.clone()),
+                cursor,
+                insert,
+                Formatting {
+                    right_justify: false,
+                    ..Formatting::default()
+                },
+            )
+            .unwrap();
             let before = editor.snapshot();
             assert!(
                 editor

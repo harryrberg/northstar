@@ -1,29 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //! Bounded reconstruction of Ctrl-B. See docs/CTRL_B.md for evidence and limits.
-use crate::{Document, Edit, EditError, TokenKind};
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Formatting {
-    pub left_margin: u16,
-    pub right_margin: u16,
-    pub right_justify: bool,
-    pub line_spacing: u16,
-    pub document_mode: bool,
-}
-
-impl Default for Formatting {
-    fn default() -> Self {
-        Self {
-            left_margin: 1,
-            right_margin: 65,
-            right_justify: true,
-            line_spacing: 1,
-            document_mode: true,
-        }
-    }
-}
+use crate::{Document, Edit, EditError, Formatting, TokenKind, formatting};
 
 pub(super) fn paragraph(
     document: &Document,
@@ -64,48 +41,7 @@ pub(super) fn paragraph(
         ));
     }
 
-    // Validate and normalize through the document's token owner. Framing payloads
-    // must never be masked as if they were ordinary high-bit ASCII text.
-    let mut clean = Vec::with_capacity(end - cursor);
-    let mut removed = false;
-    for token in document
-        .tokens()
-        .skip_while(|t| t.range.start < cursor)
-        .take_while(|t| t.range.start < end)
-    {
-        match token.kind {
-            TokenKind::Text { value, .. } => {
-                if value == b'-' {
-                    return Err(EditError::UnqualifiedOperation("hyphen break rules"));
-                }
-                // EF90 inserts a separator when removed markers joined two words.
-                if removed && value != b' ' && clean.last().is_some_and(|b| *b != b' ') {
-                    clean.push(b' ');
-                }
-                clean.push(value);
-                removed = false;
-            }
-            TokenKind::SoftSpace
-            | TokenKind::LineBreak {
-                soft: true,
-                page_marker: false,
-            } => {
-                removed = true;
-            }
-            _ => {
-                return Err(EditError::UnsupportedDocument {
-                    offset: token.range.start,
-                });
-            }
-        }
-    }
-    if removed && clean.last().is_some_and(|b| *b != b' ') {
-        // EF90 also inserts a needed separator before a hard boundary or EOF.
-        clean.push(b' ');
-    }
-    if clean.first() == Some(&b'.') {
-        return Err(EditError::UnqualifiedOperation("dot commands"));
-    }
+    let clean = formatting::normalize(document, cursor..end)?;
 
     // Keep every ordinary space, including indentation and trailing spaces.
     // WordStar tests the last nonspace column, not the following separator.

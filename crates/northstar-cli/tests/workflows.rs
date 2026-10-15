@@ -84,7 +84,7 @@ fn retained_editing_and_reformat_scenarios_match_saved_bytes_cursor_and_modes() 
         .map(|entry| entry.unwrap().path())
         .filter(|path| {
             let name = path.file_name().unwrap().to_string_lossy();
-            name.starts_with("reformat-") || name.starts_with("edit-")
+            name.starts_with("reformat-") || name.starts_with("edit-") || name.starts_with("wrap-")
         })
         .collect();
     paths.sort();
@@ -161,7 +161,7 @@ fn reformat_requires_explicit_profile_and_formatting_without_publishing_failures
 #[test]
 fn editing_requires_declared_formatting_and_does_not_publish_unsupported_batches() {
     let scratch = Scratch::new();
-    for (index, condition) in ["missing_formatting", "beyond_margin"].iter().enumerate() {
+    for (index, condition) in ["missing_formatting", "justified_wrap"].iter().enumerate() {
         let mut spec = case("edit-type-column-65");
         if *condition == "missing_formatting" {
             spec["initial"]
@@ -169,6 +169,7 @@ fn editing_requires_declared_formatting_and_does_not_publish_unsupported_batches
                 .unwrap()
                 .remove("formatting");
         } else {
+            spec["initial"]["formatting"]["right_justify"] = json!(true);
             spec["commands"] = json!([{"command": "insert_ascii", "text": " X"}]);
         }
         let input = scratch.path(&format!("editing-{index}.json"));
@@ -186,7 +187,7 @@ fn editing_requires_declared_formatting_and_does_not_publish_unsupported_batches
             error.contains(if *condition == "missing_formatting" {
                 "formatting"
             } else {
-                "typing beyond column 65"
+                "automatic wrapping with right justification"
             }),
             "{error}"
         );

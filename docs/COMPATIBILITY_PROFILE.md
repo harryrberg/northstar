@@ -29,7 +29,7 @@ Forty-six additional scenarios qualify typing and Enter in plain or formatted te
 
 `insert_ascii` represents typed printable ASCII and obeys Insert mode. With Insert off it replaces text cells, then inserts any remaining characters before an intact hard/soft CRLF or at EOF. A typed space marks the preceding nonspace byte; ordinary typing preserves existing markers except where overwritten. The selected physical line may contain ASCII with highbit markers and A0 soft spaces. Other lines may contain opaque data and remain exact.
 
-Every typed character must start at a column from 1 through 65. A command containing any later character is rejected atomically. This is a cursor-position bound, not a line-length bound: insertion near the start can extend an already long line. The original also accepts a space at column 66 without marking its predecessor; that retained observation remains outside this implementation. Automatic wrapping is not yet reconstructed.
+The local typing branch applies to characters starting in columns 1 through 65. This tests the cursor rather than the resulting line length: insertion near the start can extend an already long line. Beyond-margin spaces and automatic wrapping are now implemented under the additional wrapping profile below. A later unsupported branch rejects the entire typed command atomically.
 
 Enter with Insert on inserts a hard CRLF at the cursor, preserving any existing break. With Insert off it moves past the next hard/soft CRLF without changing bytes; on a final unterminated line it appends CRLF at that line's end, including when invoked from the middle. Selected-line controls, tabs, framed characters, page-marked breaks, malformed data, and dot-command lines are unsupported. Errors leave bytes, cursor and modes unchanged. [Exact rules, comparisons and reopen evidence](EDITING.md).
 
@@ -40,6 +40,14 @@ Token-boundary movement, document-start navigation, and insert-mode toggling sup
 Reformat scenarios require explicit initial formatting. The supported settings are document mode, single spacing, margins 1/65, and right justification off. Ctrl-B starts at document start or immediately after an ordinary hard CRLF; it rebuilds one paragraph and moves to the next hard paragraph or EOF. The current implementation handles printable ASCII, existing highbit markers, soft spaces and ordinary soft breaks. [The 27 comparisons and exact exclusions](CTRL_B.md) define the evidence boundary.
 
 Formatting settings remain explicit in snapshots and can be compared by replay. Restoring state is a harness operation, not evidence that the original uses the same internal representation. Unsupported settings are retained, then rejected by affected mutations before changing state.
+
+## Automatic wrapping: ws4-ascii-wrap-v1
+
+Forty-four additional scenarios compare typing across the right margin with right justification off. An ordinary space beyond column 65 is accepted without marking its predecessor. A nonspace first normalizes the current physical-line prefix, preserving the existing cursor byte and suffix. If the cursor remains beyond the margin, a bounded scanner places soft CRLFs and relocates it before ordinary insert/overwrite takes place. This is a distinct operation from full-paragraph Ctrl-B.
+
+The scanner includes the existing byte under the cursor, so a space, letter or EOF there can produce different wrapping. Long first words are retained without forced splitting. Cleanup can also reduce the column enough to avoid wrapping. Original before/after states qualify these rules in Insert on/off cases, with preserved adjacent physical lines, and in two sequences combining wrapping, Enter, overwrite and Ctrl-B. [Exact rules, source evidence and reopen comparisons](WRAPPING.md).
+
+Nonspace typing beyond the margin with right justification on, hyphen wrapping and the existing unsupported document/formatting conditions return explicit errors. Every typed batch stages its mutations and commits once.
 
 ## Carrier serialization
 
@@ -55,4 +63,4 @@ Ctrl-B also normalizes padding when active text is unchanged: 127 spaces grow fr
 
 ## Remaining first-milestone work
 
-General Ctrl-B behavior, automatic wrapping while typing, right-justified reformatting, visual cursor behavior, full file-save semantics, and a Windows interactive adapter remain unfinished. CP437 glyph rendering, Unicode, input-method composition, accessibility, undo/recovery, PDF, and printing are separate work. Passing these profiles does not establish those features or general compatibility.
+General Ctrl-B behavior, right-justified and hyphen-aware wrapping, visual cursor behavior, full file-save semantics, and a Windows interactive adapter remain unfinished. CP437 glyph rendering, Unicode, input-method composition, accessibility, undo/recovery, PDF, and printing are separate work. Passing these profiles does not establish those features or general compatibility.
