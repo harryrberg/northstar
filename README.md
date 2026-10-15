@@ -1,3 +1,4 @@
+# NorthStar
 
 NorthStar is an open-source, non-commercial reconstruction of WordStar Professional 4.00 for distraction-free writing.
 
