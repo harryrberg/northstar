@@ -1,8 +1,7 @@
-# NorthStar
 
 NorthStar is an open-source, non-commercial reconstruction of WordStar Professional 4.00 for distraction-free writing.
 
-The defining method is to connect reconstructed behavior to original binary analysis, controlled DOS observations, and repeatable differential tests.
+Its behavior is checked against binary analysis, controlled runs of the DOS original, and repeatable comparison tests.
 
 ## Current status
 
@@ -61,15 +60,11 @@ Original executables, dictionaries, proprietary resources, decompiled source, an
 
 ## The name
 
-NorthStar evokes the North Star: a guiding star and a steady point of reference. For a writer, that means keeping a clear course through the work, with the words at the centre.
-
-The name also refers to the King in the North in George R. R. Martin's world of Westeros.
+NorthStar refers to the North Star, a guiding star, and to the King in the North in George R. R. Martin's Westeros.
 
 ## Dedication
 
-To George R. R. Martin and the world of *Game of Thrones*—for the stories, and for reminding us that great writing needs room to breathe.
-
-Inspired by WordStar 4.0 and the quiet focus of a distraction-free writing environment, NorthStar carries that spirit forward: a place for the writer, the words, and the world taking shape.
+Dedicated to George R. R. Martin and the world of *Game of Thrones*. WordStar 4.0's keyboard-driven, distraction-free writing environment is the model for NorthStar.
 
 ## License
 
