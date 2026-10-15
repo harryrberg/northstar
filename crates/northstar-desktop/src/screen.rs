@@ -138,7 +138,7 @@ impl Screen {
             [
                 " ^S left       ^D right        ^Q R document start".into(),
                 " Backspace     Delete          Enter new line".into(),
-                " ^V paste      ^K S save as    ^K D save and done".into(),
+                " ^V paste      ^K S save       ^K D save and done".into(),
                 " ^K Q done     ^J help         F1 help".into(),
                 " F11 full screen              F12 change font".into(),
                 " UTF-8 text is stored exactly as entered".into(),
@@ -205,7 +205,12 @@ impl Screen {
         }
         s.cursor = Some((11 + row - top, column - left));
         if utf8 {
-            s.put(23, 0, " UTF-8 document. Save As creates a new file.", 7);
+            s.put(
+                23,
+                0,
+                " UTF-8 document. ^K S save; Ctrl-Shift-S Save As.",
+                7,
+            );
             s.put(
                 24,
                 0,

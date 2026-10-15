@@ -9,6 +9,7 @@ pub enum Action {
     Backspace,
     Delete,
     Paste,
+    Save,
     SaveAs,
     SaveAndDone,
     Done,
@@ -72,7 +73,7 @@ impl Keyboard {
             }
             return Some(match (prefix, letter.as_str()) {
                 ('Q', "r") => Action::Edit(Command::DocumentStart),
-                ('K', "s") => Action::SaveAs,
+                ('K', "s") => Action::Save,
                 ('K', "d") => Action::SaveAndDone,
                 ('K', "q") => Action::Done,
                 _ => Action::Notice("This command is not implemented"),
@@ -80,6 +81,8 @@ impl Keyboard {
         }
         if modifiers.control() && !modifiers.alt() && !modifiers.logo() {
             return match letter.as_str() {
+                "s" if modifiers.shift() && !repeat => Some(Action::SaveAs),
+                "s" if modifiers.shift() => None,
                 "q" | "k" => {
                     if !repeat {
                         self.prefix = Some(if letter == "q" { 'Q' } else { 'K' });
@@ -117,7 +120,7 @@ impl Keyboard {
             }
             Key::Named(Named::F1) if !repeat => Some(Action::Help),
             Key::Named(Named::F7) if !repeat => Some(Action::Edit(Command::Reformat)),
-            Key::Named(Named::F9) if !repeat => Some(Action::SaveAs),
+            Key::Named(Named::F9) if !repeat => Some(Action::Save),
             Key::Named(Named::F10) if !repeat => Some(Action::SaveAndDone),
             Key::Named(Named::Insert | Named::F1 | Named::F7 | Named::F9 | Named::F10) => None,
             _ => match text {

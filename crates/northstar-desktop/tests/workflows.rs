@@ -162,6 +162,151 @@ fn save_as_preserves_unknown_bytes_and_refuses_to_overwrite() {
 }
 
 #[test]
+fn legacy_repeated_save_replaces_document_and_rotates_bak() {
+    let scratch = Scratch::new();
+    let path = scratch.0.join("SAVE1.DOC");
+    let mut original = b"ALPHA\r\n".to_vec();
+    original.resize(128, 0x1a);
+    fs::write(&path, &original).unwrap();
+    let mut session = Session::open(&path).unwrap();
+    session
+        .editor
+        .apply(&Command::InsertAscii { text: "Z".into() })
+        .unwrap();
+    let first = session.editor.document().bytes().to_vec();
+    session.save().unwrap();
+    assert_eq!(fs::read(&path).unwrap(), first);
+    assert_eq!(fs::read(scratch.0.join("SAVE1.BAK")).unwrap(), original);
+    assert!(!session.editor.snapshot().modified);
+
+    session
+        .editor
+        .apply(&Command::InsertAscii { text: "Y".into() })
+        .unwrap();
+    let second = session.editor.document().bytes().to_vec();
+    session.save().unwrap();
+    assert_eq!(fs::read(&path).unwrap(), second);
+    assert_eq!(fs::read(scratch.0.join("SAVE1.BAK")).unwrap(), first);
+    session.save().unwrap();
+    assert_eq!(fs::read(scratch.0.join("SAVE1.BAK")).unwrap(), second);
+}
+
+#[test]
+fn external_change_or_missing_document_blocks_save_without_advancing_checkpoint() {
+    let scratch = Scratch::new();
+    let path = scratch.0.join("draft.txt");
+    fs::write(&path, "Først").unwrap();
+    let mut session = Utf8Session::open(&path).unwrap();
+    session.editor.insert_text("X").unwrap();
+    fs::write(&path, "Fra annet program").unwrap();
+    assert!(
+        session
+            .save()
+            .unwrap_err()
+            .to_string()
+            .contains("changed outside")
+    );
+    assert_eq!(fs::read(&path).unwrap(), "Fra annet program".as_bytes());
+    assert!(!scratch.0.join("draft.txt.bak").exists());
+    assert!(session.editor.snapshot().modified);
+    fs::remove_file(&path).unwrap();
+    assert_eq!(
+        session.save().unwrap_err().kind(),
+        std::io::ErrorKind::NotFound
+    );
+    assert!(!path.exists());
+    assert!(session.editor.snapshot().modified);
+
+    let copy = scratch.0.join("saved-copy.txt");
+    session.save_as(&copy).unwrap();
+    assert_eq!(fs::read(&copy).unwrap(), "XFørst".as_bytes());
+    assert!(!session.editor.snapshot().modified);
+}
+
+#[test]
+fn utf8_save_preserves_existing_bytes_and_creates_separate_backup() {
+    let scratch = Scratch::new();
+    let path = scratch.0.join("chapter.txt");
+    let original = "\u{feff}Cafe\u{301}\r\næøå\n";
+    fs::write(&path, original).unwrap();
+    let mut session = Utf8Session::open(&path).unwrap();
+    session.editor.insert_text("Blå ").unwrap();
+    let edited = session.editor.text().as_bytes().to_vec();
+    session.save().unwrap();
+    assert_eq!(fs::read(&path).unwrap(), edited);
+    assert_eq!(
+        fs::read(scratch.0.join("chapter.txt.bak")).unwrap(),
+        original.as_bytes()
+    );
+    assert_eq!(
+        Utf8Session::open(&path).unwrap().editor.text().as_bytes(),
+        edited
+    );
+}
+
+#[test]
+fn unusable_backup_target_blocks_replacement_and_keeps_document_dirty() {
+    let scratch = Scratch::new();
+    let path = scratch.0.join("chapter.txt");
+    fs::write(&path, "first").unwrap();
+    fs::create_dir(scratch.0.join("chapter.txt.bak")).unwrap();
+    let mut session = Utf8Session::open(&path).unwrap();
+    session.editor.insert_text("X").unwrap();
+    assert!(session.save().is_err());
+    assert_eq!(fs::read(&path).unwrap(), b"first");
+    assert!(session.editor.snapshot().modified);
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_file_without_delete_sharing_blocks_replacement_but_keeps_backup() {
+    use std::os::windows::fs::OpenOptionsExt;
+
+    let scratch = Scratch::new();
+    let path = scratch.0.join("locked.txt");
+    fs::write(&path, "first").unwrap();
+    let mut session = Utf8Session::open(&path).unwrap();
+    session.editor.insert_text("X").unwrap();
+    let lock = fs::OpenOptions::new()
+        .read(true)
+        .share_mode(0x00000001) // FILE_SHARE_READ, without FILE_SHARE_DELETE
+        .open(&path)
+        .unwrap();
+    assert!(session.save().is_err());
+    assert_eq!(fs::read(&path).unwrap(), b"first");
+    assert_eq!(
+        fs::read(scratch.0.join("locked.txt.bak")).unwrap(),
+        b"first"
+    );
+    assert!(session.editor.snapshot().modified);
+    drop(lock);
+    session.save().unwrap();
+    assert_eq!(fs::read(&path).unwrap(), b"Xfirst");
+    assert!(!session.editor.snapshot().modified);
+}
+
+#[test]
+fn save_keys_keep_save_and_save_as_distinct() {
+    let mut keyboard = Keyboard::default();
+    assert_eq!(keyboard.handle(&ctrl("k", false)), None);
+    assert_eq!(keyboard.handle(&ctrl("s", false)), Some(Action::Save));
+    assert_eq!(
+        keyboard.handle(&press(
+            Key::Character("s".into()),
+            Modifiers::CTRL | Modifiers::SHIFT,
+            None,
+            false
+        )),
+        Some(Action::SaveAs)
+    );
+    assert_eq!(keyboard.handle(&ctrl("k", false)), None);
+    assert_eq!(
+        keyboard.handle(&ctrl("d", false)),
+        Some(Action::SaveAndDone)
+    );
+}
+
+#[test]
 fn failed_save_keeps_the_path_cursor_and_dirty_checkpoint() {
     let scratch = Scratch::new();
     let mut session = Session::default();

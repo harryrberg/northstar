@@ -78,6 +78,7 @@ pub(crate) enum Message {
     Open,
     NewUtf8,
     OpenUtf8,
+    Save(bool),
     SaveAs(bool),
     Help,
     PathChanged(String),
@@ -174,11 +175,7 @@ impl App {
         self.keyboard.reset();
         let value = match kind {
             PathKind::OpenLegacy | PathKind::OpenUtf8 => String::new(),
-            PathKind::SaveAs { .. } => self
-                .session
-                .path()
-                .map(|p| p.to_string_lossy().into_owned())
-                .unwrap_or_default(),
+            PathKind::SaveAs { .. } => String::new(),
         };
         self.dialog = Some(Dialog::Path {
             kind,
@@ -198,6 +195,20 @@ impl App {
                 self.notice.clear();
             }
             Message::OpenUtf8 => return self.path_dialog(PathKind::OpenUtf8),
+            Message::Save(done) => {
+                if self.session.path().is_none() {
+                    return self.path_dialog(PathKind::SaveAs { done });
+                }
+                match self.session.save() {
+                    Ok(()) => {
+                        self.notice.clear();
+                        if done {
+                            return self.proceed(Next::Opening);
+                        }
+                    }
+                    Err(e) => self.notice = format!("Save failed: {e}"),
+                }
+            }
             Message::SaveAs(done) => return self.path_dialog(PathKind::SaveAs { done }),
             Message::Help => {
                 self.keyboard.reset();
@@ -263,11 +274,9 @@ impl App {
                         }
                         Err(e) => {
                             *error = if e.kind() == std::io::ErrorKind::AlreadyExists {
-                                "File exists. This prototype saves to NEW files only; choose another path.".into()
+                                "File exists. Choose a new path for Save As.".into()
                             } else {
-                                format!(
-                                    "{e}. Document retained; a failed write may leave an incomplete new file."
-                                )
+                                format!("{e}. Document retained; no new file was published.")
                             }
                         }
                     }
@@ -384,8 +393,9 @@ impl App {
                                 return clipboard::read()
                                     .map(move |text| Message::Paste(generation, text));
                             }
+                            Some(Action::Save) => return self.update(Message::Save(false)),
                             Some(Action::SaveAs) => return self.update(Message::SaveAs(false)),
-                            Some(Action::SaveAndDone) => return self.update(Message::SaveAs(true)),
+                            Some(Action::SaveAndDone) => return self.update(Message::Save(true)),
                             Some(Action::Done) => return self.begin(Next::Opening),
                             Some(Action::Help) => return self.update(Message::Help),
                             Some(Action::Notice(message)) => self.notice = message.into(),
@@ -430,7 +440,7 @@ impl App {
                     let (heading,hint)=match kind{
                         PathKind::OpenLegacy=>("Name of WordStar file to edit?","Full path; a missing file starts a new legacy document. Read limit: 1 MiB."),
                         PathKind::OpenUtf8=>("Name of UTF-8 file to edit?","Full path; a missing file starts a new UTF-8 document. Read limit: 1 MiB."),
-                        PathKind::SaveAs{..}=>("Name of file to save?","Prototype: save to a new path. Existing files are never overwritten."),
+                        PathKind::SaveAs{..}=>("Name of new file?","Save As creates a new file. Existing files are not overwritten."),
                     };
                     column![text(heading).size(24),text(hint),text_input("",value).id("document-path").on_input(Message::PathChanged).on_submit(Message::Submit).padding(8),
                         text(error),row![button("Enter: continue").on_press(Message::Submit),button("Esc: cancel").on_press(Message::Cancel)].spacing(12)].spacing(20).into()
@@ -439,13 +449,13 @@ impl App {
                     row![button("Keep editing").on_press(Message::Cancel),button("Discard changes").on_press(Message::Discard)].spacing(18)].spacing(24).into(),
                 Dialog::Help=>column![text("NORTHSTAR HELP").size(24),
                     text(if self.session.is_utf8() {
-                        "UTF-8: type or paste with Ctrl-V, Backspace/Delete, Left/Right, Enter, Ctrl-Q R. Ctrl-K S saves to a new file; Ctrl-K D saves and returns to the menu."
+                        "UTF-8: type or paste with Ctrl-V, Backspace/Delete, Left/Right, Enter, Ctrl-Q R. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {
-                        "WordStar: Ctrl-S/Ctrl-D move, Ctrl-Q R starts document, Ctrl-V toggles insert, Ctrl-B aligns. Ctrl-K S saves to a new file."
+                        "WordStar: Ctrl-S/Ctrl-D move, Ctrl-Q R starts document, Ctrl-V toggles insert, Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
                     }),
                     text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, and X to exit."),
                     text(if self.session.is_utf8() {
-                        "Modern UTF-8 keeps exact text bytes. Grapheme-aware movement and deletion are available. Wide or unsupported glyphs show a square placeholder. Overwrite, word wrap, vertical movement and safe same-path saving remain unfinished."
+                        "Modern UTF-8 keeps exact text bytes. Grapheme-aware movement and deletion are available. Wide or unsupported glyphs show a square placeholder. Overwrite, word wrap and vertical movement remain unfinished."
                     } else {
                         "Legacy editing supports printable ASCII only. Norwegian letters, IME, clipboard text, deletion, vertical movement, blocks and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
                     }),
