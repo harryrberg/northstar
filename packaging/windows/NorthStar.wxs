@@ -1,0 +1,51 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="NorthStar Prototype" Manufacturer="NorthStar contributors"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="503887AC-B780-46CF-9B87-CFCA86767445"
+           Scope="perUser" InstallerVersion="500">
+    <MajorUpgrade DowngradeErrorMessage="A newer NorthStar version is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="INSTALLFOLDER" Name="NorthStar" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="NorthStarMenu" Name="NorthStar" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="NorthStar Prototype" Level="1">
+      <ComponentRef Id="DesktopExecutable" />
+      <ComponentRef Id="ProjectLicense" />
+      <ComponentRef Id="FontNotices" />
+      <ComponentRef Id="PlexLicense" />
+      <ComponentRef Id="PrototypeGuide" />
+    </Feature>
+
+    <Component Id="DesktopExecutable" Directory="INSTALLFOLDER" Guid="08FBB73A-5EFD-48DE-8D56-3036D8ECFFC1">
+      <File Id="DesktopFile" Source="$(var.DesktopExecutable)" Name="northstar-desktop.exe">
+        <Shortcut Id="StartMenuShortcut" Directory="NorthStarMenu" Name="NorthStar Prototype"
+                  Description="NorthStar WordStar 4.0 reconstruction prototype"
+                  WorkingDirectory="INSTALLFOLDER" />
+      </File>
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
+      <RemoveFolder Id="RemoveNorthStarMenu" Directory="NorthStarMenu" On="uninstall" />
+      <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+    </Component>
+    <Component Id="ProjectLicense" Directory="INSTALLFOLDER" Guid="3A18DF82-64D5-41BB-B987-31ED66609DCE">
+      <File Source="$(var.RepoRoot)\LICENSE" Name="LICENSE.txt" />
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="License" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="FontNotices" Directory="INSTALLFOLDER" Guid="B04BF44E-694E-48FE-802D-9D97F35BBFB0">
+      <File Source="$(var.RepoRoot)\THIRD_PARTY_FONTS.md" />
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="FontNotices" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="PlexLicense" Directory="INSTALLFOLDER" Guid="F5F66250-5E04-48A9-9CA9-50F210C4C3F0">
+      <File Source="$(var.RepoRoot)\crates\northstar-desktop\assets\fonts\IBM-Plex-OFL.txt" />
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="PlexLicense" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="PrototypeGuide" Directory="INSTALLFOLDER" Guid="2C7EA8C3-B606-4246-B626-E460B04B7601">
+      <File Source="$(var.RepoRoot)\docs\WINDOWS_PROTOTYPE.md" />
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="Guide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Package>
+</Wix>
