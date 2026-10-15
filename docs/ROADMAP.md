@@ -2,7 +2,7 @@
 
 ## Current state
 
-Initial Rust implementation: byte-preserving document inspection, bounded ASCII insert/overwrite and Enter on formatted lines, automatic wrapping with justification off, and Ctrl-B at hard paragraph starts with default margins and right justification off. The CLI compares 119 scenarios with retained DOS observations: two original Enter cases, 27 Ctrl-B cases, 46 further editing cases and 44 wrapping cases. The Windows prototype now renders the retained 80x25 screen, edits through actual keyboard input, saves to a new file, and supports full screen with a smooth default font. A file produced by this flow reopened in the DOS original without byte changes. Broader wrapping, formatting, navigation, and author workflow remain unfinished. The REA analysis package remains in its original local investigation directory. [Windows verification](WINDOWS_PROTOTYPE.md), [current compatibility profiles](COMPATIBILITY_PROFILE.md), [Ctrl-B evidence](CTRL_B.md), [editing evidence](EDITING.md) and [wrapping evidence](WRAPPING.md).
+Initial Rust implementation: byte-preserving document inspection, bounded ASCII insert/overwrite and Enter on formatted lines, automatic wrapping with justification off, and Ctrl-B at hard paragraph starts with default margins and right justification off. The CLI compares 119 scenarios with retained DOS observations: two original Enter cases, 27 Ctrl-B cases, 46 further editing cases and 44 wrapping cases. The Windows prototype now renders the retained 80x25 screen, edits through actual keyboard input, saves to a new file, and supports full screen with a smooth default font. A file produced by this flow reopened in the DOS original without byte changes. Three additional screen states from a longer document match retained DOS captures. Broader wrapping, formatting, navigation, and author workflow remain unfinished. The REA analysis package remains in its original local investigation directory. [Windows verification](WINDOWS_PROTOTYPE.md), [current compatibility profiles](COMPATIBILITY_PROFILE.md), [Ctrl-B evidence](CTRL_B.md), [editing evidence](EDITING.md) and [wrapping evidence](WRAPPING.md).
 
 ## M0: Reconstruction contract
 
@@ -21,6 +21,10 @@ Open -> navigate -> insert/overwrite -> Ctrl-B -> save -> reopen in original DOS
 Compare document bytes, cursor state, modes, and relevant display observations for every declared scenario. Unchanged files must retain their bytes, including unrecognized content. Use isolated output paths; originals remain immutable. Explain any normalization rather than hiding it.
 
 Exit: a runnable Windows 11 build and a reproducible report of passing cases and known limitations. The narrow initial editing flow has passed the DOS reopen check; the broader milestone remains open. No full-compatibility claim.
+
+## Windows distribution
+
+For a public Windows release, offer a portable ZIP and a per-user MSI built from the same executable. The MSI should add a Start menu entry and a normal uninstall path without moving or removing user documents. Both packages must carry the project license and the two font licenses. Decide signing, versioned upgrades, and release hosting before distributing an installer. MSI does not supply automatic updates; consider MSIX or Store distribution later if that channel becomes useful. Packaging follows a useful and safe save workflow rather than turning the present prototype into a release.
 
 ## M2: Working author workflow
 
