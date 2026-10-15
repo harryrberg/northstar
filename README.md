@@ -55,6 +55,12 @@ Completion requires passing declared differential cases for document bytes, curs
 
 Original executables, dictionaries, proprietary resources, decompiled source, and the bulk investigation archive are not included in this repository.
 
+## The name
+
+NorthStar evokes the North Star: a guiding star and a steady point of reference. For a writer, that means keeping a clear course through the work, with the words at the centre.
+
+The name also nods to the King in the North in George R. R. Martin's world of Westeros.
+
 ## Dedication
 
 To George R. R. Martin and the world of *Game of Thrones*—for the stories, and for reminding us that great writing needs room to breathe.
