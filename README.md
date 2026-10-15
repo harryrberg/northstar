@@ -6,7 +6,7 @@ Its behavior is checked against binary analysis, controlled runs of the DOS orig
 
 ## Current status
 
-The GUI library and release schedule are not decided. The repository contains a portable Rust core and a CLI for structural inspection, ASCII insert/overwrite editing, automatic wrapping, Enter, and a bounded reconstruction of Ctrl-B. An interactive editor is not implemented yet.
+The repository contains a portable Rust editing core, a comparison CLI, and a runnable Windows desktop prototype. The desktop view reproduces the observed 80-column, 25-row DOS screen on black. Its initial editing flow has been checked against a retained WordStar 4.0 session, including a file saved in NorthStar and reopened in the DOS original. This is a bounded prototype; many WordStar commands remain unimplemented.
 
 ## Build and try the prototype
 
@@ -20,9 +20,12 @@ cargo run -p northstar-cli -- replay tests/oracles/enter-insert-off-next-line.js
 cargo run -p northstar-cli -- replay tests/oracles/reformat-old-markers.json
 cargo run -p northstar-cli -- replay tests/oracles/edit-reformat-edit-split-chain.json
 cargo run -p northstar-cli -- replay tests/oracles/wrap-type-multiple-wrapped-lines.json
+cargo run -p northstar-desktop -- path/to/document.doc
 ```
 
 Replay compares local Rust behavior with declared retained DOS observations. It does not execute the original program. Add `--output NEW_FILE` to write the scenario result to a new path; existing files are never overwritten. Inspection is read-only.
+
+The desktop prototype accepts an optional document path. Without one, press D at the opening menu and enter a path. In the editor, Ctrl-S/Ctrl-D move the cursor, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to a **new** path; existing files cannot be overwritten. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
 
 ## Direction
 
@@ -58,6 +61,8 @@ Automatic wrapping adds 44 comparisons with right justification off, including c
 - [Recorded source identities](docs/analysis-baseline.json)
 
 Original executables, dictionaries, proprietary resources, decompiled source, and the bulk investigation archive are not included in this repository.
+
+The desktop prototype includes IBM Plex Mono and a recreated VGA font under their respective licenses. [Font attribution and licenses](THIRD_PARTY_FONTS.md).
 
 ## The name
 

@@ -270,6 +270,13 @@ impl Editor {
         &self.document
     }
 
+    /// Record a successfully persisted carrier. The caller must finish writing
+    /// and syncing before advancing this checkpoint. This is an application
+    /// operation, not a reconstruction of WordStar's internal dirty flag.
+    pub fn mark_saved(&mut self) {
+        self.original.clone_from(&self.document.bytes);
+    }
+
     pub fn snapshot(&self) -> Snapshot {
         Snapshot {
             cursor_byte: self.cursor,

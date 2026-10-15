@@ -1,0 +1,15 @@
+[package]
+name = "northstar-desktop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+northstar-core = { path = "../northstar-core" }
+iced = { version = "=0.14.0", default-features = false, features = ["wgpu", "tiny-skia", "canvas", "thread-pool", "x11", "wayland"] }
+
+[dev-dependencies]
+serde_json.workspace = true
+sha2.workspace = true

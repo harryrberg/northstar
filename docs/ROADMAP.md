@@ -2,7 +2,7 @@
 
 ## Current state
 
-Initial Rust implementation: byte-preserving document inspection, bounded ASCII insert/overwrite and Enter on formatted lines, automatic wrapping with justification off, and Ctrl-B at hard paragraph starts with default margins and right justification off. The CLI compares 119 scenarios with retained DOS observations: two original Enter cases, 27 Ctrl-B cases, 46 further editing cases and 44 wrapping cases. Actual Rust outputs have also been reopened in the DOS original, including combined editing/reformatting sequences. The interactive Windows adapter and full screen comparison remain first-milestone work; broader wrapping and formatting rules also remain unfinished. The REA analysis package remains in its original local investigation directory. [Current compatibility profiles](COMPATIBILITY_PROFILE.md), [Ctrl-B evidence](CTRL_B.md), [editing evidence](EDITING.md) and [wrapping evidence](WRAPPING.md).
+Initial Rust implementation: byte-preserving document inspection, bounded ASCII insert/overwrite and Enter on formatted lines, automatic wrapping with justification off, and Ctrl-B at hard paragraph starts with default margins and right justification off. The CLI compares 119 scenarios with retained DOS observations: two original Enter cases, 27 Ctrl-B cases, 46 further editing cases and 44 wrapping cases. The Windows prototype now renders the retained 80x25 screen, edits through actual keyboard input, saves to a new file, and supports full screen with a smooth default font. A file produced by this flow reopened in the DOS original without byte changes. Broader wrapping, formatting, navigation, and author workflow remain unfinished. The REA analysis package remains in its original local investigation directory. [Windows verification](WINDOWS_PROTOTYPE.md), [current compatibility profiles](COMPATIBILITY_PROFILE.md), [Ctrl-B evidence](CTRL_B.md), [editing evidence](EDITING.md) and [wrapping evidence](WRAPPING.md).
 
 ## M0: Reconstruction contract
 
@@ -10,7 +10,7 @@ Initial Rust implementation: byte-preserving document inspection, bounded ASCII 
 - Turn the verified Enter, mode, wrap, Ctrl-B, and cursor observations into named scenarios. List missing cursor/selection observations rather than inventing them.
 - Specify document byte positions versus screen columns, hard/soft boundaries, EOF/padding, and preservation of unknown controls.
 - Define oracle observation and comparison formats, including input identities and coverage limits.
-- Trial a Rust Windows input/view adapter for Ctrl prefixes, key repeat, focus, rendering, and Norwegian text entry. Choose the GUI library from results.
+- Trial a Rust Windows input/view adapter for Ctrl prefixes, key repeat, focus, and rendering. Iced 0.14 is selected for the Windows prototype. Norwegian text entry remains outside the legacy ASCII profile and needs its own contract.
 
 Exit: reviewable contracts and a bounded implementation plan with evidence references.
 
@@ -20,7 +20,7 @@ Open -> navigate -> insert/overwrite -> Ctrl-B -> save -> reopen in original DOS
 
 Compare document bytes, cursor state, modes, and relevant display observations for every declared scenario. Unchanged files must retain their bytes, including unrecognized content. Use isolated output paths; originals remain immutable. Explain any normalization rather than hiding it.
 
-Exit: a runnable Windows 11 build and a reproducible report of passing cases and known limitations. No full-compatibility claim.
+Exit: a runnable Windows 11 build and a reproducible report of passing cases and known limitations. The narrow initial editing flow has passed the DOS reopen check; the broader milestone remains open. No full-compatibility claim.
 
 ## M2: Working author workflow
 

@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/northstar-core", "crates/northstar-cli"]
+members = ["crates/northstar-core", "crates/northstar-cli", "crates/northstar-desktop"]
 resolver = "3"
 
 [workspace.package]

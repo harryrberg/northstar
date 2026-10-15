@@ -10,7 +10,9 @@ Existing REA investigation outputs provide pseudocode, format decoders, and sele
 
 ## Decision
 
-Implement the first application in Rust for Windows 11. Keep document and editing semantics in a portable library. Select a Windows presentation layer only after a small input/rendering experiment. Flutter/Dart is no longer the default for the complete implementation; Flutter remains a possible future client.
+Implement the first application in Rust for Windows 11. Keep document and editing semantics in a portable library. The input and rendering experiment selected Iced 0.14 for the Windows prototype. It handles WordStar Ctrl prefixes, key repeat, focus changes, a retained 80x25 screen, and full-screen rendering. This choice does not bind later clients to Iced. Flutter/Dart is no longer the default for the complete implementation; Flutter remains a possible future client.
+
+Use IBM Plex Mono as the default screen font so the 80x25 layout scales smoothly on high-resolution displays. Offer a VGA 8x16 outline recreation for readers who prefer its original pixel shapes. Keep screen cells and command semantics independent of the selected font. The current adapter scales the full grid to fit the window while retaining its 80-column layout.
 
 Use the DOS original as a behavioral reference. Compare declared scenarios rather than guessing from decompiler output. Modern capabilities must be explicit extensions with their own tests.
 
@@ -20,4 +22,4 @@ Future platform support is an architectural objective, not a current compatibili
 
 The first deliverable prioritizes faithful editing and file interoperability over broad platform packaging. A common core can support multiple clients, but bindings, builds, rendering, input methods, accessibility, and device testing remain real work.
 
-PDF layout and platform printing are separate from legacy printer-driver emulation. The project is named NorthStar (`northstar` on GitHub) and is open source and non-commercial. The owner selected GPL-3.0-only and public GitHub development on 2026-10-15. The GUI toolkit, Unicode representation, and modern/legacy mode boundaries remain open decisions.
+PDF layout and platform printing are separate from legacy printer-driver emulation. The project is named NorthStar (`northstar` on GitHub) and is open source and non-commercial. The owner selected GPL-3.0-only and public GitHub development on 2026-10-15. Unicode representation and modern/legacy mode boundaries remain open decisions. The Windows prototype does not yet implement Norwegian text input or IME.

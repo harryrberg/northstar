@@ -1,0 +1,17 @@
+# Windows desktop prototype
+
+Build with Rust 1.99 and run `cargo run -p northstar-desktop -- path/to/document.doc`. Omitting the path opens the WordStar-style main menu. D opens or creates a document; X exits. The window starts on a black 80-column, 25-row screen. F11 toggles full screen, and F12 changes between IBM Plex Mono and a recreated VGA 8x16 font. The font scales with the grid; the document model and screen cells do not change when the font changes. IBM Plex Mono is the default because the VGA shapes look coarse on a high-resolution full-screen display.
+
+The implemented editing commands are Ctrl-S and Ctrl-D for left/right, Ctrl-Q R for document start, Ctrl-V for insert/overwrite, Ctrl-B for paragraph alignment, Enter for a line break, and Ctrl-K S for Save As. Ctrl-K D saves to a new path and returns to the main menu. Ctrl-K Q returns to the menu after an unsaved-change check. Arrow Left/Right, Insert, F1, F7, F9, and F10 are additional prototype shortcuts. The DOS menu still displays commands that are not implemented. F1 lists the current subset.
+
+Saving creates a **new** file and refuses to overwrite an existing path. The dialog initially shows the current path; replace it with a new one. Reading is limited to 1 MiB. The prototype handles printable ASCII. Norwegian letters, IME, pasted document text, deletion, vertical navigation, blocks, undo, scrolling, and general WordStar formatting remain unfinished. Original data after EOF remains in the saved carrier but is not displayed. Unsupported control glyphs are not yet qualified. No accessibility or multi-display claim has been verified.
+
+## Retained comparison
+
+The synthetic `PIPE1.DOC` fixture in `tests/oracles/edit-reformat-edit-split-chain.json` was opened in the native Windows window. The sequence Ctrl-B, Ctrl-Q R, Ctrl-D five times, X, space, Ctrl-V, Z twice, Ctrl-V, Enter, Ctrl-Q R, Ctrl-B produced a new 128-byte `GUI1.DOC` with SHA-256 `4e3a93f1bada5d7309a7231ccbc5d62558351e9a4f67cfec94723e5ecaa467d4`. The input remained at SHA-256 `6d23a5fe7464ca0fca6bc70b75e544110dd2258ada9458a6a4d5d66ae0de7ab0`. This matches the retained DOS edit result. WordStar Professional 4.00 (`WS.EXE` SHA-256 `535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d`) opened `GUI1.DOC`, displayed its edited text, and saved it without changing its hash.
+
+The portable `screen_oracle` test compares the screen's full 4,000-byte character/attribute image against retained DOS captures before and after the edit sequence. The expected SHA-256 values are `7016d55d25ba33892bf5087031df3a1995bbddfebc49efa78bc9b644a0757de1` and `e6c1617dd204b3ec1c92844a6701d45c0c1510b7a82f2cd5cfb7eb3f69b81ac3`. Locally, set `NORTHSTAR_DOS_SCREENS` to a directory containing `PIPE1-before-screen.bin` and `PIPE1-after-screen.bin` for byte-level difference output on failure. These captures and the original executable remain in the separate local REA investigation; they are not distributed with NorthStar.
+
+Full screen and both fonts were inspected in the native Windows window at 2048x1152. Other display resolutions, scaling settings, and platforms have not been tested. The screen comparison proves cell content for the declared fixture, not pixel-level identity across fonts or displays.
+
+After saving, a further unsaved edit was made in the native window. Alt-F4 showed the unsaved-change prompt, and Escape returned to the edited document without writing it. The test window was then closed by explicitly discarding that extra edit.
