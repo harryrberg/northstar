@@ -6,7 +6,7 @@ The `ws4-ascii-reformat-v1` profile compares 27 synthetic cases against WordStar
 
 The caller declares document mode, single line spacing, left margin 1, right margin 65, and right justification off. The cursor must be at document start or directly after an ordinary hard CRLF. The selected paragraph may contain printable ASCII, highbit ASCII markers, A0 soft spaces, and 8D/0A soft breaks. Ordinary hard CRLF ends the paragraph. Other paragraphs retain their bytes, including supported structural tokens whose editing remains unknown.
 
-Ctrl-B returns the cursor immediately after the hard CRLF, or at active EOF when there is no following hard paragraph. Insert mode is preserved. Initial offsets other than zero, Insert off, and an opaque following paragraph each have their own captured case. Cursor expectations are derived from the DOS text-mode status line and the saved token boundaries; they are not direct dumps of a document cursor pointer. NorthStar does not yet render or compare a complete screen.
+Ctrl-B returns the cursor immediately after the hard CRLF, or at active EOF when there is no following hard paragraph. Insert mode is preserved. Initial offsets other than zero, Insert off, and an opaque following paragraph each have their own captured case. Cursor expectations are derived from the DOS text-mode status line and the saved token boundaries; they are not direct dumps of a document cursor pointer. OpenStar does not yet render or compare a complete screen.
 
 ## Reconstructed rules
 

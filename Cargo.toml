@@ -1,13 +1,13 @@
 [workspace]
-members = ["crates/northstar-core", "crates/northstar-cli", "crates/northstar-desktop"]
+members = ["crates/openstar-core", "crates/openstar-cli", "crates/openstar-desktop"]
 resolver = "3"
 
 [workspace.package]
-version = "0.1.19"
+version = "0.1.20"
 edition = "2024"
 rust-version = "1.99"
 license = "GPL-3.0-only"
-repository = "https://github.com/harryrberg/northstar"
+repository = "https://github.com/harryrberg/openstar"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }

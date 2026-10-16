@@ -1,0 +1,18 @@
+[package]
+name = "openstar-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "openstar"
+path = "src/main.rs"
+
+[dependencies]
+openstar-core = { path = "../openstar-core" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true

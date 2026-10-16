@@ -39,8 +39,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $version = (cargo metadata --no-deps --format-version 1 | ConvertFrom-Json).packages | Where-Object name -eq 'northstar-desktop' | Select-Object -ExpandProperty version
-          $msi = "./releases/windows/NorthStar-Prototype-$version-x64.msi"
+          $version = (cargo metadata --no-deps --format-version 1 | ConvertFrom-Json).packages | Where-Object name -eq 'openstar-desktop' | Select-Object -ExpandProperty version
+          $msi = "./releases/windows/OpenStar-Prototype-$version-x64.msi"
           ./target/tools/wix/wix.exe msi validate $msi -sice ICE91
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ./packaging/windows/test.ps1 -MsiPath $msi
@@ -48,5 +48,5 @@ jobs:
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: northstar-prototype-msi
-          path: releases/windows/NorthStar-Prototype-*.msi
+          name: openstar-prototype-msi
+          path: releases/windows/OpenStar-Prototype-*.msi

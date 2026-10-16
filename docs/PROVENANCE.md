@@ -18,4 +18,4 @@ Useful starting reports in that directory:
 
 Known limits include incomplete global message classification, arbitrary indirect/error paths, complete spelling suggestion behavior, and unrestricted file compatibility. The investigation contains no buildable reconstruction.
 
-No original program or bulk evidence is redistributed by establishing this repository. Original NorthStar contributions are licensed under GPL-3.0-only. This does not grant rights to original WordStar software, decompiled output, dictionaries, or other third-party material; any proposed redistribution needs a separate provenance and rights assessment.
+No original program or bulk evidence is redistributed by establishing this repository. Original OpenStar contributions are licensed under GPL-3.0-only. This does not grant rights to original WordStar software, decompiled output, dictionaries, or other third-party material; any proposed redistribution needs a separate provenance and rights assessment.

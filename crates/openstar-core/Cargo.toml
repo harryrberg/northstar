@@ -1,0 +1,12 @@
+[package]
+name = "openstar-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+serde.workspace = true
+unicode-segmentation = "1.13.3"

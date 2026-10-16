@@ -1,0 +1,19 @@
+[package]
+name = "openstar-desktop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+openstar-core = { path = "../openstar-core" }
+iced = { version = "=0.14.0", default-features = false, features = ["advanced", "wgpu", "tiny-skia", "canvas", "tokio", "x11", "wayland"] }
+unicode-normalization = "0.1.25"
+unicode-width = "0.2.2"
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Storage_FileSystem"] }

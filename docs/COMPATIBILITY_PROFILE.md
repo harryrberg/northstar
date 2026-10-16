@@ -97,9 +97,9 @@ Ctrl-B also normalizes padding when active text is unchanged: 127 spaces grow fr
 
 ## CLI and resource limits
 
-`northstar inspect FILE` reads at most 64 MiB and reports SHA-256, complete token counts, and a bounded preview. At most 64 tokens and 32 raw bytes per token are displayed; the full carrier is examined. The first padding candidate does not stop tokenization.
+`openstar inspect FILE` reads at most 64 MiB and reports SHA-256, complete token counts, and a bounded preview. At most 64 tokens and 32 raw bytes per token are displayed; the full carrier is examined. The first padding candidate does not stop tokenization.
 
-`northstar replay CASE.json [--output NEW_FILE]` accepts at most 1 MiB of scenario JSON and 10000 commands. Unknown fields, versions, commands, malformed identities, and malformed hex are rejected. Output is created only after the declared comparisons pass, using the operating system's create-new operation. Existing files are never overwritten. An output I/O failure may leave the newly created file incomplete and is reported as failure.
+`openstar replay CASE.json [--output NEW_FILE]` accepts at most 1 MiB of scenario JSON and 10000 commands. Unknown fields, versions, commands, malformed identities, and malformed hex are rejected. Output is created only after the declared comparisons pass, using the operating system's create-new operation. Existing files are never overwritten. An output I/O failure may leave the newly created file incomplete and is reported as failure.
 
 ## Remaining first-milestone work
 

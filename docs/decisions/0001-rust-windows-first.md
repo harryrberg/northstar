@@ -23,3 +23,5 @@ Future platform support is an architectural objective, not a current compatibili
 The first deliverable prioritizes faithful editing and file interoperability over broad platform packaging. A common core can support multiple clients, but bindings, builds, rendering, input methods, accessibility, and device testing remain real work.
 
 PDF layout and platform printing are separate from legacy printer-driver emulation. The project is named NorthStar (`northstar` on GitHub) and is open source and non-commercial. The owner selected GPL-3.0-only and public GitHub development on 2026-10-15. Native UTF-8 documents are specified separately in [ADR 0002](0002-utf8-documents.md). Legacy WordStar editing remains ASCII-only, and real IME behavior still needs platform verification.
+
+The owner renamed the project and repository to OpenStar in October 2026. The earlier name above records the decision as originally made.

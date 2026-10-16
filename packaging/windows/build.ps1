@@ -19,20 +19,20 @@ if ($cargoCommand) {
 
 $metadata = & $cargo metadata --no-deps --format-version 1 | ConvertFrom-Json
 if ($LASTEXITCODE -ne 0) { throw 'cargo metadata failed' }
-$version = ($metadata.packages | Where-Object name -eq 'northstar-desktop').version
+$version = ($metadata.packages | Where-Object name -eq 'openstar-desktop').version
 if ($version -notmatch '^\d+\.\d+\.\d+$') {
     throw "Desktop version $version is not a three-part MSI version"
 }
 if (-not $OutputPath) {
-    $OutputPath = Join-Path $repo "releases\windows\NorthStar-Prototype-$version-x64.msi"
+    $OutputPath = Join-Path $repo "releases\windows\OpenStar-Prototype-$version-x64.msi"
 }
 $OutputPath = [System.IO.Path]::GetFullPath($OutputPath)
 
 if (-not $SkipRustBuild) {
-    & $cargo build --release -p northstar-desktop --locked
+    & $cargo build --release -p openstar-desktop --locked
     if ($LASTEXITCODE -ne 0) { throw 'Rust release build failed' }
 }
-$desktop = Join-Path $repo 'target\release\northstar-desktop.exe'
+$desktop = Join-Path $repo 'target\release\openstar-desktop.exe'
 if (-not (Test-Path -LiteralPath $desktop -PathType Leaf)) {
     throw "Desktop executable is missing: $desktop"
 }
@@ -56,12 +56,12 @@ if ((& $wix --version) -notmatch "^$([regex]::Escape($wixVersion))\+") {
 }
 
 New-Item -ItemType Directory -Force (Split-Path $OutputPath) | Out-Null
-& $wix build (Join-Path $PSScriptRoot 'NorthStar.wxs') `
+& $wix build (Join-Path $PSScriptRoot 'OpenStar.wxs') `
     -arch x64 `
     -d "ProductVersion=$version" `
     -d "DesktopExecutable=$desktop" `
     -d "RepoRoot=$repo" `
-    -pdb (Join-Path $repo 'target\NorthStar.wixpdb') `
+    -pdb (Join-Path $repo 'target\OpenStar.wixpdb') `
     -out $OutputPath
 if ($LASTEXITCODE -ne 0) { throw 'WiX build failed' }
 

@@ -21,7 +21,7 @@ The eight comparisons check saved SHA-256, cursor, Insert mode, declared formatt
 
 NorthStar generated the `block-copy-hard-break` result as `target/block-reopen.doc`. In a separate `runtime-northstar-block-reopen-05` DOS copy, WordStar opened it as `REBLK.DOC`, displayed its three lines and saved it with the same SHA-256, `93bb94c2e3ec719f68530a3470093a0d0040b444b893b776dfb92098df9dbc0f`. This checks interoperability for that result.
 
-NorthStar's selected cells use inverse video and show the K end marker at the right edge of its row, as seen in the retained DOS captures. It shows a B marker at the right edge of the start row. The original can show an inline `<B>` marker before an end is set; NorthStar's B marker occupies a different position.
+OpenStar's selected cells use inverse video and show the K end marker at the right edge of its row, as seen in the retained DOS captures. It shows a B marker at the right edge of the start row. The original can show an inline `<B>` marker before an end is set; OpenStar's B marker occupies a different position.
 
 ## Boundary
 

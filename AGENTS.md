@@ -1,4 +1,4 @@
-# NorthStar project instructions
+# OpenStar project instructions
 
 Read README.md and docs/decisions/0001-rust-windows-first.md before implementation.
 
@@ -12,7 +12,7 @@ When the required model or effort cannot be changed automatically in the active 
 
 ## Authority and scope
 
-NorthStar is an open-source, non-commercial, fidelity-driven WordStar Professional 4.00 reconstruction in Rust, with Windows 11 as the first deliverable. Preserve portability for later desktop, tablet, e-paper, and Emacs clients. Keep this repository separate from REA.
+OpenStar is an open-source, non-commercial, fidelity-driven WordStar Professional 4.00 reconstruction in Rust, with Windows 11 as the first deliverable. Preserve portability for later desktop, tablet, e-paper, and Emacs clients. Keep this repository separate from REA.
 
 Do not replace original behavior with a convenient approximation without recording the difference. Distinguish observed behavior, static derivations, hypotheses, and unknowns. Function export counts are not behavioral coverage.
 

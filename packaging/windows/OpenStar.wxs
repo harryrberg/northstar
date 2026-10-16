@@ -1,0 +1,106 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="OpenStar Prototype" Manufacturer="OpenStar contributors"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="503887AC-B780-46CF-9B87-CFCA86767445"
+           Scope="perUser" InstallerVersion="500">
+    <MajorUpgrade DowngradeErrorMessage="A newer OpenStar version is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="INSTALLFOLDER" Name="OpenStar" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="OpenStarMenu" Name="OpenStar" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="OpenStar Prototype" Level="1">
+      <ComponentRef Id="DesktopExecutable" />
+      <ComponentRef Id="ProjectLicense" />
+      <ComponentRef Id="FontNotices" />
+      <ComponentRef Id="PlexLicense" />
+      <ComponentRef Id="PrototypeGuide" />
+      <ComponentRef Id="RecoveryGuide" />
+      <ComponentRef Id="NavigationGuide" />
+      <ComponentRef Id="WordNavigationGuide" />
+      <ComponentRef Id="FindGuide" />
+      <ComponentRef Id="ReplacementGuide" />
+      <ComponentRef Id="DeletionGuide" />
+      <ComponentRef Id="BackspaceDeleteGuide" />
+      <ComponentRef Id="BlockCopyGuide" />
+      <ComponentRef Id="BlockMoveDeleteGuide" />
+      <ComponentRef Id="ErasureGuide" />
+      <ComponentRef Id="WordErasureGuide" />
+    </Feature>
+
+    <Component Id="DesktopExecutable" Directory="INSTALLFOLDER" Guid="2A838F5F-8E76-4801-B9EB-D9B767CB32C3">
+      <File Id="DesktopFile" Source="$(var.DesktopExecutable)" Name="openstar-desktop.exe">
+        <Shortcut Id="StartMenuShortcut" Directory="OpenStarMenu" Name="OpenStar Prototype"
+                  Description="OpenStar distraction-free writing prototype"
+                  WorkingDirectory="INSTALLFOLDER" />
+      </File>
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
+      <RemoveFolder Id="RemoveOpenStarMenu" Directory="OpenStarMenu" On="uninstall" />
+      <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+    </Component>
+    <Component Id="ProjectLicense" Directory="INSTALLFOLDER" Guid="B9226579-6591-46DD-8F51-AFC9305B3D76">
+      <File Source="$(var.RepoRoot)\LICENSE" Name="LICENSE.txt" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="License" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="FontNotices" Directory="INSTALLFOLDER" Guid="BB947087-FBC0-49F8-860F-D36A4AEBF2F1">
+      <File Source="$(var.RepoRoot)\THIRD_PARTY_FONTS.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="FontNotices" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="PlexLicense" Directory="INSTALLFOLDER" Guid="B6B11790-44FC-4169-95B0-CE0960BFE156">
+      <File Source="$(var.RepoRoot)\crates\openstar-desktop\assets\fonts\IBM-Plex-OFL.txt" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="PlexLicense" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="PrototypeGuide" Directory="INSTALLFOLDER" Guid="64F01E65-07EA-420C-BD86-91DACC340B5C">
+      <File Source="$(var.RepoRoot)\docs\WINDOWS_PROTOTYPE.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="Guide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="RecoveryGuide" Directory="INSTALLFOLDER" Guid="4970E41A-2E49-4422-9114-082C91F94752">
+      <File Source="$(var.RepoRoot)\docs\RECOVERY.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="RecoveryGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="NavigationGuide" Directory="INSTALLFOLDER" Guid="5A08750E-5DA1-40C9-B169-5F46C044BD1B">
+      <File Source="$(var.RepoRoot)\docs\NAVIGATION.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="NavigationGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="WordNavigationGuide" Directory="INSTALLFOLDER" Guid="CAA49190-B031-4AB2-A0B7-C6A7C704BCD5">
+      <File Source="$(var.RepoRoot)\docs\WORD_NAVIGATION.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="WordNavigationGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="FindGuide" Directory="INSTALLFOLDER" Guid="4BE40C16-D7F4-403F-99ED-89B2AB58CF95">
+      <File Source="$(var.RepoRoot)\docs\FIND.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="FindGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="ReplacementGuide" Directory="INSTALLFOLDER" Guid="C9A95B17-5677-410B-BC29-9582DAC793A5">
+      <File Source="$(var.RepoRoot)\docs\REPLACEMENT.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="ReplacementGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="DeletionGuide" Directory="INSTALLFOLDER" Guid="A38C7200-A031-468F-9743-29798532EB1E">
+      <File Source="$(var.RepoRoot)\docs\DELETION.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="DeletionGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="BackspaceDeleteGuide" Directory="INSTALLFOLDER" Guid="9EC2820F-8A3C-4A79-82C4-F5AE9E7F7287">
+      <File Source="$(var.RepoRoot)\docs\BACKSPACE_DELETE.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="BackspaceDeleteGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="BlockCopyGuide" Directory="INSTALLFOLDER" Guid="08522D31-9C6F-43D0-AEED-16E5F7EFB2CB">
+      <File Source="$(var.RepoRoot)\docs\BLOCK_COPY.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="BlockCopyGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="BlockMoveDeleteGuide" Directory="INSTALLFOLDER" Guid="A46E88E2-20B2-49DC-B9EC-83C834191DEB">
+      <File Source="$(var.RepoRoot)\docs\BLOCK_MOVE_DELETE.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="BlockMoveDeleteGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="ErasureGuide" Directory="INSTALLFOLDER" Guid="C9626847-DE87-4AE4-89AF-F5DFE888D1DB">
+      <File Source="$(var.RepoRoot)\docs\ERASURE.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="ErasureGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="WordErasureGuide" Directory="INSTALLFOLDER" Guid="BD2B8876-F38F-4A7E-BF46-1A3D8C08F53C">
+      <File Source="$(var.RepoRoot)\docs\WORD_ERASURE.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="WordErasureGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Package>
+</Wix>
