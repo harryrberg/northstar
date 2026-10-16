@@ -53,6 +53,10 @@ Nonspace typing beyond the margin with right justification on, hyphen wrapping a
 
 Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synthetic input identities. On ordinary one-cell physical lines, the current column is clamped to the destination's end. The clamped column is used by the next move; there is no retained preferred column. Empty lines, the first and last line, and one observed soft-break transition are included. The core moves without changing carrier bytes or Insert mode. The Windows adapter routes Ctrl-E/Ctrl-X and Up/Down to the same core commands. [Observed sequences and limits](NAVIGATION.md) record the evidence. Page-marked breaks, dot commands, and opaque selected lines are rejected until their navigation semantics are qualified.
 
+## Word navigation: ws4-word-navigation-v1
+
+Eighteen scenarios compare Ctrl-A/Ctrl-F movement with retained DOS status and unchanged synthetic carrier bytes. Word movement is line-local. The measured punctuation cases distinguish comma as a separator from an internal hyphen that stays in a word. Ctrl-F on a hard CRLF reaches the next line start, but Ctrl-F from the preceding word does not cross the break. The core owns cursor movement; Windows Ctrl-A/Ctrl-F select the commands. [Observed cases and limits](WORD_NAVIGATION.md) record source identities. Other punctuation, marked text, soft breaks, and opaque selected lines remain unqualified.
+
 ## Ctrl-G deletion: ws4-delete-character-v1
 
 Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved bytes. On an ordinary text cell it removes that byte and keeps the cursor position. On a hard CRLF it joins two short ordinary lines. At EOF it has no effect. One high-bit text cell and Insert-off deletion are included. Windows Ctrl-G routes to the core command. [Observed cases and limits](DELETION.md) record source identities and the DOS reopen check. Backspace, the DOS Delete key, and soft-break deletion remain unqualified.

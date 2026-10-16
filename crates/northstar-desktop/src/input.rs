@@ -94,6 +94,8 @@ impl Keyboard {
                 }
                 "s" => Some(Action::Edit(Command::PreviousCharacter)),
                 "d" => Some(Action::Edit(Command::NextCharacter)),
+                "a" if !utf8 => Some(Action::Edit(Command::PreviousWord)),
+                "f" if !utf8 => Some(Action::Edit(Command::NextWord)),
                 "g" if !utf8 => Some(Action::Edit(Command::DeleteCharacter)),
                 "t" if !utf8 => Some(Action::Edit(Command::DeleteWord)),
                 "y" if !utf8 => Some(Action::Edit(Command::DeleteLine)),

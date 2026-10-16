@@ -88,6 +88,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("edit-")
                 || name.starts_with("wrap-")
                 || name.starts_with("nav-")
+                || name.starts_with("navword-")
                 || name.starts_with("delete-")
                 || name.starts_with("erasure-")
                 || name.starts_with("word-")
@@ -127,6 +128,11 @@ fn navigation_profile_does_not_admit_unqualified_commands() {
     for (index, (profile, command)) in [
         ("ws4-vertical-navigation-v1", json!({"command":"reformat"})),
         ("ws4-ascii-edit-v1", json!({"command":"next_line"})),
+        (
+            "ws4-word-navigation-v1",
+            json!({"command":"next_character"}),
+        ),
+        ("ws4-ascii-edit-v1", json!({"command":"next_word"})),
     ]
     .into_iter()
     .enumerate()

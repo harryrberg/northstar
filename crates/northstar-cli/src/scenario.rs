@@ -61,6 +61,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-ascii-edit-v1"
                 | "ws4-ascii-wrap-v1"
                 | "ws4-vertical-navigation-v1"
+                | "ws4-word-navigation-v1"
                 | "ws4-delete-character-v1"
                 | "ws4-line-erasure-v1"
                 | "ws4-word-erasure-v1"
@@ -80,6 +81,17 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
         || (spec.profile != "ws4-vertical-navigation-v1" && spec.commands.iter().any(vertical))
     {
         return Err("vertical movement requires its declared navigation profile".into());
+    }
+    let word_navigation =
+        |command: &Command| matches!(command, Command::NextWord | Command::PreviousWord);
+    if (spec.profile == "ws4-word-navigation-v1"
+        && spec
+            .commands
+            .iter()
+            .any(|command| !word_navigation(command)))
+        || (spec.profile != "ws4-word-navigation-v1" && spec.commands.iter().any(word_navigation))
+    {
+        return Err("word movement requires its declared navigation profile".into());
     }
     let deletion = |command: &Command| matches!(command, Command::DeleteCharacter);
     if (spec.profile == "ws4-delete-character-v1"

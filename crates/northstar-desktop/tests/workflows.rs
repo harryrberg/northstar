@@ -68,6 +68,8 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
     for name in [
         "edit-reformat-edit-split-chain",
         "wrap-type-multiple-wrapped-lines",
+        "navword-next-over-hyphen",
+        "navword-next-twice",
     ] {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../tests/oracles")
@@ -109,6 +111,8 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 Command::PreviousCharacter => {
                     dispatch(&mut keyboard, &mut session, ctrl("s", false))
                 }
+                Command::NextWord => dispatch(&mut keyboard, &mut session, ctrl("f", false)),
+                Command::PreviousWord => dispatch(&mut keyboard, &mut session, ctrl("a", false)),
                 Command::NextLine => dispatch(&mut keyboard, &mut session, ctrl("x", false)),
                 Command::PreviousLine => dispatch(&mut keyboard, &mut session, ctrl("e", false)),
                 Command::DeleteCharacter => dispatch(&mut keyboard, &mut session, ctrl("g", false)),
@@ -148,6 +152,31 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         );
         assert_eq!(fs::read(source).unwrap(), carrier);
     }
+}
+
+#[test]
+fn legacy_word_keys_follow_dos_positions_and_preserve_the_file() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("N2.DOC");
+    let mut carrier = b"ONE TWO THREE".to_vec();
+    carrier.resize(128, 0x1a);
+    fs::write(&source, &carrier).unwrap();
+    let mut session = Session::open(&source).unwrap();
+    let mut keyboard = Keyboard::default();
+    for (key, expected) in [("f", 4), ("f", 8), ("a", 4), ("a", 0)] {
+        dispatch(&mut keyboard, &mut session, ctrl(key, false));
+        assert_eq!(session.editor.snapshot().cursor_byte, expected);
+        assert_eq!(session.editor.document().bytes(), carrier);
+        assert!(!session.editor.snapshot().modified);
+    }
+    let copy = scratch.0.join("N2-COPY.DOC");
+    session.save_as(&copy).unwrap();
+    assert_eq!(fs::read(source).unwrap(), carrier);
+    assert_eq!(fs::read(&copy).unwrap(), carrier);
+    assert_eq!(
+        Session::open(&copy).unwrap().editor.document().bytes(),
+        carrier
+    );
 }
 
 #[test]

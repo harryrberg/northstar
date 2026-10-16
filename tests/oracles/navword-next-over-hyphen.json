@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-word-navigation-v1",
+  "id": "navword-next-over-hyphen",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-wordnav-01/files/N13.DOC",
+        "sha256": "c91e5486abb70eb88dba3ab5af3a48b5fb2a4607b4bfca9e6e385f8934e1868d"
+      },
+      {
+        "path": "runtime-northstar-wordnav-01/events.json",
+        "sha256": "2f93c269b610a28f432bfec89c00eabc883cbe62eb0ffa23ef53d458b1402ded"
+      },
+      {
+        "path": "runtime-northstar-wordnav-01/n13-open.png",
+        "sha256": "bd3cf0e3c7aa72e2f38fb372c128b9d37e5f94387df22130f825a8817cb9879e"
+      },
+      {
+        "path": "runtime-northstar-wordnav-01/n13-result1.png",
+        "sha256": "47f1df1696ed28cb10e930aad38613a4fb1b914887a4be85c50786b267616e37"
+      }
+    ],
+    "limitations": [
+      "Synthetic document opened and saved in an isolated DOSBox copy on 2026-10-16.",
+      "Cursor byte offset is derived from the observed L/C status and one-byte cells in the named screenshots.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Compares cursor placement and unchanged carrier bytes; other command behavior is outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4f4e452d54574f2054485245451a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_word"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "c91e5486abb70eb88dba3ab5af3a48b5fb2a4607b4bfca9e6e385f8934e1868d",
+    "cursor_byte": 8,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

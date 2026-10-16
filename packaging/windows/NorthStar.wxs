@@ -21,6 +21,7 @@
       <ComponentRef Id="PrototypeGuide" />
       <ComponentRef Id="RecoveryGuide" />
       <ComponentRef Id="NavigationGuide" />
+      <ComponentRef Id="WordNavigationGuide" />
       <ComponentRef Id="DeletionGuide" />
       <ComponentRef Id="ErasureGuide" />
       <ComponentRef Id="WordErasureGuide" />
@@ -59,6 +60,10 @@
     <Component Id="NavigationGuide" Directory="INSTALLFOLDER" Guid="7726B1C3-F8C5-421A-BDAB-1DC030ABFAB0">
       <File Source="$(var.RepoRoot)\docs\NAVIGATION.md" />
       <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="NavigationGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="WordNavigationGuide" Directory="INSTALLFOLDER" Guid="78B03A14-0FC7-4544-8527-B25660AFA32B">
+      <File Source="$(var.RepoRoot)\docs\WORD_NAVIGATION.md" />
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="WordNavigationGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
     <Component Id="DeletionGuide" Directory="INSTALLFOLDER" Guid="81D76939-872B-474C-8D26-C271B07A0848">
       <File Source="$(var.RepoRoot)\docs\DELETION.md" />

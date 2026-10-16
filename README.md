@@ -6,7 +6,7 @@ Its behavior is checked against binary analysis, controlled runs of the DOS orig
 
 ## Current status
 
-The repository contains a portable Rust editing core, a comparison CLI, and a runnable Windows desktop prototype. The desktop view reproduces the observed 80-column, 25-row DOS screen on black. Its initial legacy editing flow has been checked against a retained WordStar 4.0 session, including a file saved in NorthStar and reopened in the DOS original. Ctrl-E/Ctrl-X now move through ordinary physical lines under a separate DOS-checked navigation profile. A separate UTF-8 mode supports a bounded modern writing flow. Many WordStar commands and author workflow features remain unimplemented.
+The repository contains a portable Rust editing core, a comparison CLI, and a runnable Windows desktop prototype. The desktop view reproduces the observed 80-column, 25-row DOS screen on black. Its initial legacy editing flow has been checked against a retained WordStar 4.0 session, including a file saved in NorthStar and reopened in the DOS original. Ctrl-E/Ctrl-X move through ordinary physical lines, and Ctrl-A/Ctrl-F move by word on a line under separate DOS-checked navigation profiles. A separate UTF-8 mode supports a bounded modern writing flow. Many WordStar commands and author workflow features remain unimplemented.
 
 ## Build and try the prototype
 
@@ -25,9 +25,9 @@ cargo run -p northstar-desktop -- path/to/document.doc
 
 Replay compares local Rust behavior with declared retained DOS observations. It does not execute the original program. Add `--output NEW_FILE` to write the scenario result to a new path; existing files are never overwritten. Inspection is read-only.
 
-The desktop prototype accepts an optional WordStar document path. Without one, press D at the opening menu and enter a path. F2 starts a new UTF-8 document, and F3 opens a UTF-8 file; `--utf8 FILE` explicitly selects that mode from the command line. UTF-8 mode supports Norwegian text, paste, visual word wrap, grapheme-aware movement and deletion, Enter, saving, undo/redo, and separate recovery copies of unsaved drafts. F4 on the opening menu finds a recovery copy. In UTF-8 mode, Up/Down or Ctrl-E/Ctrl-X move through visual rows without changing the file's line endings. In the legacy editor, Ctrl-S/Ctrl-D move left and right, Ctrl-E/Ctrl-X move between physical lines, Ctrl-G deletes one character, Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to the current path, Ctrl-K D saves and returns to the menu, and Ctrl-Shift-S saves a copy to a new path. Saving an existing file retains its previous bytes in a backup and refuses to overwrite a file changed outside NorthStar. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
+The desktop prototype accepts an optional WordStar document path. Without one, press D at the opening menu and enter a path. F2 starts a new UTF-8 document, and F3 opens a UTF-8 file; `--utf8 FILE` explicitly selects that mode from the command line. UTF-8 mode supports Norwegian text, paste, visual word wrap, grapheme-aware movement and deletion, Enter, saving, undo/redo, and separate recovery copies of unsaved drafts. F4 on the opening menu finds a recovery copy. In UTF-8 mode, Up/Down or Ctrl-E/Ctrl-X move through visual rows without changing the file's line endings. In the legacy editor, Ctrl-S/Ctrl-D move left and right, Ctrl-A/Ctrl-F move by word, Ctrl-E/Ctrl-X move between physical lines, Ctrl-G deletes one character, Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to the current path, Ctrl-K D saves and returns to the menu, and Ctrl-Shift-S saves a copy to a new path. Saving an existing file retains its previous bytes in a backup and refuses to overwrite a file changed outside NorthStar. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
 
-An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.11-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
+An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.12-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
 
 ## Direction
 
@@ -56,6 +56,8 @@ Automatic wrapping adds 44 comparisons with right justification off, including c
 
 Vertical WordStar navigation adds seven comparisons covering short and empty lines, a soft break, and document boundaries. [Navigation rules and evidence](docs/NAVIGATION.md).
 
+WordStar Ctrl-A/Ctrl-F navigation adds 18 comparisons covering word positions, separators, punctuation, hard breaks, and document boundaries. [Word navigation rules and evidence](docs/WORD_NAVIGATION.md).
+
 Ctrl-G adds five comparisons for ordinary text, a hard line break, EOF, high-bit text, and Insert off. [Deletion rules and evidence](docs/DELETION.md).
 
 Ctrl-Y/Ctrl-U add 14 comparisons for line deletion, reusable unerase content, cursor placement, and interactions with typing, Ctrl-G, and Insert mode. [Line erasure rules and evidence](docs/ERASURE.md).
@@ -72,6 +74,7 @@ Ctrl-T adds 27 comparisons for word deletion and the shared Ctrl-U buffer. [Word
 - [Recorded source identities](docs/analysis-baseline.json)
 - [Save behavior and open questions](docs/SAVING.md)
 - [WordStar vertical navigation](docs/NAVIGATION.md)
+- [WordStar word navigation](docs/WORD_NAVIGATION.md)
 - [WordStar character deletion](docs/DELETION.md)
 - [WordStar line erasure](docs/ERASURE.md)
 - [WordStar word erasure](docs/WORD_ERASURE.md)

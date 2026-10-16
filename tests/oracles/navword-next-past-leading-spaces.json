@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-word-navigation-v1",
+  "id": "navword-next-past-leading-spaces",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-wordnav-01/files/N17.DOC",
+        "sha256": "2bff8727a3ce52b5f7c62cf2d1f56dd43dcb655ce55e2f629e6b97efbc93530c"
+      },
+      {
+        "path": "runtime-northstar-wordnav-01/events.json",
+        "sha256": "2f93c269b610a28f432bfec89c00eabc883cbe62eb0ffa23ef53d458b1402ded"
+      },
+      {
+        "path": "runtime-northstar-wordnav-01/n17-open.png",
+        "sha256": "f193a895bb7fde9286f1d607abdcc550083afd1561460b40c4ea1924ee5f48c9"
+      },
+      {
+        "path": "runtime-northstar-wordnav-01/n17-result1.png",
+        "sha256": "a015718cbef3ed203cc71763d16af457182be495e51a1dc803a1ed2c51ba4809"
+      }
+    ],
+    "limitations": [
+      "Synthetic document opened and saved in an isolated DOSBox copy on 2026-10-16.",
+      "Cursor byte offset is derived from the observed L/C status and one-byte cells in the named screenshots.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Compares cursor placement and unchanged carrier bytes; other command behavior is outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "20204f4e452054574f1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_word"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "2bff8727a3ce52b5f7c62cf2d1f56dd43dcb655ce55e2f629e6b97efbc93530c",
+    "cursor_byte": 2,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

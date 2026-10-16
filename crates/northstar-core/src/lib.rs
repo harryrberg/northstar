@@ -12,6 +12,7 @@ mod formatting;
 mod reformat;
 mod typing;
 mod utf8;
+mod word_navigation;
 pub use formatting::Formatting;
 pub use utf8::{UTF8_HISTORY_BYTES, UTF8_HISTORY_EDITS, Utf8Editor, Utf8Error, Utf8Snapshot};
 
@@ -263,6 +264,8 @@ pub enum Command {
     DocumentStart,
     NextCharacter,
     PreviousCharacter,
+    NextWord,
+    PreviousWord,
     NextLine,
     PreviousLine,
     DeleteCharacter,
@@ -393,6 +396,15 @@ impl Editor {
                     .last()
                 {
                     self.cursor = token.range.start;
+                }
+            }
+            Command::NextWord | Command::PreviousWord => {
+                if let Some(cursor) = word_navigation::target(
+                    &self.document,
+                    self.cursor,
+                    matches!(command, Command::NextWord),
+                )? {
+                    self.cursor = cursor;
                 }
             }
             Command::NextLine | Command::PreviousLine => {

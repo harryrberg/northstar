@@ -69,6 +69,8 @@ impl DocumentSession {
                     | Command::Reformat
                     | Command::NextLine
                     | Command::PreviousLine
+                    | Command::NextWord
+                    | Command::PreviousWord
                     | Command::DeleteCharacter
                     | Command::DeleteWord
                     | Command::DeleteLine
