@@ -30,6 +30,38 @@ impl Grid {
     }
 }
 
+pub(crate) struct Typography {
+    pub font: Font,
+    pub size: f32,
+    pub row_height: f32,
+    pub grid_width: f32,
+    pub origin_x: f32,
+    pub origin_y: f32,
+    pub column_width: f32,
+}
+
+pub(crate) fn typography(bounds: Size, classic_font: bool) -> Typography {
+    let grid = Grid::fit(bounds);
+    let row_height = grid.height;
+    Typography {
+        font: Font::with_name(if classic_font {
+            "Px437 IBM VGA 8x16"
+        } else {
+            "IBM Plex Mono"
+        }),
+        size: if classic_font {
+            row_height
+        } else {
+            row_height * PLEX_SIZE_RATIO
+        },
+        row_height,
+        grid_width: grid.width * COLUMNS,
+        origin_x: grid.x,
+        origin_y: grid.y,
+        column_width: grid.width,
+    }
+}
+
 pub struct Surface {
     pub screen: Screen,
     pub focused: bool,
@@ -47,11 +79,8 @@ impl canvas::Program<Message> for Surface {
     ) -> Vec<canvas::Geometry> {
         let mut frame = canvas::Frame::new(renderer, bounds.size());
         frame.fill_rectangle(Point::ORIGIN, bounds.size(), Color::BLACK);
-        let font = Font::with_name(if self.classic_font {
-            "Px437 IBM VGA 8x16"
-        } else {
-            "IBM Plex Mono"
-        });
+        let typography = typography(bounds.size(), self.classic_font);
+        let font = typography.font;
         let Grid {
             x,
             y,
@@ -77,11 +106,7 @@ impl canvas::Program<Message> for Surface {
                 );
             }
         }
-        let text_size = if self.classic_font {
-            h
-        } else {
-            h * PLEX_SIZE_RATIO
-        };
+        let text_size = typography.size;
         for (r, row) in self.screen.cells.iter().enumerate() {
             let mut column = 0;
             while column < row.len() {
@@ -134,10 +159,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn grid_fills_height_on_widescreen_in_both_font_modes() {
-        let grid = Grid::fit(Size::new(2048.0, 1152.0));
-        assert_eq!(grid.y, 0.0);
-        assert_eq!(grid.height * ROWS, 1152.0);
-        assert_eq!(PLEX_SIZE_RATIO * PLEX_ADVANCE, CELL_ASPECT);
+    fn grid_and_dialog_typography_share_both_font_metrics() {
+        for bounds in [Size::new(1120.0, 700.0), Size::new(2048.0, 1152.0)] {
+            let grid = Grid::fit(bounds);
+            let classic = typography(bounds, true);
+            let plex = typography(bounds, false);
+            assert_eq!(grid.y, 0.0);
+            assert_eq!(grid.height * ROWS, bounds.height);
+            assert_eq!(classic.row_height, grid.height);
+            assert_eq!(plex.row_height, grid.height);
+            assert_eq!(classic.grid_width, grid.width * COLUMNS);
+            assert_eq!(plex.grid_width, grid.width * COLUMNS);
+            assert_eq!(classic.size, grid.height);
+            assert!((plex.size * PLEX_ADVANCE - grid.width).abs() < 0.0001);
+        }
     }
 }

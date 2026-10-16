@@ -25,6 +25,17 @@ impl Default for Screen {
     }
 }
 impl Screen {
+    pub fn dialogue(command: &str) -> Self {
+        let mut screen = Self::default();
+        screen.cells[0].fill(Cell {
+            glyph: ' ',
+            attribute: 0x70,
+        });
+        screen.put(0, 0, command, 0x70);
+        let title = "OpenStar 4.0";
+        screen.put(0, (80 - title.len()) / 2, title, 0x70);
+        screen
+    }
     fn clear_find_header(&mut self) {
         for row in 1..=9 {
             self.cells[row].fill(Cell {
@@ -139,7 +150,11 @@ impl Screen {
     pub fn opening() -> Self {
         let mut s = Self::default();
         let title = "OpenStar 4.0";
-        s.put(0, (80 - title.len()) / 2, title, 15);
+        s.cells[0].fill(Cell {
+            glyph: ' ',
+            attribute: 0x70,
+        });
+        s.put(0, (80 - title.len()) / 2, title, 0x70);
         s.border(1, 10, " O P E N I N G   M E N U ");
         for (row, line) in [
             "     D open a document                    L change logged drive/directory",
@@ -163,6 +178,67 @@ impl Screen {
             7,
         );
         s
+    }
+    pub fn opening_help(&mut self) {
+        self.put(0, 0, "J", 0x70);
+        for row in 11..25 {
+            self.cells[row].fill(Cell {
+                glyph: ' ',
+                attribute: 7,
+            });
+        }
+        self.put(11, 0, "The Opening Menu above shows the main commands.", 7);
+        self.put(
+            12,
+            0,
+            "D opens a document; F2 and F3 work with UTF-8 files.",
+            7,
+        );
+        self.put(
+            14,
+            0,
+            "D, J, X and F2-F4 are currently available from this menu.",
+            7,
+        );
+        self.put(16, 0, "Press Esc to return to the Opening Menu.", 7);
+        self.put(21, 0, crate::APP_TITLE, 7);
+        self.cursor = None;
+    }
+    pub fn editor_help(&mut self, utf8: bool) {
+        for row in 11..23 {
+            self.cells[row].fill(Cell {
+                glyph: ' ',
+                attribute: 7,
+            });
+        }
+        self.put(12, 0, "The Edit Menu above shows the main editing keys.", 7);
+        self.put(
+            13,
+            0,
+            "^ means hold Control while pressing the following key.",
+            7,
+        );
+        if utf8 {
+            self.put(
+                15,
+                0,
+                "F2 starts a new UTF-8 document; F3 opens one from the menu.",
+                7,
+            );
+            self.put(16, 0, "Ctrl-Z undoes; Ctrl-Y redoes; Ctrl-K S saves.", 7);
+        } else {
+            self.put(15, 0, "Ctrl-S/D move left/right; Ctrl-E/X move up/down.", 7);
+            self.put(
+                16,
+                0,
+                "Ctrl-K S saves; Ctrl-K D saves and returns to the menu.",
+                7,
+            );
+        }
+        self.put(18, 0, "F11 toggles full screen; F12 changes the font.", 7);
+        self.put(20, 0, "Press Esc to return to your document.", 7);
+        self.put(22, 0, crate::APP_TITLE, 7);
+        self.cursor = None;
     }
     pub fn editor(
         projection: &Projection,
@@ -368,5 +444,40 @@ impl Screen {
                 ]
             })
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn help_keeps_the_dos_menu_and_replaces_only_the_work_area() {
+        let mut opening = Screen::opening();
+        let border = opening.cells[1][0].glyph;
+        opening.opening_help();
+        assert_eq!(opening.cells[0][0].glyph, 'J');
+        assert_eq!(opening.cells[0][0].attribute, 0x70);
+        assert_eq!(opening.cells[1][0].glyph, border);
+        assert_eq!(opening.cells[13][0].glyph, ' ');
+        assert_eq!(opening.cells[11][0].glyph, 'T');
+
+        let mut editor = Screen::default();
+        editor.put(1, 0, "MENU", 7);
+        editor.put(11, 0, "DOCUMENT", 7);
+        editor.put(24, 0, "STATUS", 7);
+        editor.editor_help(false);
+        assert_eq!(editor.cells[1][0].glyph, 'M');
+        assert_eq!(editor.cells[11][0].glyph, ' ');
+        assert_eq!(editor.cells[12][0].glyph, 'T');
+        assert_eq!(editor.cells[24][0].glyph, 'S');
+        assert!(editor.cursor.is_none());
+    }
+
+    #[test]
+    fn dialogue_uses_the_same_reverse_video_status_bar() {
+        let screen = Screen::dialogue("D");
+        assert_eq!(screen.cells[0][0].glyph, 'D');
+        assert!(screen.cells[0].iter().all(|cell| cell.attribute == 0x70));
     }
 }

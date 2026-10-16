@@ -2,7 +2,7 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 use iced::{
     Element, Event, Fill, Font, Subscription, Task, Theme, clipboard, keyboard,
-    widget::{button, canvas, column, container, row, text, text_input},
+    widget::{canvas, column, responsive, row, space, stack, text_input},
     window,
 };
 use openstar_desktop::{
@@ -730,6 +730,39 @@ impl App {
                     ) {
                         return self.update(Message::Cancel);
                     }
+                    if self.window_focused
+                        && let KeyPressed {
+                            key: Key::Character(key),
+                            modifiers,
+                            repeat: false,
+                            ..
+                        } = &event
+                        && !modifiers.control()
+                        && !modifiers.alt()
+                        && !modifiers.logo()
+                    {
+                        let message = match &self.dialog {
+                            Some(Dialog::Discard(_)) if key.eq_ignore_ascii_case("y") => {
+                                Some(Message::Discard)
+                            }
+                            Some(Dialog::Discard(_)) if key.eq_ignore_ascii_case("n") => {
+                                Some(Message::Cancel)
+                            }
+                            Some(Dialog::Recovery { .. }) if key.eq_ignore_ascii_case("r") => {
+                                Some(Message::Recover)
+                            }
+                            Some(Dialog::Recovery { .. }) if key.eq_ignore_ascii_case("l") => {
+                                Some(Message::SkipRecovery)
+                            }
+                            Some(Dialog::Recovery { .. }) if key.eq_ignore_ascii_case("d") => {
+                                Some(Message::DiscardRecovery)
+                            }
+                            _ => None,
+                        };
+                        if let Some(message) = message {
+                            return self.update(message);
+                        }
+                    }
                 } else if self.window_focused {
                     if self.opening {
                         if let KeyPressed {
@@ -978,43 +1011,159 @@ impl App {
         self.notice.clear();
         self.mark_recovery_changed();
     }
+    fn dialog_view(&self, viewport: iced::Size) -> Element<'_, Message> {
+        let surface::Typography {
+            font,
+            size,
+            row_height: cell_height,
+            grid_width,
+            origin_x,
+            origin_y,
+            column_width,
+        } = surface::typography(viewport, self.classic_font);
+        let dialog = self
+            .dialog
+            .as_ref()
+            .expect("dialog view requires an open dialog");
+        let command = match dialog {
+            Dialog::Path {
+                kind: PathKind::OpenLegacy,
+                ..
+            } => "D",
+            Dialog::Path {
+                kind: PathKind::OpenUtf8,
+                ..
+            } => "F3",
+            Dialog::Path {
+                kind: PathKind::SaveAs { .. },
+                ..
+            } => "K",
+            Dialog::Discard(_) => "?",
+            Dialog::Recovery { .. } => "R",
+            Dialog::Help => unreachable!("help uses the screen grid"),
+        };
+        let mut screen = Screen::dialogue(command);
+        match dialog {
+            Dialog::Path { kind, error, .. } => {
+                let (description, prompt) = match kind {
+                    PathKind::OpenLegacy => (
+                        "Type the name of the document to create or change.",
+                        "Document to open?",
+                    ),
+                    PathKind::OpenUtf8 => (
+                        "Type the name of the UTF-8 document to open or create.",
+                        "Document to open?",
+                    ),
+                    PathKind::SaveAs { .. } => (
+                        "Save a copy under a new name. Existing files stay unchanged.",
+                        "New file name?",
+                    ),
+                };
+                screen.put(2, 0, description, 7);
+                screen.put(3, 0, "Include the drive and directory if needed.", 7);
+                screen.put(8, 0, prompt, 7);
+                screen.put(9, 0, "Enter done    Esc cancel    Backspace erase left", 7);
+                screen.put(10, 0, "Ctrl+A select all    Ctrl+V paste", 7);
+                screen.put(13, 0, error, 7);
+            }
+            Dialog::Discard(_) => {
+                screen.put(3, 0, "The document has unsaved changes.", 7);
+                screen.put(
+                    5,
+                    0,
+                    "Save your work before leaving, or discard these changes.",
+                    7,
+                );
+                screen.put(8, 0, "Discard changes (Y/N)?", 7);
+                screen.put(10, 0, "Y discard    N or Esc keep editing", 7);
+            }
+            Dialog::Recovery { candidate, error } => {
+                screen.put(
+                    2,
+                    0,
+                    if candidate.is_legacy() {
+                        "An unsaved document copy is available."
+                    } else {
+                        "An unsaved UTF-8 draft is available."
+                    },
+                    7,
+                );
+                let path = candidate
+                    .path
+                    .as_ref()
+                    .map(|path| path.display().to_string())
+                    .unwrap_or_else(|| "Untitled document".into());
+                for (line, chunk) in path
+                    .chars()
+                    .collect::<Vec<_>>()
+                    .chunks(79)
+                    .take(3)
+                    .enumerate()
+                {
+                    screen.put(4 + line, 0, &chunk.iter().collect::<String>(), 7);
+                }
+                if path.chars().count() > 79 * 3 {
+                    screen.put(6, 76, "...", 7);
+                }
+                screen.put(
+                    8,
+                    0,
+                    "Restore the copy without writing the original file?",
+                    7,
+                );
+                screen.put(10, 0, "R restore    L later    D discard copy", 7);
+                screen.put(
+                    12,
+                    0,
+                    "A changed or missing original opens without a file name.",
+                    7,
+                );
+                screen.put(14, 0, error, 7);
+            }
+            Dialog::Help => unreachable!("help uses the screen grid"),
+        }
+        let canvas = canvas(surface::Surface {
+            screen,
+            focused: self.window_focused,
+            classic_font: self.classic_font,
+        })
+        .width(Fill)
+        .height(Fill);
+        if let Dialog::Path { value, .. } = dialog {
+            let input = text_input("", value)
+                .id("document-path")
+                .on_input(Message::PathChanged)
+                .on_submit(Message::Submit)
+                .font(font)
+                .size(size)
+                .line_height(iced::Pixels(cell_height))
+                .padding(0)
+                .width(grid_width - 19.0 * column_width)
+                .style(|_, _| iced::widget::text_input::Style {
+                    background: iced::Background::Color(iced::Color::BLACK),
+                    border: iced::Border::default(),
+                    icon: iced::Color::WHITE,
+                    placeholder: iced::Color::from_rgb8(170, 170, 170),
+                    value: iced::Color::from_rgb8(170, 170, 170),
+                    selection: iced::Color::from_rgb8(170, 170, 170),
+                });
+            let overlay = column![
+                space().height(origin_y + 8.0 * cell_height),
+                row![space().width(origin_x + 18.0 * column_width), input]
+            ];
+            stack![canvas, overlay].width(Fill).height(Fill).into()
+        } else {
+            canvas.into()
+        }
+    }
+
     fn view(&self) -> Element<'_, Message> {
-        if let Some(dialog) = &self.dialog {
-            let content:Element<'_,Message>=match dialog {
-                Dialog::Path{kind,value,error}=>{
-                    let (heading,hint)=match kind{
-                        PathKind::OpenLegacy=>("Name of legacy file to edit?","Full path; a missing file starts a new legacy document. Read limit: 1 MiB."),
-                        PathKind::OpenUtf8=>("Name of UTF-8 file to edit?","Full path; a missing file starts a new UTF-8 document. Read limit: 1 MiB."),
-                        PathKind::SaveAs{..}=>("Name of new file?","Save As creates a new file. Existing files are not overwritten."),
-                    };
-                    column![text(heading).size(24),text(hint),text_input("",value).id("document-path").on_input(Message::PathChanged).on_submit(Message::Submit).padding(8),
-                        text(error),row![button("Enter: continue").on_press(Message::Submit),button("Esc: cancel").on_press(Message::Cancel)].spacing(12)].spacing(20).into()
-                },
-                Dialog::Discard(_)=>column![text("Unsaved changes").size(24),text("Keep editing to save, or discard your changes and continue."),
-                    row![button("Keep editing").on_press(Message::Cancel),button("Discard changes").on_press(Message::Discard)].spacing(18)].spacing(24).into(),
-                Dialog::Recovery{candidate,error}=>column![text(if candidate.is_legacy() { "RECOVER UNSAVED LEGACY COPY" } else { "RECOVER UNSAVED UTF-8 DRAFT" }).size(24),
-                    text(candidate.path.as_ref().map(|path|path.display().to_string()).unwrap_or_else(||"Untitled document".into())),
-                    text("Restore the separate copy without writing the original. If the original changed or disappeared, the copy opens without a file name and needs Save As."),
-                    text(error),
-                    row![button("Restore copy").on_press(Message::Recover),button("Later").on_press(Message::SkipRecovery),button("Discard copy").on_press(Message::DiscardRecovery)].spacing(18)].spacing(20).into(),
-                Dialog::Help=>column![text(format!("{} HELP", APP_TITLE.to_uppercase())).size(24),
-                    text(if self.session.is_utf8() {
-                        "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-Z undoes; Ctrl-Y or Ctrl-Shift-Z redoes. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
-                    } else {
-                        "Legacy: Ctrl-S/Ctrl-D move by character, Ctrl-A/Ctrl-F by word, and Ctrl-E/Ctrl-X by line. Ctrl-Q F finds text; Ctrl-Q A replaces words; Ctrl-L repeats either. Backspace deletes left; Delete or Ctrl-G deletes under the cursor. Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text. Ctrl-K B/K mark a block; Ctrl-K C copies it, Ctrl-K V moves it, and Ctrl-K Y deletes it. Move requires source and target on the same ordinary ASCII line, outside the block. Delete requires the cursor at or after the end mark and may cross one hard line break. A block ending one byte before EOF is excluded. Ctrl-Q R starts document; Ctrl-V toggles insert; Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
-                    }),
-                    text("F11 toggles full screen; F12 changes font. The opening menu uses D for legacy files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, F4 for recovery, and X to exit."),
-                    text(if self.session.is_utf8() {
-                        "Modern UTF-8 keeps exact text bytes. The screen wraps words without inserting line breaks. Movement and deletion follow graphemes. Wide or unsupported glyphs show a square placeholder. A separate recovery copy captures unsaved edits. Overwrite remains unfinished."
-                    } else {
-                        "Legacy typing supports printable ASCII only. Backspace, Delete, Ctrl-G, vertical movement and other editing commands have bounded DOS-checked profiles. A separate recovery copy captures unsaved edits. Norwegian letters, IME, clipboard text, other block operations and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
-                    }),
-                    text("The display is 80x25. Legacy comparison covers selected DOS screen states only. '?' page numbers are unknown; square cells are unrendered tokens."),
-                    button("Esc: back").on_press(Message::Cancel)].spacing(22).into(),
-            };
-            return container(container(content).max_width(900).padding(30))
-                .center(Fill)
-                .into();
+        if self
+            .dialog
+            .as_ref()
+            .is_some_and(|dialog| !matches!(dialog, Dialog::Help))
+        {
+            return responsive(|viewport| self.dialog_view(viewport)).into();
         }
         let mut screen = if self.opening {
             let mut screen = Screen::opening();
@@ -1058,7 +1207,14 @@ impl App {
                 ),
             }
         };
-        if let Some(find) = &self.find_dialog {
+        let show_help = matches!(self.dialog, Some(Dialog::Help));
+        if show_help {
+            if self.opening {
+                screen.opening_help();
+            } else {
+                screen.editor_help(self.session.is_utf8());
+            }
+        } else if let Some(find) = &self.find_dialog {
             match find {
                 FindDialog::Term(term) => screen.find_prompt(term, None),
                 FindDialog::Options { term, flags } => screen.find_prompt(term, Some(flags)),
@@ -1085,13 +1241,13 @@ impl App {
                 screen.put(9, 3, &self.notice, 7);
             }
         }
-        if self.find_dialog.is_none() && !self.notice.is_empty() {
+        if !show_help && self.find_dialog.is_none() && !self.notice.is_empty() {
             screen.cells[22].fill(openstar_desktop::screen::Cell {
                 glyph: ' ',
                 attribute: 0x70,
             });
             screen.put(22, 0, &self.notice, 0x70);
-        } else if self.projection.hidden_tail_bytes > 0 && !self.opening {
+        } else if !show_help && self.projection.hidden_tail_bytes > 0 && !self.opening {
             screen.put(
                 22,
                 0,
@@ -1155,6 +1311,31 @@ mod tests {
             text: text.map(Into::into),
             repeat: false,
         })
+    }
+
+    #[test]
+    fn help_and_discard_prompts_keep_keyboard_navigation() {
+        let mut app = App::new_with_recovery(None, None);
+        app.window_focused = true;
+        let id = window::Id::unique();
+        let _ = app.update(Message::Event(
+            key(Key::Character("j".into()), false, Some("j")),
+            id,
+        ));
+        assert!(matches!(app.dialog, Some(Dialog::Help)));
+        let _ = app.view();
+        let _ = app.update(Message::Event(
+            key(Key::Named(Named::Escape), false, None),
+            id,
+        ));
+        assert!(app.dialog.is_none());
+
+        app.dialog = Some(Dialog::Discard(Next::Opening));
+        let _ = app.update(Message::Event(
+            key(Key::Character("n".into()), false, Some("n")),
+            id,
+        ));
+        assert!(app.dialog.is_none());
     }
 
     #[test]
