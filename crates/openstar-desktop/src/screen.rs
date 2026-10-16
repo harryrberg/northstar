@@ -138,7 +138,7 @@ impl Screen {
     }
     pub fn opening() -> Self {
         let mut s = Self::default();
-        let title = crate::APP_TITLE;
+        let title = "OpenStar 4.0";
         s.put(0, (80 - title.len()) / 2, title, 15);
         s.border(1, 10, " O P E N I N G   M E N U ");
         for (row, line) in [

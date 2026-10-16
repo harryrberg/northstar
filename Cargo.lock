@@ -1837,7 +1837,7 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "openstar-cli"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "openstar-core",
  "serde",
@@ -1847,7 +1847,7 @@ dependencies = [
 
 [[package]]
 name = "openstar-core"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "serde",
  "unicode-segmentation",
@@ -1855,7 +1855,7 @@ dependencies = [
 
 [[package]]
 name = "openstar-desktop"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "iced",
  "openstar-core",
