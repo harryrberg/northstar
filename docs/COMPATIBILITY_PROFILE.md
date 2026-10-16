@@ -69,6 +69,10 @@ Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved 
 
 Ten synthetic scenarios compare physical Backspace and Delete with retained DOS screenshots and saved bytes. Backspace removes the previous byte and moves the cursor back; Delete removes the byte under the cursor and leaves the cursor in place. Both can join an ordinary hard break. Document boundaries, Insert-off mode and high-bit text are included. The desktop routes both keys through the core; Delete shares Ctrl-G's deletion command. [Observations, source identities, DOS reopen check and limits](BACKSPACE_DELETE.md) define the scope.
 
+## Block marks and copy: ws4-block-copy-v1
+
+Eight synthetic scenarios compare Ctrl-K B, Ctrl-K K and Ctrl-K C against retained DOS screenshots and saved bytes. The marks define a half-open byte range. Copy inserts those bytes at the cursor, leaves the cursor in place and retains the selection for repeated copying. Copy before and inside the selection, an ordinary hard CRLF, and Insert-off mode are covered. Incomplete or empty blocks are rejected atomically. [Observed cases, source identities, DOS reopen check and limits](BLOCK_COPY.md) define the scope. Block movement, deletion, hiding, and later editing while marked remain unqualified.
+
 ## Ctrl-Y and Ctrl-U: ws4-line-erasure-v1
 
 Fourteen synthetic scenarios compare whole-line deletion and reuse of the deleted-line buffer with retained DOS runs. Ctrl-Y deletes an ordinary physical line, including its hard CRLF when present, and moves to the line start. Ctrl-U inserts a copy of the buffer at the current cursor, leaves the cursor and Insert mode unchanged, and keeps the buffer for later use. Ctrl-G does not fill or clear this buffer in the observed sequences. [Cases, source identities, interoperability check, and limits](ERASURE.md) define the scope. The core owns the buffer; CLI and desktop adapters select commands without reproducing its rules.

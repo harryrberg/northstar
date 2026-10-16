@@ -73,6 +73,9 @@ impl DocumentSession {
                     | Command::PreviousWord
                     | Command::DeleteCharacter
                     | Command::Backspace
+                    | Command::MarkBlockBegin
+                    | Command::MarkBlockEnd
+                    | Command::CopyBlock
                     | Command::DeleteWord
                     | Command::DeleteLine
                     | Command::UneraseLine

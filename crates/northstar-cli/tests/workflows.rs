@@ -94,6 +94,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("word-")
                 || name.starts_with("find-")
                 || name.starts_with("backdel-")
+                || name.starts_with("block-")
         })
         .collect();
     paths.sort();
@@ -119,6 +120,12 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
         for field in ["cursor_byte", "insert", "formatting"] {
             assert_eq!(report["compared_fields"][field], true);
             assert_eq!(report["state"][field], spec["expected"][field]);
+        }
+        if spec["profile"] == "ws4-block-copy-v1" {
+            for field in ["block_begin", "block_end"] {
+                assert_eq!(report["compared_fields"][field], true);
+                assert_eq!(report["state"][field], spec["expected"][field]);
+            }
         }
         assert_eq!(report["target_executed"], false);
     }

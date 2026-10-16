@@ -7,6 +7,7 @@
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, ops::Range};
 
+mod block;
 mod erasure;
 mod formatting;
 mod reformat;
@@ -273,6 +274,9 @@ pub enum Command {
     PreviousLine,
     DeleteCharacter,
     Backspace,
+    MarkBlockBegin,
+    MarkBlockEnd,
+    CopyBlock,
     DeleteWord,
     DeleteLine,
     UneraseLine,
@@ -321,6 +325,8 @@ pub struct Snapshot {
     pub modified: bool,
     pub active_bytes: usize,
     pub formatting: Formatting,
+    pub block_begin: Option<usize>,
+    pub block_end: Option<usize>,
 }
 
 /// Owns cursor, modes, and document mutation; adapters must not duplicate these.
@@ -333,6 +339,7 @@ pub struct Editor {
     erased_text: Option<erasure::ErasedText>,
     find: Option<search::FindSpec>,
     last_find_result: Option<bool>,
+    block: block::Marks,
 }
 
 impl Editor {
@@ -364,6 +371,7 @@ impl Editor {
             erased_text: None,
             find: None,
             last_find_result: None,
+            block: block::Marks::default(),
         })
     }
 
@@ -394,6 +402,8 @@ impl Editor {
             modified: self.document.bytes != self.original,
             active_bytes: self.document.active_end(),
             formatting: self.formatting,
+            block_begin: self.block.begin,
+            block_end: self.block.end,
         }
     }
 
@@ -460,6 +470,20 @@ impl Editor {
                     self.cursor,
                     self.formatting,
                 )?);
+            }
+            Command::MarkBlockBegin => {
+                block::mark(&self.document, self.cursor, self.formatting)?;
+                self.block.begin = Some(self.cursor);
+            }
+            Command::MarkBlockEnd => {
+                block::mark(&self.document, self.cursor, self.formatting)?;
+                self.block.end = Some(self.cursor);
+            }
+            Command::CopyBlock => {
+                let (edit, marks) =
+                    block::copy(&self.document, self.cursor, self.formatting, self.block)?;
+                self.commit_edit(edit);
+                self.block = marks;
             }
             Command::DeleteWord => {
                 if let Some((edit, erased)) =
@@ -544,6 +568,8 @@ impl Editor {
             Edit::Replace { active, cursor } => {
                 self.replace_active(active);
                 self.cursor = cursor;
+                // Other editing commands have no measured mark-adjustment rule.
+                self.block = block::Marks::default();
             }
         }
     }

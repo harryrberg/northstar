@@ -263,6 +263,9 @@ impl Screen {
                         continue;
                     }
                     s.cells[screen_row][c - left].glyph = cell.glyph;
+                    if cell.selected {
+                        s.cells[screen_row][c - left].attribute = 0x70;
+                    }
                 }
                 if let Some(last) = cells.last() {
                     indicator = match last.glyph {
@@ -274,6 +277,11 @@ impl Screen {
                 }
             }
             s.put(screen_row, 79, &indicator.to_string(), 7);
+            if !utf8 && projection.block_end_row == Some(document_row) {
+                s.put(screen_row, 79, "K", 7);
+            } else if !utf8 && projection.block_begin_row == Some(document_row) {
+                s.put(screen_row, 79, "B", 7);
+            }
         }
         s.cursor = Some((11 + row - top, column - left));
         if utf8 {

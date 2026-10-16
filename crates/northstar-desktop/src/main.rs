@@ -836,13 +836,13 @@ impl App {
                     text(if self.session.is_utf8() {
                         "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-Z undoes; Ctrl-Y or Ctrl-Shift-Z redoes. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {
-                        "WordStar: Ctrl-S/Ctrl-D move by character, Ctrl-A/Ctrl-F by word, and Ctrl-E/Ctrl-X by line. Ctrl-Q F finds text; Ctrl-L repeats. Backspace deletes left; Delete or Ctrl-G deletes under the cursor. Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text. Ctrl-Q R starts document; Ctrl-V toggles insert; Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
+                        "WordStar: Ctrl-S/Ctrl-D move by character, Ctrl-A/Ctrl-F by word, and Ctrl-E/Ctrl-X by line. Ctrl-Q F finds text; Ctrl-L repeats. Backspace deletes left; Delete or Ctrl-G deletes under the cursor. Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text. Ctrl-K B marks block start, Ctrl-K K marks its end, and Ctrl-K C copies it at the cursor. Ctrl-Q R starts document; Ctrl-V toggles insert; Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
                     }),
                     text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, F4 for recovery, and X to exit."),
                     text(if self.session.is_utf8() {
                         "Modern UTF-8 keeps exact text bytes. The screen wraps words without inserting line breaks. Movement and deletion follow graphemes. Wide or unsupported glyphs show a square placeholder. A separate recovery copy captures unsaved edits. Overwrite remains unfinished."
                     } else {
-                        "Legacy typing supports printable ASCII only. Backspace, Delete, Ctrl-G, vertical movement and other editing commands have bounded DOS-checked profiles. Norwegian letters, IME, clipboard text, blocks and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
+                        "Legacy typing supports printable ASCII only. Backspace, Delete, Ctrl-G, vertical movement and other editing commands have bounded DOS-checked profiles. Norwegian letters, IME, clipboard text, other block operations and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
                     }),
                     text("The display is 80x25. Legacy comparison covers selected DOS screen states only. '?' page numbers are unknown; square cells are unrendered tokens."),
                     button("Esc: back").on_press(Message::Cancel)].spacing(22).into(),

@@ -50,6 +50,8 @@ struct Expected {
     insert: Option<bool>,
     formatting: Option<Formatting>,
     find_found: Option<bool>,
+    block_begin: Option<usize>,
+    block_end: Option<usize>,
 }
 
 pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
@@ -68,6 +70,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-word-erasure-v1"
                 | "ws4-ascii-find-v1"
                 | "ws4-backspace-delete-v1"
+                | "ws4-block-copy-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
@@ -143,6 +146,35 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 .any(|command| matches!(command, Command::Backspace)))
     {
         return Err("Backspace requires its declared profile".into());
+    }
+    let block_copy = |command: &Command| {
+        matches!(
+            command,
+            Command::MarkBlockBegin
+                | Command::MarkBlockEnd
+                | Command::CopyBlock
+                | Command::NextCharacter
+                | Command::PreviousCharacter
+                | Command::DocumentStart
+                | Command::ToggleInsert
+        )
+    };
+    if (spec.profile == "ws4-block-copy-v1"
+        && spec.commands.iter().any(|command| !block_copy(command)))
+        || (spec.profile != "ws4-block-copy-v1"
+            && spec.commands.iter().any(|command| {
+                matches!(
+                    command,
+                    Command::MarkBlockBegin | Command::MarkBlockEnd | Command::CopyBlock
+                )
+            }))
+    {
+        return Err("block commands require their declared profile".into());
+    }
+    if spec.profile == "ws4-block-copy-v1"
+        && (spec.expected.block_begin.is_none() || spec.expected.block_end.is_none())
+    {
+        return Err("block copy profile requires expected mark positions".into());
     }
     let line_erasure = |command: &Command| {
         matches!(
@@ -263,6 +295,20 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
     }
     if spec
         .expected
+        .block_begin
+        .is_some_and(|x| Some(x) != snapshot.block_begin)
+    {
+        mismatches.push("block_begin");
+    }
+    if spec
+        .expected
+        .block_end
+        .is_some_and(|x| Some(x) != snapshot.block_end)
+    {
+        mismatches.push("block_end");
+    }
+    if spec
+        .expected
         .find_found
         .is_some_and(|x| Some(x) != editor.last_find_result())
     {
@@ -304,7 +350,7 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
         "state": snapshot,
         "steps": steps,
         "find_found": editor.last_find_result(),
-        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some(), "find_found": spec.expected.find_found.is_some()},
+        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some(), "find_found": spec.expected.find_found.is_some(), "block_begin": spec.expected.block_begin.is_some(), "block_end": spec.expected.block_end.is_some()},
         "output_path": output,
         "target_executed": false,
         "provenance": spec.provenance,

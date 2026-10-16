@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-block-copy-v1",
+  "id": "block-copy-repeat-inside-source",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-block-04/block-inputs.json",
+        "sha256": "e00f95b460c96e717f06e12b02a417223bdf040878d5719ddc9155097add6387"
+      },
+      {
+        "path": "runtime-northstar-block-04/events.json",
+        "sha256": "1f2c2c9226760e629d8399c45f76a5934fdd985ccdd57a560b049bc1b4bcf3b1"
+      },
+      {
+        "path": "runtime-northstar-block-04/b10-copy-twice.png",
+        "sha256": "5bf15cf2422fdac6a4597c8ae04a45ddea7eb977547e76d4fac912f297a97aaf"
+      },
+      {
+        "path": "runtime-northstar-block-04/files/BLK10.DOC",
+        "sha256": "acebaf25366741b21de62298bcb9130795da737e2a6ae9aa3aa66228058f0e6a"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document in an isolated DOSBox copy on 2026-10-16.",
+      "The action log records physical Ctrl-K B, Ctrl-K K, Ctrl-K C, navigation and save.",
+      "Cursor and mark offsets are derived from observed one-byte cells and selected highlight.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Other control cells, soft/page breaks, long lines, dot commands, and unrelated edits while marked remain outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41424344451a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_begin"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_end"
+    },
+    {
+      "command": "previous_character"
+    },
+    {
+      "command": "previous_character"
+    },
+    {
+      "command": "copy_block"
+    },
+    {
+      "command": "copy_block"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "acebaf25366741b21de62298bcb9130795da737e2a6ae9aa3aa66228058f0e6a",
+    "cursor_byte": 2,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    },
+    "block_begin": 1,
+    "block_end": 13
+  }
+}

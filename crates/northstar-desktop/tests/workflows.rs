@@ -77,6 +77,14 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "backdel-backspace-join",
         "backdel-delete-middle",
         "backdel-delete-join",
+        "block-copy-end",
+        "block-copy-repeat-end",
+        "block-copy-hard-break",
+        "block-copy-before-source",
+        "block-copy-inside-source",
+        "block-copy-insert-off",
+        "block-copy-repeat-before-source",
+        "block-copy-repeat-inside-source",
     ] {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../tests/oracles")
@@ -151,6 +159,25 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                         false,
                     ),
                 ),
+                Command::MarkBlockBegin | Command::MarkBlockEnd | Command::CopyBlock => {
+                    let key = match command {
+                        Command::MarkBlockBegin => "b",
+                        Command::MarkBlockEnd => "k",
+                        Command::CopyBlock => "c",
+                        _ => unreachable!(),
+                    };
+                    dispatch(&mut keyboard, &mut session, ctrl("k", false));
+                    dispatch(
+                        &mut keyboard,
+                        &mut session,
+                        press(
+                            Key::Character(key.into()),
+                            Modifiers::empty(),
+                            Some(key),
+                            false,
+                        ),
+                    );
+                }
                 Command::DeleteWord => dispatch(&mut keyboard, &mut session, ctrl("t", false)),
                 Command::DeleteLine => dispatch(&mut keyboard, &mut session, ctrl("y", false)),
                 Command::UneraseLine => dispatch(&mut keyboard, &mut session, ctrl("u", false)),
@@ -171,6 +198,16 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
             session.editor.snapshot().insert,
             expected["insert"].as_bool().unwrap()
         );
+        if case["profile"] == "ws4-block-copy-v1" {
+            assert_eq!(
+                session.editor.snapshot().block_begin,
+                Some(expected["block_begin"].as_u64().unwrap() as usize)
+            );
+            assert_eq!(
+                session.editor.snapshot().block_end,
+                Some(expected["block_end"].as_u64().unwrap() as usize)
+            );
+        }
         let destination = scratch.0.join(format!("{name}-output.doc"));
         session.save_as(&destination).unwrap();
         assert!(!session.editor.snapshot().modified);
@@ -212,6 +249,37 @@ fn legacy_backspace_and_delete_session_save_and_reopen() {
         reopened.editor.document().bytes(),
         fs::read(&destination).unwrap()
     );
+}
+
+#[test]
+fn selected_block_uses_reverse_video_and_end_marker() {
+    let mut session = Session::default();
+    session
+        .editor
+        .apply(&Command::InsertAscii {
+            text: "ABCD".into(),
+        })
+        .unwrap();
+    session.editor.apply(&Command::DocumentStart).unwrap();
+    session.editor.apply(&Command::NextCharacter).unwrap();
+    session.editor.apply(&Command::MarkBlockBegin).unwrap();
+    let begin_screen = Screen::editor(
+        &Projection::new(&session.editor),
+        &session.editor.snapshot(),
+        "TEST.DOC",
+        None,
+    );
+    assert_eq!(begin_screen.cells[11][79].glyph, 'B');
+    session.editor.apply(&Command::NextCharacter).unwrap();
+    session.editor.apply(&Command::NextCharacter).unwrap();
+    session.editor.apply(&Command::MarkBlockEnd).unwrap();
+    let projection = Projection::new(&session.editor);
+    let screen = Screen::editor(&projection, &session.editor.snapshot(), "TEST.DOC", None);
+    assert_eq!(screen.cells[11][0].attribute, 7);
+    assert_eq!(screen.cells[11][1].attribute, 0x70);
+    assert_eq!(screen.cells[11][2].attribute, 0x70);
+    assert_eq!(screen.cells[11][3].attribute, 7);
+    assert_eq!(screen.cells[11][79].glyph, 'K');
 }
 
 #[test]

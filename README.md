@@ -6,7 +6,7 @@ Its behavior is checked against binary analysis, controlled runs of the DOS orig
 
 ## Current status
 
-The repository contains a portable Rust editing core, a comparison CLI, and a runnable Windows desktop prototype. The desktop view reproduces the observed 80-column, 25-row DOS screen on black. Its initial legacy editing flow has been checked against a retained WordStar 4.0 session, including a file saved in NorthStar and reopened in the DOS original. Ctrl-E/Ctrl-X move through ordinary physical lines, Ctrl-A/Ctrl-F move by word on a line, and Ctrl-Q F/Ctrl-L search plain ASCII, and Backspace/Delete erase characters under separate DOS-checked profiles. A separate UTF-8 mode supports a bounded modern writing flow. Many WordStar commands and author workflow features remain unimplemented.
+The repository contains a portable Rust editing core, a comparison CLI, and a runnable Windows desktop prototype. The desktop view reproduces the observed 80-column, 25-row DOS screen on black. Its initial legacy editing flow has been checked against a retained WordStar 4.0 session, including a file saved in NorthStar and reopened in the DOS original. Ctrl-E/Ctrl-X move through ordinary physical lines, Ctrl-A/Ctrl-F move by word, Ctrl-Q F/Ctrl-L search plain ASCII, Backspace/Delete erase characters, and Ctrl-K B/K/C mark and copy blocks under separate DOS-checked profiles. A separate UTF-8 mode supports a bounded modern writing flow. Many WordStar commands and author workflow features remain unimplemented.
 
 ## Build and try the prototype
 
@@ -25,9 +25,9 @@ cargo run -p northstar-desktop -- path/to/document.doc
 
 Replay compares local Rust behavior with declared retained DOS observations. It does not execute the original program. Add `--output NEW_FILE` to write the scenario result to a new path; existing files are never overwritten. Inspection is read-only.
 
-The desktop prototype accepts an optional WordStar document path. Without one, press D at the opening menu and enter a path. F2 starts a new UTF-8 document, and F3 opens a UTF-8 file; `--utf8 FILE` explicitly selects that mode from the command line. UTF-8 mode supports Norwegian text, paste, visual word wrap, grapheme-aware movement and deletion, Enter, saving, undo/redo, and separate recovery copies of unsaved drafts. F4 on the opening menu finds a recovery copy. In UTF-8 mode, Up/Down or Ctrl-E/Ctrl-X move through visual rows without changing the file's line endings. In the legacy editor, Ctrl-S/Ctrl-D move left and right, Ctrl-A/Ctrl-F move by word, Ctrl-E/Ctrl-X move between physical lines, Backspace deletes the previous character, Delete or Ctrl-G deletes the current character, Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to the current path, Ctrl-K D saves and returns to the menu, and Ctrl-Shift-S saves a copy to a new path. Saving an existing file retains its previous bytes in a backup and refuses to overwrite a file changed outside NorthStar. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
+The desktop prototype accepts an optional WordStar document path. Without one, press D at the opening menu and enter a path. F2 starts a new UTF-8 document, and F3 opens a UTF-8 file; `--utf8 FILE` explicitly selects that mode from the command line. UTF-8 mode supports Norwegian text, paste, visual word wrap, grapheme-aware movement and deletion, Enter, saving, undo/redo, and separate recovery copies of unsaved drafts. F4 on the opening menu finds a recovery copy. In UTF-8 mode, Up/Down or Ctrl-E/Ctrl-X move through visual rows without changing the file's line endings. In the legacy editor, Ctrl-S/Ctrl-D move left and right, Ctrl-A/Ctrl-F move by word, Ctrl-E/Ctrl-X move between physical lines, Backspace deletes the previous character, Delete or Ctrl-G deletes the current character, Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text, Ctrl-K B marks a block start, Ctrl-K K marks its end, Ctrl-K C copies it, Ctrl-Q R returns to the start, Ctrl-V toggles insert mode, Ctrl-B reformats the current paragraph, and Enter splits a line. Ctrl-K S saves to the current path, Ctrl-K D saves and returns to the menu, and Ctrl-Shift-S saves a copy to a new path. Saving an existing file retains its previous bytes in a backup and refuses to overwrite a file changed outside NorthStar. F11 toggles full screen. F12 switches between the default IBM Plex Mono and an optional VGA font. [Windows prototype controls, verification, and limits](docs/WINDOWS_PROTOTYPE.md).
 
-An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.14-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
+An unsigned, per-user [Windows MSI prototype](releases/windows/NorthStar-Prototype-0.1.15-x64.msi) is available. Its [build and test instructions](packaging/windows/README.md) describe what it installs and its current limits.
 
 In legacy mode, Ctrl-Q F asks for a search term and W, U, or B options. Ctrl-L repeats the search. Wildcards, G, and replacement are not yet supported.
 
@@ -68,6 +68,8 @@ Ctrl-Y/Ctrl-U add 14 comparisons for line deletion, reusable unerase content, cu
 
 Ctrl-T adds 27 comparisons for word deletion and the shared Ctrl-U buffer. [Word erasure rules and evidence](docs/WORD_ERASURE.md).
 
+Ctrl-K B/K/C add eight comparisons for block marking and copying. [Block copy rules and evidence](docs/BLOCK_COPY.md).
+
 ## Project documents
 
 - [Architecture decision](docs/decisions/0001-rust-windows-first.md)
@@ -82,6 +84,7 @@ Ctrl-T adds 27 comparisons for word deletion and the shared Ctrl-U buffer. [Word
 - [WordStar literal search](docs/FIND.md)
 - [WordStar character deletion](docs/DELETION.md)
 - [WordStar Backspace and Delete](docs/BACKSPACE_DELETE.md)
+- [WordStar block copy](docs/BLOCK_COPY.md)
 - [WordStar line erasure](docs/ERASURE.md)
 - [WordStar word erasure](docs/WORD_ERASURE.md)
 - [UTF-8 draft recovery](docs/RECOVERY.md)

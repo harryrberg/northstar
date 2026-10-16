@@ -12,6 +12,7 @@ pub const UTF8_TEXT_COLUMNS: usize = 78;
 pub struct Cell {
     pub glyph: char,
     pub marker: bool,
+    pub selected: bool,
 }
 
 #[derive(Debug, Default)]
@@ -20,6 +21,8 @@ pub struct Projection {
     pub cursor: (usize, usize),
     pub hidden_tail_bytes: usize,
     pub page_unknown_before_cursor: bool,
+    pub block_end_row: Option<usize>,
+    pub block_begin_row: Option<usize>,
     utf8_stops: Vec<Vec<usize>>,
 }
 
@@ -65,6 +68,7 @@ impl Utf8Row {
         self.cells.push(Cell {
             glyph: '↵',
             marker: true,
+            selected: false,
         });
     }
 }
@@ -85,6 +89,7 @@ impl Projection {
                 rows.last_mut().unwrap().cells.push(Cell {
                     glyph: '¶',
                     marker: true,
+                    selected: false,
                 });
                 rows.push(Utf8Row::new(start + grapheme.len()));
                 continue;
@@ -112,6 +117,7 @@ impl Projection {
             row.cells.push(Cell {
                 glyph,
                 marker: glyph == '□',
+                selected: false,
             });
             row.stops.push(start + grapheme.len());
             row.break_after.push(matches!(grapheme, " " | "\t"));
@@ -145,11 +151,21 @@ impl Projection {
     /// Each non-break token gets one cell, including explicit placeholders.
     pub fn new(editor: &Editor) -> Self {
         let snapshot = editor.snapshot();
+        let selected = snapshot
+            .block_begin
+            .zip(snapshot.block_end)
+            .filter(|(begin, end)| begin < end);
         let mut result = Self {
             rows: vec![vec![]],
             ..Self::default()
         };
         for token in editor.document().tokens() {
+            if token.range.start == snapshot.block_begin.unwrap_or(usize::MAX) {
+                result.block_begin_row = Some(result.rows.len() - 1);
+            }
+            if token.range.start == snapshot.block_end.unwrap_or(usize::MAX) {
+                result.block_end_row = Some(result.rows.len() - 1);
+            }
             if token.range.start == snapshot.cursor_byte {
                 result.cursor = (result.rows.len() - 1, result.rows.last().unwrap().len());
             }
@@ -174,10 +190,14 @@ impl Projection {
                 TokenKind::Text { value, .. } => row.push(Cell {
                     glyph: value as char,
                     marker: false,
+                    selected: selected.is_some_and(|(begin, end)| {
+                        begin <= token.range.start && token.range.start < end
+                    }),
                 }),
                 TokenKind::SoftSpace => row.push(Cell {
                     glyph: ' ',
                     marker: false,
+                    selected: false,
                 }),
                 TokenKind::LineBreak { soft, page_marker } => {
                     row.push(Cell {
@@ -189,17 +209,25 @@ impl Projection {
                             '¶'
                         },
                         marker: true,
+                        selected: false,
                     });
                     result.rows.push(vec![]);
                 }
                 _ => row.push(Cell {
                     glyph: '□',
                     marker: true,
+                    selected: false,
                 }),
             }
         }
         if snapshot.cursor_byte == snapshot.active_bytes {
             result.cursor = (result.rows.len() - 1, result.rows.last().unwrap().len());
+        }
+        if snapshot.block_end == Some(snapshot.active_bytes) {
+            result.block_end_row = Some(result.rows.len() - 1);
+        }
+        if snapshot.block_begin == Some(snapshot.active_bytes) {
+            result.block_begin_row = Some(result.rows.len() - 1);
         }
         // Padding remains in the carrier. A payload following the first EOF is
         // separately disclosed instead of silently presenting it as ordinary text.

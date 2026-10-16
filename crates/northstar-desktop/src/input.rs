@@ -82,6 +82,9 @@ impl Keyboard {
                 ('K', "s") => Action::Save,
                 ('K', "d") => Action::SaveAndDone,
                 ('K', "q") => Action::Done,
+                ('K', "b") if !utf8 => Action::Edit(Command::MarkBlockBegin),
+                ('K', "k") if !utf8 => Action::Edit(Command::MarkBlockEnd),
+                ('K', "c") if !utf8 => Action::Edit(Command::CopyBlock),
                 _ => Action::Notice("This command is not implemented"),
             });
         }
