@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //! Reconstructed 80x25 monochrome screen cells; no original font or resources.
+use crate::directory::DirectoryListing;
 use crate::projection::Projection;
 use openstar_core::Snapshot;
 
@@ -147,7 +148,7 @@ impl Screen {
             self.put(row, 78, "║", 7);
         }
     }
-    pub fn opening() -> Self {
+    pub fn opening(directory_visible: bool) -> Self {
         let mut s = Self::default();
         let title = "OpenStar 4.0";
         s.cells[0].fill(Cell {
@@ -162,7 +163,11 @@ impl Screen {
             "     P print a file                       E rename a file",
             "     M merge print a file                 O copy a file",
             "     I index a document                   Y delete a file",
-            "     T table of contents                  F turn directory off",
+            if directory_visible {
+                "     T table of contents                  F turn directory off"
+            } else {
+                "     T table of contents                  F turn directory on "
+            },
             "     X exit OpenStar                   Esc shorthand",
             "     J help                               R run a DOS command",
         ]
@@ -171,37 +176,148 @@ impl Screen {
         {
             s.put(row + 2, 1, line, 7);
         }
-        s.put(
-            12,
-            0,
-            "Select D to open or create a document. J describes implemented commands.",
-            7,
-        );
         s
     }
-    pub fn opening_help(&mut self) {
-        self.put(0, 0, "J", 0x70);
-        for row in 11..25 {
-            self.cells[row].fill(Cell {
-                glyph: ' ',
-                attribute: 7,
-            });
+
+    pub fn show_directory(&mut self, listing: &DirectoryListing, header_row: usize, offset: usize) {
+        let rows = 24usize.saturating_sub(header_row + 1);
+        if rows == 0 {
+            return;
         }
-        self.put(11, 0, "The Opening Menu above shows the main commands.", 7);
+        let path = listing.path.display().to_string();
         self.put(
-            12,
+            header_row,
             0,
-            "D opens a document; F2 and F3 work with UTF-8 files.",
+            &format!("DIRECTORY  {}", path)
+                .chars()
+                .take(80)
+                .collect::<String>(),
+            7,
+        );
+        let start = listing.page_start(offset, rows * 4);
+        for (index, entry) in listing
+            .entries
+            .iter()
+            .skip(start)
+            .take(rows * 4)
+            .enumerate()
+        {
+            let row = header_row + 1 + index % rows;
+            let col = index / rows * 20;
+            let size = if entry.is_directory {
+                "   \\".to_owned()
+            } else if let Some(bytes) = entry.size {
+                let kib = bytes as f64 / 1024.0;
+                let value = if kib < 10.0 {
+                    format!("{kib:.1}k").trim_start_matches('0').to_owned()
+                } else {
+                    format!("{kib:.0}k")
+                };
+                format!("{value:>4}")
+            } else {
+                "   ?".to_owned()
+            };
+            let text = format!("{size} {}", entry.name);
+            self.put(row, col, &text.chars().take(19).collect::<String>(), 7);
+        }
+        if let Some(error) = &listing.error {
+            self.put(24, 0, &error.chars().take(80).collect::<String>(), 7);
+        } else if listing.truncated || start + rows * 4 < listing.entries.len() || start > 0 {
+            self.put(
+                24,
+                0,
+                &format!(
+                    "Directory entries {}-{} of {}{}; PgUp/PgDn browse",
+                    start + 1,
+                    (start + rows * 4).min(listing.entries.len()),
+                    listing.entries.len(),
+                    if listing.truncated { "+" } else { "" },
+                ),
+                7,
+            );
+        }
+    }
+    pub fn opening_help(&mut self) {
+        *self = Self::dialogue("J");
+        self.put(
+            2,
+            0,
+            "To get help with a command on the Opening Menu, press its key.",
             7,
         );
         self.put(
-            14,
+            4,
             0,
-            "D, J, X and F2-F4 are currently available from this menu.",
+            "While editing, press Ctrl-J or F1 for the Edit Menu help.",
             7,
         );
-        self.put(16, 0, "Press Esc to return to the Opening Menu.", 7);
-        self.put(21, 0, crate::APP_TITLE, 7);
+        self.put(
+            6,
+            0,
+            "D opens a document. F toggles the directory; L changes its path.",
+            7,
+        );
+        self.put(
+            7,
+            0,
+            "J opens help; X exits. F2-F4 handle UTF-8 files and recovery.",
+            7,
+        );
+        self.put(9, 0, "Press Esc to return to the Opening Menu.", 7);
+        self.cursor = None;
+    }
+    pub fn opening_help_topic(&mut self, topic: char) {
+        if topic == 'J' {
+            self.opening_help();
+            return;
+        }
+        *self = Self::dialogue(&format!("J{topic}"));
+        let (label, description) = match topic {
+            'D' => (
+                "D open a document",
+                "Opens an existing legacy document or creates one at the typed path.",
+            ),
+            'F' => (
+                "F turn directory on/off",
+                "Shows or hides the logged directory. Turning it on asks for a file match.",
+            ),
+            'L' => (
+                "L change logged drive/directory",
+                "Selects the folder used for relative document paths.",
+            ),
+            'X' => ("X exit OpenStar", "Closes OpenStar from the Opening Menu."),
+            'N' => (
+                "N open a nondocument",
+                "This command is not implemented yet.",
+            ),
+            'P' => ("P print a file", "This command is not implemented yet."),
+            'M' => (
+                "M merge print a file",
+                "This command is not implemented yet.",
+            ),
+            'I' => ("I index a document", "This command is not implemented yet."),
+            'T' => (
+                "T table of contents",
+                "This command is not implemented yet.",
+            ),
+            'C' => ("C protect a file", "This command is not implemented yet."),
+            'E' => ("E rename a file", "This command is not implemented yet."),
+            'O' => ("O copy a file", "This command is not implemented yet."),
+            'Y' => ("Y delete a file", "This command is not implemented yet."),
+            'R' => (
+                "R run a DOS command",
+                "This command is not implemented yet.",
+            ),
+            _ => ("Opening Menu", "This command is not available."),
+        };
+        self.put(2, 0, label, 7);
+        self.put(4, 0, description, 7);
+        self.put(
+            7,
+            0,
+            "Press another Opening Menu key for help, or Esc to return.",
+            7,
+        );
         self.cursor = None;
     }
     pub fn editor_help(&mut self, utf8: bool) {
@@ -239,6 +355,144 @@ impl Screen {
         self.put(20, 0, "Press Esc to return to your document.", 7);
         self.put(22, 0, crate::APP_TITLE, 7);
         self.cursor = None;
+    }
+    fn submenu(&mut self, prefix: char) {
+        let title = match prefix {
+            'K' => " B L O C K   &   S A V E   M E N U ",
+            'Q' => " Q U I C K   M E N U ",
+            'O' => " O N S C R E E N   F O R M A T   M E N U ",
+            'P' => " P R I N T   C O N T R O L S   M E N U ",
+            _ => return,
+        };
+        for row in 1..=9 {
+            self.cells[row].fill(Cell {
+                glyph: ' ',
+                attribute: 7,
+            });
+        }
+        self.border(1, 9, title);
+        let entries: &[(usize, usize, &str)] = match prefix {
+            'K' => &[
+                (2, 13, "SAVE"),
+                (2, 37, "BLOCK"),
+                (2, 63, "FILE"),
+                (3, 2, "S save & resume edit"),
+                (3, 26, "B mark begin"),
+                (3, 46, "C copy"),
+                (3, 58, "O copy"),
+                (3, 70, "P print"),
+                (4, 2, "D save document"),
+                (4, 26, "K mark end"),
+                (4, 46, "V move"),
+                (4, 58, "E rename"),
+                (5, 2, "X save & exit OpenStar"),
+                (5, 26, "H turn display on"),
+                (5, 46, "Y delete"),
+                (5, 58, "J erase"),
+                (6, 2, "Q quit without saving"),
+                (6, 26, "W write to disk"),
+                (6, 46, "M math"),
+                (6, 58, "L logged drive/dir"),
+                (7, 10, "CURSOR"),
+                (7, 26, "N turn column mode on"),
+                (7, 58, "R insert a file"),
+                (8, 2, "0-9 set/remove marker"),
+                (8, 26, "I turn column replace on"),
+                (8, 58, "F run a DOS command"),
+            ],
+            'Q' => &[
+                (2, 11, "CURSOR"),
+                (2, 39, "FIND"),
+                (2, 54, "OTHER"),
+                (2, 69, "SPELL"),
+                (3, 2, "E upper left"),
+                (3, 18, "P previous find"),
+                (3, 35, "F find text"),
+                (3, 48, "U align paragraphs"),
+                (3, 66, "L check rest"),
+                (4, 2, "X lower right"),
+                (4, 18, "V last find"),
+                (4, 35, "A find/replace"),
+                (4, 48, "M math"),
+                (4, 66, "N check word"),
+                (5, 2, "S left side"),
+                (5, 18, "B beg block"),
+                (5, 35, "G char forward"),
+                (5, 48, "ERASE"),
+                (5, 66, "O enter word"),
+                (6, 2, "D right side"),
+                (6, 18, "K end block"),
+                (6, 35, "H char back"),
+                (6, 48, "Y line to right"),
+                (7, 2, "R beg doc"),
+                (7, 18, "0-9 marker"),
+                (7, 35, "I find page"),
+                (7, 48, "Del line to left"),
+                (7, 66, "SCROLL"),
+                (8, 2, "C end doc"),
+                (8, 18, "? char count"),
+                (8, 35, "(or line)"),
+                (8, 48, "T to character"),
+                (8, 66, "W up Z down"),
+            ],
+            'O' => &[
+                (2, 12, "MARGINS"),
+                (2, 37, "TYPING"),
+                (2, 64, "DISPLAY"),
+                (3, 2, "L set left"),
+                (3, 26, "W turn word wrap off"),
+                (3, 52, "D turn print controls off"),
+                (4, 2, "R set right"),
+                (4, 26, "J turn right justify off"),
+                (4, 52, "H turn hyphen help on"),
+                (5, 2, "X release"),
+                (5, 26, "E enter soft hyphen"),
+                (5, 52, "P turn preview on"),
+                (6, 2, "T turn ruler off"),
+                (6, 26, "G temporary indent"),
+                (6, 52, "B turn soft space dots on"),
+                (7, 2, "F ruler from text"),
+                (7, 26, "X set line spacing"),
+                (7, 68, "TABS"),
+                (8, 2, "O ruler to text"),
+                (8, 26, "C center line"),
+                (8, 52, "I set tab stop"),
+                (8, 68, "N clear"),
+            ],
+            'P' => &[
+                (2, 10, "BEGIN & END"),
+                (2, 55, "OTHER"),
+                (3, 5, "B bold"),
+                (3, 25, "X strike out"),
+                (3, 42, "H overprint char"),
+                (3, 61, "O binding space"),
+                (4, 5, "S underline"),
+                (4, 25, "D double strike"),
+                (4, 42, "< overprint line"),
+                (4, 61, "C print pause"),
+                (5, 5, "U subscript"),
+                (5, 25, "Y italics/color"),
+                (5, 42, "F phantom space"),
+                (5, 61, "I column tab"),
+                (6, 5, "T superscript"),
+                (6, 25, "K indexing"),
+                (6, 42, "G phantom rubout"),
+                (6, 61, "Q fixed position"),
+                (7, 31, "Q W E R custom"),
+                (7, 61, "N normal pitch"),
+                (8, 42, "L form feed"),
+                (8, 61, "A alternate pitch"),
+            ],
+            _ => unreachable!(),
+        };
+        for (row, column, label) in entries {
+            self.put(
+                *row,
+                *column,
+                &label.chars().take(78 - column).collect::<String>(),
+                7,
+            );
+        }
     }
     pub fn editor(
         projection: &Projection,
@@ -354,6 +608,9 @@ impl Screen {
                 s.cells[10][column].glyph = '!';
             }
         }
+        if !utf8 && let Some(prefix) = prefix {
+            s.submenu(prefix);
+        }
         let top = utf8_viewport_top.unwrap_or_else(|| row.saturating_sub(11));
         let left = column.saturating_sub(78);
         for screen_row in 11..23 {
@@ -450,17 +707,19 @@ impl Screen {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::directory::DirectoryEntry;
 
     #[test]
-    fn help_keeps_the_dos_menu_and_replaces_only_the_work_area() {
-        let mut opening = Screen::opening();
-        let border = opening.cells[1][0].glyph;
+    fn help_uses_the_observed_opening_screen_and_retains_the_editor_menu() {
+        let mut opening = Screen::opening(true);
         opening.opening_help();
         assert_eq!(opening.cells[0][0].glyph, 'J');
         assert_eq!(opening.cells[0][0].attribute, 0x70);
-        assert_eq!(opening.cells[1][0].glyph, border);
-        assert_eq!(opening.cells[13][0].glyph, ' ');
-        assert_eq!(opening.cells[11][0].glyph, 'T');
+        assert_eq!(opening.cells[1][0].glyph, ' ');
+        assert_eq!(opening.cells[2][0].glyph, 'T');
+        opening.opening_help_topic('F');
+        assert_eq!(opening.cells[0][1].glyph, 'F');
+        assert_eq!(opening.cells[2][0].glyph, 'F');
 
         let mut editor = Screen::default();
         editor.put(1, 0, "MENU", 7);
@@ -479,5 +738,71 @@ mod tests {
         let screen = Screen::dialogue("D");
         assert_eq!(screen.cells[0][0].glyph, 'D');
         assert!(screen.cells[0].iter().all(|cell| cell.attribute == 0x70));
+    }
+
+    #[test]
+    fn opening_directory_uses_the_dos_grid_and_toggle_label() {
+        let listing = DirectoryListing {
+            path: "C:/WORK".into(),
+            entries: vec![
+                DirectoryEntry {
+                    name: "..".into(),
+                    size: None,
+                    is_directory: true,
+                },
+                DirectoryEntry {
+                    name: "CHAPTER.DOC".into(),
+                    size: Some(128),
+                    is_directory: false,
+                },
+            ],
+            error: None,
+            truncated: false,
+        };
+        let mut screen = Screen::opening(true);
+        screen.show_directory(&listing, 11, 0);
+        let row = |index: usize| {
+            screen.cells[index]
+                .iter()
+                .map(|cell| cell.glyph)
+                .collect::<String>()
+        };
+        assert!(row(7).contains("F turn directory off"));
+        assert!(row(11).contains("DIRECTORY  C:/WORK"));
+        assert!(row(13).contains(".1k CHAPTER.DOC"));
+        assert!(
+            Screen::opening(false).cells[7]
+                .iter()
+                .map(|cell| cell.glyph)
+                .collect::<String>()
+                .contains("F turn directory on")
+        );
+    }
+
+    #[test]
+    fn legacy_prefix_menus_replace_only_the_menu_area() {
+        let mut screen = Screen::default();
+        screen.put(0, 0, "STATUS", 0x70);
+        screen.put(10, 0, "RULER", 7);
+        screen.put(11, 0, "DOCUMENT", 7);
+        for (prefix, title, label) in [
+            ('K', "B L O C K   &   S A V E", "S save & resume edit"),
+            ('Q', "Q U I C K", "F find text"),
+            ('O', "O N S C R E E N", "L set left"),
+            ('P', "P R I N T   C O N T R O L S", "B bold"),
+        ] {
+            screen.submenu(prefix);
+            let menu = screen.cells[1..10]
+                .iter()
+                .flatten()
+                .map(|cell| cell.glyph)
+                .collect::<String>();
+            assert!(menu.contains(title), "missing {prefix} menu title");
+            assert!(menu.contains(label), "missing {prefix} menu command");
+            assert_eq!(screen.cells[0][0].glyph, 'S');
+            assert_eq!(screen.cells[10][0].glyph, 'R');
+            assert_eq!(screen.cells[11][0].glyph, 'D');
+            assert_eq!(screen.cells[8][78].glyph, '║');
+        }
     }
 }

@@ -102,6 +102,12 @@ impl Keyboard {
                     }
                     None
                 }
+                "o" | "p" if !utf8 => {
+                    if !repeat {
+                        self.prefix = Some(if letter == "o" { 'O' } else { 'P' });
+                    }
+                    None
+                }
                 "s" => Some(Action::Edit(Command::PreviousCharacter)),
                 "d" => Some(Action::Edit(Command::NextCharacter)),
                 "a" if !utf8 => Some(Action::Edit(Command::PreviousWord)),

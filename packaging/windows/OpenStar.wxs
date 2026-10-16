@@ -19,6 +19,7 @@
       <ComponentRef Id="FontNotices" />
       <ComponentRef Id="PlexLicense" />
       <ComponentRef Id="PrototypeGuide" />
+      <ComponentRef Id="MenuGuide" />
       <ComponentRef Id="RecoveryGuide" />
       <ComponentRef Id="NavigationGuide" />
       <ComponentRef Id="WordNavigationGuide" />
@@ -57,6 +58,10 @@
     <Component Id="PrototypeGuide" Directory="INSTALLFOLDER" Guid="64F01E65-07EA-420C-BD86-91DACC340B5C">
       <File Source="$(var.RepoRoot)\docs\WINDOWS_PROTOTYPE.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="Guide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="MenuGuide" Directory="INSTALLFOLDER" Guid="A712362A-FF56-4A20-B91B-77F2D04AFA21">
+      <File Source="$(var.RepoRoot)\docs\MENUS.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="MenuGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
     <Component Id="RecoveryGuide" Directory="INSTALLFOLDER" Guid="4970E41A-2E49-4422-9114-082C91F94752">
       <File Source="$(var.RepoRoot)\docs\RECOVERY.md" />

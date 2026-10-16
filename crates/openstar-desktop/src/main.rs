@@ -7,6 +7,7 @@ use iced::{
 };
 use openstar_desktop::{
     APP_TITLE,
+    directory::{DirectoryListing, resolve_path},
     input::{Action, Keyboard},
     projection::Projection,
     recovery::{RecoveryCandidate, RecoveryStore},
@@ -61,6 +62,11 @@ struct App {
     recovery_id: String,
     recovery_written: bool,
     recovery_pending: bool,
+    logged_directory: PathBuf,
+    directory_listing: DirectoryListing,
+    directory_visible: bool,
+    directory_offset: usize,
+    directory_match: String,
 }
 #[derive(Debug, Clone, Copy)]
 enum Next {
@@ -72,10 +78,15 @@ enum PathKind {
     OpenLegacy,
     OpenUtf8,
     SaveAs { done: bool },
+    ChangeDirectory,
 }
 enum Dialog {
     Path {
         kind: PathKind,
+        value: String,
+        error: String,
+    },
+    DirectoryMatch {
         value: String,
         error: String,
     },
@@ -84,7 +95,9 @@ enum Dialog {
         candidate: Box<RecoveryCandidate>,
         error: String,
     },
-    Help,
+    Help {
+        topic: Option<char>,
+    },
 }
 enum FindDialog {
     Term(String),
@@ -115,6 +128,8 @@ pub(crate) enum Message {
     Open,
     NewUtf8,
     OpenUtf8,
+    ChangeDirectory,
+    ToggleDirectory,
     Save(bool),
     SaveAs(bool),
     Help,
@@ -387,6 +402,8 @@ impl App {
             }
         }
         let projection = Projection::for_session(&session);
+        let logged_directory = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let directory_listing = DirectoryListing::read(logged_directory.clone());
         let mut app = Self {
             session,
             projection,
@@ -405,6 +422,11 @@ impl App {
             recovery_id: RecoveryStore::new_id(),
             recovery_written: false,
             recovery_pending: false,
+            logged_directory,
+            directory_listing,
+            directory_visible: true,
+            directory_offset: 0,
+            directory_match: "????????.???".into(),
         };
         if app.opening || app.session.path().is_some() {
             app.offer_recovery(app.opening, false);
@@ -458,6 +480,7 @@ impl App {
                 self.recovery_id = RecoveryStore::new_id();
                 self.recovery_written = false;
                 self.recovery_pending = false;
+                self.refresh_directory();
                 Task::none()
             }
         }
@@ -468,6 +491,7 @@ impl App {
         let value = match kind {
             PathKind::OpenLegacy | PathKind::OpenUtf8 => String::new(),
             PathKind::SaveAs { .. } => String::new(),
+            PathKind::ChangeDirectory => String::new(),
         };
         self.dialog = Some(Dialog::Path {
             kind,
@@ -475,6 +499,11 @@ impl App {
             error: String::new(),
         });
         iced::widget::operation::focus("document-path")
+    }
+    fn refresh_directory(&mut self) {
+        self.directory_listing = DirectoryListing::read(self.logged_directory.clone());
+        self.directory_listing.retain_match(&self.directory_match);
+        self.directory_offset = 0;
     }
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
@@ -493,6 +522,18 @@ impl App {
                 self.recovery_pending = false;
             }
             Message::OpenUtf8 => return self.path_dialog(PathKind::OpenUtf8),
+            Message::ChangeDirectory => return self.path_dialog(PathKind::ChangeDirectory),
+            Message::ToggleDirectory => {
+                if self.directory_visible {
+                    self.directory_visible = false;
+                } else {
+                    self.dialog = Some(Dialog::DirectoryMatch {
+                        value: String::new(),
+                        error: String::new(),
+                    });
+                    return iced::widget::operation::focus("document-path");
+                }
+            }
             Message::ShowRecovery => self.offer_recovery(true, true),
             Message::RecoveryTick => self.flush_recovery(),
             Message::Recover => {
@@ -571,27 +612,63 @@ impl App {
             Message::SaveAs(done) => return self.path_dialog(PathKind::SaveAs { done }),
             Message::Help => {
                 self.keyboard.reset();
-                self.dialog = Some(Dialog::Help);
+                self.dialog = Some(Dialog::Help { topic: None });
             }
-            Message::PathChanged(value) => {
-                if let Some(Dialog::Path {
+            Message::PathChanged(value) => match &mut self.dialog {
+                Some(Dialog::Path {
                     value: current,
                     error,
                     ..
-                }) = &mut self.dialog
-                {
+                })
+                | Some(Dialog::DirectoryMatch {
+                    value: current,
+                    error,
+                }) => {
                     *current = value;
                     error.clear();
                 }
-            }
+                _ => {}
+            },
             Message::Submit => {
+                if matches!(&self.dialog, Some(Dialog::Path { kind: PathKind::ChangeDirectory, value, .. }) if value.is_empty())
+                {
+                    self.dialog = None;
+                    return Task::none();
+                }
+                if let Some(Dialog::DirectoryMatch { value, error }) = &mut self.dialog {
+                    if value.len() > 64
+                        || value
+                            .chars()
+                            .any(|ch| matches!(ch, '/' | '\\' | ':' | '<' | '>' | '|'))
+                    {
+                        *error = "Enter a file name pattern using * or ?".into();
+                        return Task::none();
+                    }
+                    self.directory_match = if value.is_empty() {
+                        "????????.???".into()
+                    } else {
+                        value.clone()
+                    };
+                    self.directory_visible = true;
+                    self.dialog = None;
+                    self.refresh_directory();
+                    return Task::none();
+                }
                 let mut opened_document = false;
+                let logged_directory = self.logged_directory.clone();
+                let mut changed_directory = None;
                 if let Some(Dialog::Path { kind, value, error }) = &mut self.dialog {
                     if value.is_empty() {
                         *error = "Enter a file path".into();
                         return Task::none();
                     }
-                    let path = PathBuf::from(&*value);
+                    let path = match resolve_path(&logged_directory, value) {
+                        Ok(path) => path,
+                        Err(problem) => {
+                            *error = problem.to_string();
+                            return Task::none();
+                        }
+                    };
                     let result = match kind {
                         PathKind::OpenLegacy => match Session::open(&path) {
                             Ok(opened) => {
@@ -617,9 +694,27 @@ impl App {
                             Err(e) => Err(e),
                         },
                         PathKind::SaveAs { .. } => self.session.save_as(&path),
+                        PathKind::ChangeDirectory => match std::fs::metadata(&path) {
+                            Ok(metadata) if metadata.is_dir() => {
+                                changed_directory = Some(path);
+                                Ok(())
+                            }
+                            Ok(_) => Err(std::io::Error::new(
+                                std::io::ErrorKind::NotADirectory,
+                                "Not a directory",
+                            )),
+                            Err(error) => Err(error),
+                        },
                     };
                     match result {
                         Ok(()) => {
+                            if let Some(directory) = changed_directory.take() {
+                                self.logged_directory = directory;
+                                self.dialog = None;
+                                self.notice.clear();
+                                self.refresh_directory();
+                                return Task::none();
+                            }
                             self.find_dialog = None;
                             opened_document =
                                 matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8);
@@ -731,6 +826,26 @@ impl App {
                         return self.update(Message::Cancel);
                     }
                     if self.window_focused
+                        && let Some(Dialog::Help { topic }) = &mut self.dialog
+                        && let KeyPressed {
+                            key: Key::Character(key),
+                            modifiers,
+                            repeat: false,
+                            ..
+                        } = &event
+                        && !modifiers.control()
+                        && !modifiers.alt()
+                        && !modifiers.logo()
+                    {
+                        if self.opening {
+                            let selected = key.to_ascii_uppercase();
+                            if selected.len() == 1 && "DNPMITYXJLCEOFR".contains(&selected) {
+                                *topic = selected.chars().next();
+                            }
+                        }
+                        return Task::none();
+                    }
+                    if self.window_focused
                         && let KeyPressed {
                             key: Key::Character(key),
                             modifiers,
@@ -777,12 +892,22 @@ impl App {
                             }
                             match key.as_ref(){
                                 Key::Character(s) if s.eq_ignore_ascii_case("d")=>return self.update(Message::Open),
+                                Key::Character(s) if s.eq_ignore_ascii_case("l")=>return self.update(Message::ChangeDirectory),
+                                Key::Character(s) if s.eq_ignore_ascii_case("f")=>return self.update(Message::ToggleDirectory),
                                 Key::Character(s) if s.eq_ignore_ascii_case("x")=>return self.begin(Next::Close(id)),
                                 Key::Character(s) if s.eq_ignore_ascii_case("j")=>return self.update(Message::Help),
                                 Key::Named(Named::F1)=>return self.update(Message::Help),
                                 Key::Named(Named::F2)=>return self.update(Message::NewUtf8),
                                 Key::Named(Named::F3)=>return self.update(Message::OpenUtf8),
                                 Key::Named(Named::F4)=>return self.update(Message::ShowRecovery),
+                                Key::Named(Named::PageDown) if self.directory_visible => {
+                                    self.directory_offset = self.directory_listing.page_start(self.directory_offset.saturating_add(48), 48);
+                                    return Task::none();
+                                }
+                                Key::Named(Named::PageUp) if self.directory_visible => {
+                                    self.directory_offset = self.directory_offset.saturating_sub(48);
+                                    return Task::none();
+                                }
                                 _=>self.notice="This opening-menu command is not implemented. D opens a document.".into(),
                             }
                         }
@@ -1038,33 +1163,138 @@ impl App {
                 kind: PathKind::SaveAs { .. },
                 ..
             } => "K",
+            Dialog::Path {
+                kind: PathKind::ChangeDirectory,
+                ..
+            } => "L",
+            Dialog::DirectoryMatch { .. } => "F",
             Dialog::Discard(_) => "?",
             Dialog::Recovery { .. } => "R",
-            Dialog::Help => unreachable!("help uses the screen grid"),
+            Dialog::Help { .. } => unreachable!("help uses the screen grid"),
         };
         let mut screen = Screen::dialogue(command);
         match dialog {
             Dialog::Path { kind, error, .. } => {
-                let (description, prompt) = match kind {
-                    PathKind::OpenLegacy => (
-                        "Type the name of the document to create or change.",
-                        "Document to open?",
-                    ),
-                    PathKind::OpenUtf8 => (
-                        "Type the name of the UTF-8 document to open or create.",
-                        "Document to open?",
-                    ),
-                    PathKind::SaveAs { .. } => (
-                        "Save a copy under a new name. Existing files stay unchanged.",
-                        "New file name?",
-                    ),
-                };
-                screen.put(2, 0, description, 7);
-                screen.put(3, 0, "Include the drive and directory if needed.", 7);
-                screen.put(8, 0, prompt, 7);
-                screen.put(9, 0, "Enter done    Esc cancel    Backspace erase left", 7);
-                screen.put(10, 0, "Ctrl+A select all    Ctrl+V paste", 7);
-                screen.put(13, 0, error, 7);
+                if matches!(kind, PathKind::ChangeDirectory) {
+                    screen.put(
+                        2,
+                        0,
+                        "The logged directory is where OpenStar will get a document if you",
+                        7,
+                    );
+                    screen.put(
+                        3,
+                        0,
+                        "do not specify a path when you enter a document name.",
+                        7,
+                    );
+                    screen.put(
+                        5,
+                        0,
+                        &format!(
+                            "The logged directory is currently:  {}",
+                            self.logged_directory.display()
+                        )
+                        .chars()
+                        .take(80)
+                        .collect::<String>(),
+                        7,
+                    );
+                    screen.put(7, 0, "You may specify another directory path name.", 7);
+                    screen.put(
+                        9,
+                        0,
+                        "Relative names are resolved from the current logged directory.",
+                        7,
+                    );
+                    screen.put(
+                        13,
+                        0,
+                        "What would you like the new logged directory to be?",
+                        7,
+                    );
+                    screen.put(14, 0, "Enter done  | Backspace erase left  | Esc cancel", 7);
+                    screen.put(16, 0, error, 7);
+                    if self.directory_visible {
+                        screen.show_directory(&self.directory_listing, 18, 0);
+                    }
+                } else {
+                    match kind {
+                        PathKind::OpenLegacy => {
+                            screen.put(
+                                2,
+                                0,
+                                "Type the name of the document to create or change.",
+                                7,
+                            );
+                            screen.put(3, 0, "Include drive and directory if they differ from the logged directory.", 7);
+                            screen.put(
+                                5,
+                                0,
+                                "The directory, if on, displays existing files you may change.",
+                                7,
+                            );
+                            screen.put(
+                                6,
+                                0,
+                                "To create a new document, type a new name and press Enter.",
+                                7,
+                            );
+                            screen.put(8, 0, "Document to open?", 7);
+                        }
+                        PathKind::OpenUtf8 => {
+                            screen.put(
+                                2,
+                                0,
+                                "Type the name of the UTF-8 document to open or create.",
+                                7,
+                            );
+                            screen.put(3, 0, "Include the drive and directory if needed.", 7);
+                            screen.put(8, 0, "Document to open?", 7);
+                        }
+                        PathKind::SaveAs { .. } => {
+                            screen.put(
+                                2,
+                                0,
+                                "Save a copy under a new name. Existing files stay unchanged.",
+                                7,
+                            );
+                            screen.put(3, 0, "Include the drive and directory if needed.", 7);
+                            screen.put(8, 0, "New file name?", 7);
+                        }
+                        PathKind::ChangeDirectory => unreachable!(),
+                    }
+                    screen.put(
+                        9,
+                        0,
+                        "Enter done  | Backspace or ^H erase left  | Esc cancel",
+                        7,
+                    );
+                    screen.put(10, 0, "Ctrl+A select all  | Ctrl+V paste", 7);
+                    screen.put(13, 0, error, 7);
+                    if self.directory_visible {
+                        screen.show_directory(&self.directory_listing, 14, 0);
+                    }
+                }
+            }
+            Dialog::DirectoryMatch { error, .. } => {
+                screen.put(
+                    2,
+                    0,
+                    "You have just turned on the file directory. File names that are now",
+                    7,
+                );
+                screen.put(3, 0, "displayed use directory match name: ????????.???", 7);
+                screen.put(
+                    5,
+                    0,
+                    "(Question marks are used where any file name character is permissible).",
+                    7,
+                );
+                screen.put(7, 0, "New directory match name?", 7);
+                screen.put(8, 0, "Enter done  | Backspace or ^H erase left", 7);
+                screen.put(9, 0, "Esc cancel   | Del erase", 7);
+                screen.put(11, 0, error, 7);
             }
             Dialog::Discard(_) => {
                 screen.put(3, 0, "The document has unsaved changes.", 7);
@@ -1120,7 +1350,7 @@ impl App {
                 );
                 screen.put(14, 0, error, 7);
             }
-            Dialog::Help => unreachable!("help uses the screen grid"),
+            Dialog::Help { .. } => unreachable!("help uses the screen grid"),
         }
         let canvas = canvas(surface::Surface {
             screen,
@@ -1129,7 +1359,17 @@ impl App {
         })
         .width(Fill)
         .height(Fill);
-        if let Dialog::Path { value, .. } = dialog {
+        let input_position = match dialog {
+            Dialog::Path {
+                kind: PathKind::ChangeDirectory,
+                value,
+                ..
+            } => Some((value, 13.0, 53.0)),
+            Dialog::Path { value, .. } => Some((value, 8.0, 18.0)),
+            Dialog::DirectoryMatch { value, .. } => Some((value, 7.0, 27.0)),
+            _ => None,
+        };
+        if let Some((value, row, column)) = input_position {
             let input = text_input("", value)
                 .id("document-path")
                 .on_input(Message::PathChanged)
@@ -1138,7 +1378,7 @@ impl App {
                 .size(size)
                 .line_height(iced::Pixels(cell_height))
                 .padding(0)
-                .width(grid_width - 19.0 * column_width)
+                .width(grid_width - (column + 1.0) * column_width)
                 .style(|_, _| iced::widget::text_input::Style {
                     background: iced::Background::Color(iced::Color::BLACK),
                     border: iced::Border::default(),
@@ -1148,8 +1388,8 @@ impl App {
                     selection: iced::Color::from_rgb8(170, 170, 170),
                 });
             let overlay = column![
-                space().height(origin_y + 8.0 * cell_height),
-                row![space().width(origin_x + 18.0 * column_width), input]
+                space().height(origin_y + row * cell_height),
+                row![space().width(origin_x + column * column_width), input]
             ];
             stack![canvas, overlay].width(Fill).height(Fill).into()
         } else {
@@ -1161,18 +1401,15 @@ impl App {
         if self
             .dialog
             .as_ref()
-            .is_some_and(|dialog| !matches!(dialog, Dialog::Help))
+            .is_some_and(|dialog| !matches!(dialog, Dialog::Help { .. }))
         {
             return responsive(|viewport| self.dialog_view(viewport)).into();
         }
         let mut screen = if self.opening {
-            let mut screen = Screen::opening();
-            screen.put(
-                13,
-                0,
-                "F2 new UTF-8 document   F3 open UTF-8 file   F4 recovery",
-                7,
-            );
+            let mut screen = Screen::opening(self.directory_visible);
+            if self.directory_visible {
+                screen.show_directory(&self.directory_listing, 11, self.directory_offset);
+            }
             screen
         } else {
             let label = self
@@ -1207,10 +1444,14 @@ impl App {
                 ),
             }
         };
-        let show_help = matches!(self.dialog, Some(Dialog::Help));
+        let show_help = matches!(self.dialog, Some(Dialog::Help { .. }));
         if show_help {
             if self.opening {
-                screen.opening_help();
+                if let Some(Dialog::Help { topic: Some(topic) }) = &self.dialog {
+                    screen.opening_help_topic(*topic);
+                } else {
+                    screen.opening_help();
+                }
             } else {
                 screen.editor_help(self.session.is_utf8());
             }
@@ -1322,8 +1563,16 @@ mod tests {
             key(Key::Character("j".into()), false, Some("j")),
             id,
         ));
-        assert!(matches!(app.dialog, Some(Dialog::Help)));
+        assert!(matches!(app.dialog, Some(Dialog::Help { .. })));
         let _ = app.view();
+        let _ = app.update(Message::Event(
+            key(Key::Character("d".into()), false, Some("d")),
+            id,
+        ));
+        assert!(matches!(
+            app.dialog,
+            Some(Dialog::Help { topic: Some('D') })
+        ));
         let _ = app.update(Message::Event(
             key(Key::Named(Named::Escape), false, None),
             id,
@@ -1336,6 +1585,84 @@ mod tests {
             id,
         ));
         assert!(app.dialog.is_none());
+    }
+
+    #[test]
+    fn opening_directory_toggle_and_logged_path_open_the_selected_file() {
+        let scratch = Scratch::new();
+        let folder = scratch.0.join("chapters");
+        fs::create_dir(&folder).unwrap();
+        let path = folder.join("FIRST.DOC");
+        let mut bytes = b"FIRST".to_vec();
+        bytes.resize(128, 0x1a);
+        fs::write(&path, bytes).unwrap();
+        let mut app = App::new_with_recovery(None, None);
+        app.window_focused = true;
+        let id = window::Id::unique();
+        let _ = app.update(Message::Event(
+            key(Key::Character("f".into()), false, Some("f")),
+            id,
+        ));
+        assert!(!app.directory_visible);
+        let _ = app.update(Message::Event(
+            key(Key::Character("f".into()), false, Some("f")),
+            id,
+        ));
+        assert!(matches!(app.dialog, Some(Dialog::DirectoryMatch { .. })));
+        assert!(!app.directory_visible);
+        let _ = app.update(Message::PathChanged("*.DOC".into()));
+        let _ = app.update(Message::Submit);
+        assert!(app.directory_visible);
+        assert_eq!(app.directory_match, "*.DOC");
+        let _ = app.update(Message::Event(
+            key(Key::Character("l".into()), false, Some("l")),
+            id,
+        ));
+        assert!(matches!(
+            app.dialog,
+            Some(Dialog::Path {
+                kind: PathKind::ChangeDirectory,
+                ..
+            })
+        ));
+        let _ = app.update(Message::PathChanged(folder.display().to_string()));
+        let _ = app.update(Message::Submit);
+        assert_eq!(app.logged_directory, folder);
+        assert!(
+            app.directory_listing
+                .entries
+                .iter()
+                .any(|entry| entry.name == "FIRST.DOC")
+        );
+        let _ = app.update(Message::Event(
+            key(Key::Character("d".into()), false, Some("d")),
+            id,
+        ));
+        let _ = app.update(Message::PathChanged("FIRST.DOC".into()));
+        let _ = app.update(Message::Submit);
+        assert!(!app.opening);
+        assert_eq!(app.session.path(), Some(path.as_path()));
+    }
+
+    #[test]
+    fn legacy_menu_prefixes_do_not_edit_the_document_until_a_command_is_chosen() {
+        let mut app = App::new_with_recovery(None, None);
+        app.opening = false;
+        app.window_focused = true;
+        let id = window::Id::unique();
+        for (key_name, prefix) in [("k", 'K'), ("q", 'Q'), ("o", 'O'), ("p", 'P')] {
+            let _ = app.update(Message::Event(
+                key(Key::Character(key_name.into()), true, None),
+                id,
+            ));
+            assert_eq!(app.keyboard.prefix(), Some(prefix));
+            assert!(!app.session.modified());
+            let _ = app.update(Message::Event(
+                key(Key::Named(Named::Escape), false, None),
+                id,
+            ));
+            assert_eq!(app.keyboard.prefix(), None);
+        }
     }
 
     #[test]
