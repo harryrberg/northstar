@@ -91,7 +91,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     };
     if operation == "--version" && args.next().is_none() {
         println!(
-            "OpenStar {} (bounded compatibility prototype)",
+            "OpenStar 4.0 ({}) | bounded compatibility prototype",
             env!("CARGO_PKG_VERSION")
         );
         return Ok(());
