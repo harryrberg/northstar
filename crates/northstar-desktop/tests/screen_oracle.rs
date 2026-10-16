@@ -16,6 +16,19 @@ fn find_prompt_keeps_all_options_inside_the_eighty_column_header() {
     assert!(screen.cursor.is_none());
 }
 
+#[test]
+fn replace_prompt_and_question_fit_the_eighty_column_header() {
+    let mut screen = Screen::default();
+    screen.replace_prompt("cat", Some("DOG"), Some("WUN"));
+    assert_eq!(screen.cells[0][0].glyph, 'Q');
+    assert_eq!(screen.cells[0][1].glyph, 'A');
+    assert_eq!(screen.cells[5][1].glyph, 'R');
+    assert_eq!(screen.cells[7][3].glyph, 'W');
+    screen.replace_question();
+    assert_eq!(screen.cells[0][68].glyph, 'R');
+    assert_eq!(screen.cells[0][78].glyph, 'N');
+}
+
 fn screen_bytes(editor: &Editor, label: &str) -> Vec<u8> {
     let projection = Projection::new(editor);
     Screen::editor(&projection, &editor.snapshot(), label, None).monochrome_bytes()

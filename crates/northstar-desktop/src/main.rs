@@ -87,8 +87,26 @@ enum Dialog {
 }
 enum FindDialog {
     Term(String),
-    Options { term: String, flags: String },
-    Notice { term: String, repeated: bool },
+    Options {
+        term: String,
+        flags: String,
+    },
+    ReplaceTerm(String),
+    ReplaceWith {
+        term: String,
+        value: String,
+    },
+    ReplaceOptions {
+        term: String,
+        value: String,
+        flags: String,
+    },
+    ReplaceConfirm,
+    Notice {
+        term: String,
+        repeated: bool,
+        replace: bool,
+    },
 }
 #[derive(Debug, Clone)]
 pub(crate) enum Message {
@@ -129,6 +147,12 @@ impl App {
         if *key == Key::Named(Named::Escape)
             || (modifiers.control() && key.as_ref() == Key::Character("u"))
         {
+            if matches!(dialog, FindDialog::ReplaceConfirm) {
+                let result = self
+                    .session
+                    .apply_command(&northstar_core::Command::AnswerReplace { accept: false });
+                self.record_edit(result);
+            }
             return;
         }
         match dialog {
@@ -172,6 +196,7 @@ impl App {
                         self.find_dialog = Some(FindDialog::Notice {
                             term,
                             repeated: false,
+                            replace: false,
                         });
                     }
                 }
@@ -201,6 +226,122 @@ impl App {
                     }
                 }
             },
+            FindDialog::ReplaceTerm(mut term) => match key {
+                Key::Named(Named::Enter) if !term.is_empty() => {
+                    self.find_dialog = Some(FindDialog::ReplaceWith {
+                        term,
+                        value: String::new(),
+                    });
+                }
+                Key::Named(Named::Backspace | Named::Delete) => {
+                    term.pop();
+                    self.find_dialog = Some(FindDialog::ReplaceTerm(term));
+                }
+                _ => {
+                    if !modifiers.control()
+                        && !modifiers.alt()
+                        && !modifiers.logo()
+                        && let Some(value) = text
+                        && value.bytes().all(|byte| byte.is_ascii_alphabetic())
+                        && term.len() + value.len() <= 64
+                    {
+                        term.push_str(value);
+                    }
+                    self.find_dialog = Some(FindDialog::ReplaceTerm(term));
+                }
+            },
+            FindDialog::ReplaceWith { term, mut value } => match key {
+                Key::Named(Named::Enter) if !value.is_empty() => {
+                    self.find_dialog = Some(FindDialog::ReplaceOptions {
+                        term,
+                        value,
+                        flags: String::new(),
+                    });
+                }
+                Key::Named(Named::Backspace | Named::Delete) => {
+                    value.pop();
+                    self.find_dialog = Some(FindDialog::ReplaceWith { term, value });
+                }
+                _ => {
+                    if !modifiers.control()
+                        && !modifiers.alt()
+                        && !modifiers.logo()
+                        && let Some(input) = text
+                        && input.bytes().all(|byte| byte.is_ascii_alphabetic())
+                        && value.len() + input.len() <= 64
+                    {
+                        value.push_str(input);
+                    }
+                    self.find_dialog = Some(FindDialog::ReplaceWith { term, value });
+                }
+            },
+            FindDialog::ReplaceOptions {
+                term,
+                value,
+                mut flags,
+            } => match key {
+                Key::Named(Named::Enter) => {
+                    let command = northstar_core::Command::ReplaceLiteral {
+                        text: term.clone(),
+                        replacement: value,
+                        whole_words: flags.contains('W'),
+                        ignore_case: flags.contains('U'),
+                        without_asking: flags.contains('N'),
+                    };
+                    let result = self.session.apply_command(&command);
+                    let ok = result.is_ok();
+                    self.record_edit(result);
+                    if ok && let DocumentSession::Legacy(session) = &self.session {
+                        if session.editor.replacement_pending() {
+                            self.find_dialog = Some(FindDialog::ReplaceConfirm);
+                        } else if session.editor.last_find_result() == Some(false) {
+                            self.find_dialog = Some(FindDialog::Notice {
+                                term,
+                                repeated: false,
+                                replace: true,
+                            });
+                        }
+                    }
+                }
+                Key::Named(Named::Backspace | Named::Delete) => {
+                    flags.pop();
+                    self.find_dialog = Some(FindDialog::ReplaceOptions { term, value, flags });
+                }
+                _ => {
+                    if !modifiers.control()
+                        && !modifiers.alt()
+                        && !modifiers.logo()
+                        && let Some(input) = text
+                    {
+                        for ch in input.chars().map(|ch| ch.to_ascii_uppercase()) {
+                            if "WUN".contains(ch) && !flags.contains(ch) {
+                                flags.push(ch);
+                            } else if "BG?AR".contains(ch) {
+                                self.notice = "This replacement option is not yet qualified".into();
+                            }
+                        }
+                    }
+                    self.find_dialog = Some(FindDialog::ReplaceOptions { term, value, flags });
+                }
+            },
+            FindDialog::ReplaceConfirm => {
+                let accept = match key.as_ref() {
+                    Key::Character(value) if value.eq_ignore_ascii_case("y") => true,
+                    Key::Character(value) if value.eq_ignore_ascii_case("n") => false,
+                    _ => {
+                        self.find_dialog = Some(FindDialog::ReplaceConfirm);
+                        return;
+                    }
+                };
+                let result = self
+                    .session
+                    .apply_command(&northstar_core::Command::AnswerReplace { accept });
+                let ok = result.is_ok();
+                self.record_edit(result);
+                if !ok {
+                    self.find_dialog = Some(FindDialog::ReplaceConfirm);
+                }
+            }
             notice @ FindDialog::Notice { .. } => {
                 self.find_dialog = Some(notice);
             }
@@ -609,6 +750,10 @@ impl App {
                                 self.find_dialog = Some(FindDialog::Term(String::new()));
                                 self.notice.clear();
                             }
+                            Some(Action::Replace) => {
+                                self.find_dialog = Some(FindDialog::ReplaceTerm(String::new()));
+                                self.notice.clear();
+                            }
                             Some(Action::RepeatFind) => {
                                 let term = match &self.session {
                                     DocumentSession::Legacy(session) => {
@@ -622,12 +767,16 @@ impl App {
                                 self.record_edit(result);
                                 if let (Some(term), DocumentSession::Legacy(session)) =
                                     (term, &self.session)
-                                    && session.editor.last_find_result() == Some(false)
                                 {
-                                    self.find_dialog = Some(FindDialog::Notice {
-                                        term,
-                                        repeated: true,
-                                    });
+                                    if session.editor.replacement_pending() {
+                                        self.find_dialog = Some(FindDialog::ReplaceConfirm);
+                                    } else if session.editor.last_find_result() == Some(false) {
+                                        self.find_dialog = Some(FindDialog::Notice {
+                                            term,
+                                            repeated: true,
+                                            replace: session.editor.last_search_replaces(),
+                                        });
+                                    }
                                 }
                             }
                             Some(Action::Text(text)) => {
@@ -836,7 +985,7 @@ impl App {
                     text(if self.session.is_utf8() {
                         "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-Z undoes; Ctrl-Y or Ctrl-Shift-Z redoes. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {
-                        "WordStar: Ctrl-S/Ctrl-D move by character, Ctrl-A/Ctrl-F by word, and Ctrl-E/Ctrl-X by line. Ctrl-Q F finds text; Ctrl-L repeats. Backspace deletes left; Delete or Ctrl-G deletes under the cursor. Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text. Ctrl-K B/K mark a block; Ctrl-K C copies it, Ctrl-K V moves it, and Ctrl-K Y deletes it. Move requires source and target on the same ordinary ASCII line, outside the block. Delete requires the cursor at or after the end mark and may cross one hard line break. A block ending one byte before EOF is excluded. Ctrl-Q R starts document; Ctrl-V toggles insert; Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
+                        "WordStar: Ctrl-S/Ctrl-D move by character, Ctrl-A/Ctrl-F by word, and Ctrl-E/Ctrl-X by line. Ctrl-Q F finds text; Ctrl-Q A replaces words; Ctrl-L repeats either. Backspace deletes left; Delete or Ctrl-G deletes under the cursor. Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text. Ctrl-K B/K mark a block; Ctrl-K C copies it, Ctrl-K V moves it, and Ctrl-K Y deletes it. Move requires source and target on the same ordinary ASCII line, outside the block. Delete requires the cursor at or after the end mark and may cross one hard line break. A block ending one byte before EOF is excluded. Ctrl-Q R starts document; Ctrl-V toggles insert; Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
                     }),
                     text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, F4 for recovery, and X to exit."),
                     text(if self.session.is_utf8() {
@@ -897,7 +1046,27 @@ impl App {
             match find {
                 FindDialog::Term(term) => screen.find_prompt(term, None),
                 FindDialog::Options { term, flags } => screen.find_prompt(term, Some(flags)),
-                FindDialog::Notice { term, repeated } => screen.find_notice(term, *repeated),
+                FindDialog::ReplaceTerm(term) => screen.replace_prompt(term, None, None),
+                FindDialog::ReplaceWith { term, value } => {
+                    screen.replace_prompt(term, Some(value), None)
+                }
+                FindDialog::ReplaceOptions { term, value, flags } => {
+                    screen.replace_prompt(term, Some(value), Some(flags))
+                }
+                FindDialog::ReplaceConfirm => screen.replace_question(),
+                FindDialog::Notice {
+                    term,
+                    repeated,
+                    replace,
+                } => {
+                    screen.find_notice(term, *repeated);
+                    if *replace && !*repeated {
+                        screen.cells[0][1].glyph = 'A';
+                    }
+                }
+            }
+            if !self.notice.is_empty() {
+                screen.put(9, 3, &self.notice, 7);
             }
         }
         if self.find_dialog.is_none() && !self.notice.is_empty() {
@@ -1030,6 +1199,63 @@ mod tests {
         };
         assert_eq!(session.editor.snapshot().cursor_byte, 11);
         assert_eq!(fs::read(&path).unwrap(), carrier);
+    }
+
+    #[test]
+    fn legacy_replace_prompt_answers_and_repeats_through_app() {
+        let scratch = Scratch::new();
+        let path = scratch.0.join("replace.doc");
+        let mut carrier = b"CAT CATALOG cat".to_vec();
+        carrier.resize(128, 0x1a);
+        fs::write(&path, &carrier).unwrap();
+        let mut app = App::new_with_recovery(None, None);
+        app.session = DocumentSession::Legacy(Session::open(&path).unwrap());
+        app.projection = Projection::for_session(&app.session);
+        app.opening = false;
+        app.window_focused = true;
+        let id = window::Id::unique();
+        for event in [
+            key(Key::Character("q".into()), true, None),
+            key(Key::Character("a".into()), false, Some("a")),
+            key(Key::Character("c".into()), false, Some("cat")),
+            key(Key::Named(Named::Enter), false, None),
+            key(Key::Character("d".into()), false, Some("DOG")),
+            key(Key::Named(Named::Enter), false, None),
+            key(Key::Character("w".into()), false, Some("w")),
+            key(Key::Character("u".into()), false, Some("u")),
+            key(Key::Named(Named::Enter), false, None),
+        ] {
+            let _ = app.update(Message::Event(event, id));
+        }
+        assert!(matches!(app.find_dialog, Some(FindDialog::ReplaceConfirm)));
+        let DocumentSession::Legacy(session) = &app.session else {
+            panic!()
+        };
+        assert_eq!(session.editor.snapshot().cursor_byte, 0);
+        assert!(session.editor.replacement_pending());
+        let _ = app.update(Message::Event(
+            key(Key::Character("y".into()), false, Some("y")),
+            id,
+        ));
+        assert!(app.find_dialog.is_none());
+        let _ = app.update(Message::Event(
+            key(Key::Character("l".into()), true, None),
+            id,
+        ));
+        assert!(matches!(app.find_dialog, Some(FindDialog::ReplaceConfirm)));
+        let DocumentSession::Legacy(session) = &app.session else {
+            panic!()
+        };
+        assert_eq!(session.editor.snapshot().cursor_byte, 12);
+        let _ = app.update(Message::Event(
+            key(Key::Character("y".into()), false, Some("y")),
+            id,
+        ));
+        assert!(app.find_dialog.is_none());
+        app.session.save().unwrap();
+        let mut expected = b"DOG CATALOG DOG".to_vec();
+        expected.resize(128, 0x1a);
+        assert_eq!(fs::read(path).unwrap(), expected);
     }
 
     #[test]

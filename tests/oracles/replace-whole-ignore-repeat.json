@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-replace-v1",
+  "id": "replace-whole-ignore-repeat",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-replace-08/replace-input.json",
+        "sha256": "51f734c5e372c3d6a73e19b48182e920b0efe0d6d550fe384108850517dd6cff"
+      },
+      {
+        "path": "runtime-northstar-replace-08/events.json",
+        "sha256": "f1b53d88514c57c9f0239e56420c7ad3f564ab3fb25ddfcac187e4e21e51bdef"
+      },
+      {
+        "path": "runtime-northstar-replace-08/second-replaced.png",
+        "sha256": "2edfd663e03db6f53dd12bbb5fe334fe7b8e6d4d3f93419456e5d42f9bead144"
+      },
+      {
+        "path": "runtime-northstar-replace-08/files/REP.DOC",
+        "sha256": "55da9b7ef44b2d83c6a9e80355213ebc30c9f9ae75406121431c6722e653b3c7"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte carrier in an isolated DOSBox copy on 2026-10-16.",
+      "Physical Ctrl-Q A, prompt answers, Ctrl-L and save are recorded in events.json.",
+      "Cursor byte is derived from the visible DOS line and column on one-byte text.",
+      "Only the declared alphabetic terms, options, and starting state were compared."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "43415420434154414c4f47206361741a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "replace_literal",
+      "text": "cat",
+      "replacement": "DOG",
+      "ignore_case": true,
+      "whole_words": true,
+      "without_asking": false
+    },
+    {
+      "command": "answer_replace",
+      "accept": true
+    },
+    {
+      "command": "repeat_find"
+    },
+    {
+      "command": "answer_replace",
+      "accept": true
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "55da9b7ef44b2d83c6a9e80355213ebc30c9f9ae75406121431c6722e653b3c7",
+    "cursor_byte": 12,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    },
+    "find_found": true,
+    "replace_pending": false
+  }
+}

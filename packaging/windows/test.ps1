@@ -30,7 +30,7 @@ try {
     $installed = $true
 
     $files = @('northstar-desktop.exe', 'LICENSE.txt', 'THIRD_PARTY_FONTS.md',
-               'IBM-Plex-OFL.txt', 'WINDOWS_PROTOTYPE.md', 'RECOVERY.md', 'NAVIGATION.md', 'WORD_NAVIGATION.md', 'FIND.md', 'DELETION.md', 'BACKSPACE_DELETE.md', 'BLOCK_COPY.md', 'BLOCK_MOVE_DELETE.md', 'ERASURE.md', 'WORD_ERASURE.md')
+               'IBM-Plex-OFL.txt', 'WINDOWS_PROTOTYPE.md', 'RECOVERY.md', 'NAVIGATION.md', 'WORD_NAVIGATION.md', 'FIND.md', 'REPLACEMENT.md', 'DELETION.md', 'BACKSPACE_DELETE.md', 'BLOCK_COPY.md', 'BLOCK_MOVE_DELETE.md', 'ERASURE.md', 'WORD_ERASURE.md')
     foreach ($file in $files) {
         if (-not (Test-Path -LiteralPath (Join-Path $installDir $file) -PathType Leaf)) {
             throw "Installed file missing: $file"

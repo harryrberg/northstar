@@ -82,6 +82,8 @@ impl DocumentSession {
                     | Command::DeleteLine
                     | Command::UneraseLine
                     | Command::FindLiteral { .. }
+                    | Command::ReplaceLiteral { .. }
+                    | Command::AnswerReplace { .. }
                     | Command::RepeatFind => {
                         return Err("This WordStar command is not available in UTF-8 mode".into());
                     }

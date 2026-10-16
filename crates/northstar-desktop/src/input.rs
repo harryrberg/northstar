@@ -5,6 +5,7 @@ use northstar_core::Command;
 #[derive(Debug, PartialEq, Eq)]
 pub enum Action {
     Find,
+    Replace,
     RepeatFind,
     Edit(Command),
     Text(String),
@@ -79,6 +80,7 @@ impl Keyboard {
             return Some(match (prefix, letter.as_str()) {
                 ('Q', "r") => Action::Edit(Command::DocumentStart),
                 ('Q', "f") if !utf8 => Action::Find,
+                ('Q', "a") if !utf8 => Action::Replace,
                 ('K', "s") => Action::Save,
                 ('K', "d") => Action::SaveAndDone,
                 ('K', "q") => Action::Done,

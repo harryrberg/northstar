@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //! Bounded, DOS-checked literal search on ordinary ASCII WordStar documents.
 
-use crate::{Document, EditError, TokenKind};
+use crate::{Document, Edit, EditError, Formatting, TokenKind};
 
+#[derive(Clone)]
 pub(super) struct FindSpec {
     bytes: Vec<u8>,
     ignore_case: bool,
@@ -10,9 +11,84 @@ pub(super) struct FindSpec {
     pub(super) backwards: bool,
 }
 
+#[derive(Clone)]
+pub(super) struct ReplaceSpec {
+    pub(super) bytes: Vec<u8>,
+    pub(super) without_asking: bool,
+}
+
+impl ReplaceSpec {
+    pub(super) fn new(
+        find: &str,
+        replacement: &str,
+        without_asking: bool,
+    ) -> Result<Self, EditError> {
+        // The retained replacement cases use nonempty alphabetic words. Spaces,
+        // punctuation, and empty replacements need their own byte comparisons.
+        if !find.bytes().all(|byte| byte.is_ascii_alphabetic())
+            || replacement.is_empty()
+            || replacement.len() > 64
+            || !replacement.bytes().all(|byte| byte.is_ascii_alphabetic())
+        {
+            return Err(EditError::UnqualifiedOperation(
+                "replacement currently requires nonempty ASCII words",
+            ));
+        }
+        Ok(Self {
+            bytes: replacement.as_bytes().to_vec(),
+            without_asking,
+        })
+    }
+}
+
+pub(super) fn check_replace_context(formatting: Formatting, insert: bool) -> Result<(), EditError> {
+    if !insert
+        || !formatting.document_mode
+        || formatting.line_spacing != 1
+        || (formatting.left_margin, formatting.right_margin) != (1, 65)
+        || formatting.right_justify
+    {
+        return Err(EditError::UnqualifiedOperation(
+            "replacement requires Insert on, document mode, single spacing, margins 1/65, and justification off",
+        ));
+    }
+    Ok(())
+}
+
+pub(super) fn replacement_edit(
+    document: &Document,
+    cursor: usize,
+    find_len: usize,
+    replacement: &ReplaceSpec,
+) -> Result<Edit, EditError> {
+    let end = document.checked_active_end()?;
+    let line = document.ascii_line(cursor, end)?;
+    if cursor + find_len > line.end
+        || line.end - line.start - find_len + replacement.bytes.len() > 65
+    {
+        return Err(EditError::UnqualifiedOperation(
+            "replacement must fit an ordinary physical line within margin 65",
+        ));
+    }
+    let new_length = end - find_len + replacement.bytes.len();
+    if new_length > 1024 * 1024 {
+        return Err(EditError::UnqualifiedOperation(
+            "replacement exceeds the 1 MiB prototype limit",
+        ));
+    }
+    let mut active = Vec::with_capacity(new_length);
+    active.extend_from_slice(&document.bytes()[..cursor]);
+    active.extend_from_slice(&replacement.bytes);
+    active.extend_from_slice(&document.bytes()[cursor + find_len..end]);
+    Ok(Edit::Replace { active, cursor })
+}
+
 impl FindSpec {
     pub(super) fn text(&self) -> String {
         String::from_utf8(self.bytes.clone()).expect("validated ASCII query")
+    }
+    pub(super) fn len(&self) -> usize {
+        self.bytes.len()
     }
     pub(super) fn new(
         text: &str,

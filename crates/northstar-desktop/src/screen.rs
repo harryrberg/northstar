@@ -60,6 +60,31 @@ impl Screen {
         self.cursor = None;
     }
 
+    pub fn replace_prompt(&mut self, term: &str, replacement: Option<&str>, options: Option<&str>) {
+        self.clear_find_header();
+        self.cells[0][1].glyph = 'A';
+        self.put(2, 3, &format!("Find what? {term}"), 7);
+        self.put(3, 1, "↵ done  : Backspace or ^H erase left", 7);
+        self.put(4, 1, "^U cancel :          Del erase", 7);
+        if let Some(replacement) = replacement {
+            self.put(5, 1, &format!("Replace with? {replacement}"), 7);
+        }
+        if let Some(options) = options {
+            self.put(6, 3, &format!("Option(s)? {options}"), 7);
+            self.put(
+                7,
+                3,
+                "W whole words   U ignore case   N replace without asking",
+                7,
+            );
+        }
+        self.cursor = None;
+    }
+
+    pub fn replace_question(&mut self) {
+        self.put(0, 68, "Replace Y/N", 0x70);
+    }
+
     pub fn find_notice(&mut self, term: &str, repeated: bool) {
         self.clear_find_header();
         self.cells[0].fill(Cell {

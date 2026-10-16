@@ -289,6 +289,16 @@ pub enum Command {
         whole_words: bool,
         backwards: bool,
     },
+    ReplaceLiteral {
+        text: String,
+        replacement: String,
+        ignore_case: bool,
+        whole_words: bool,
+        without_asking: bool,
+    },
+    AnswerReplace {
+        accept: bool,
+    },
     RepeatFind,
 }
 
@@ -329,6 +339,7 @@ pub struct Snapshot {
     pub formatting: Formatting,
     pub block_begin: Option<usize>,
     pub block_end: Option<usize>,
+    pub replace_pending: bool,
 }
 
 /// Owns cursor, modes, and document mutation; adapters must not duplicate these.
@@ -340,6 +351,8 @@ pub struct Editor {
     formatting: Formatting,
     erased_text: Option<erasure::ErasedText>,
     find: Option<search::FindSpec>,
+    replacement: Option<search::ReplaceSpec>,
+    replace_pending: bool,
     last_find_result: Option<bool>,
     block: block::Marks,
 }
@@ -372,6 +385,8 @@ impl Editor {
             formatting,
             erased_text: None,
             find: None,
+            replacement: None,
+            replace_pending: false,
             last_find_result: None,
             block: block::Marks::default(),
         })
@@ -390,6 +405,14 @@ impl Editor {
         self.find.as_ref().map(|spec| spec.text())
     }
 
+    pub fn replacement_pending(&self) -> bool {
+        self.replace_pending
+    }
+
+    pub fn last_search_replaces(&self) -> bool {
+        self.replacement.is_some()
+    }
+
     /// Record a successfully persisted carrier. The caller must finish writing
     /// and syncing before advancing this checkpoint. This is an application
     /// operation, not a reconstruction of WordStar's internal dirty flag.
@@ -406,11 +429,17 @@ impl Editor {
             formatting: self.formatting,
             block_begin: self.block.begin,
             block_end: self.block.end,
+            replace_pending: self.replace_pending,
         }
     }
 
     /// Reject unsupported cases before changing state. Returned errors are atomic.
     pub fn apply(&mut self, command: &Command) -> Result<(), EditError> {
+        if self.replace_pending && !matches!(command, Command::AnswerReplace { .. }) {
+            return Err(EditError::UnqualifiedOperation(
+                "answer the pending replacement before another command",
+            ));
+        }
         match command {
             Command::ToggleInsert => self.insert = !self.insert,
             Command::DocumentStart => self.cursor = 0,
@@ -568,13 +597,77 @@ impl Editor {
                 });
                 self.last_find_result = Some(target.is_some());
                 self.find = Some(spec);
+                self.replacement = None;
+                self.replace_pending = false;
+            }
+            Command::ReplaceLiteral {
+                text,
+                replacement,
+                ignore_case,
+                whole_words,
+                without_asking,
+            } => {
+                search::check_replace_context(self.formatting, self.insert)?;
+                if self.block.begin.is_some() || self.block.end.is_some() {
+                    return Err(EditError::UnqualifiedOperation(
+                        "replacement while block marks are set",
+                    ));
+                }
+                let spec = search::FindSpec::new(text, *ignore_case, *whole_words, false)?;
+                let replace = search::ReplaceSpec::new(text, replacement, *without_asking)?;
+                let target = search::target(&self.document, self.cursor, &spec, false)?;
+                let edit = target
+                    .map(|cursor| {
+                        search::replacement_edit(&self.document, cursor, text.len(), &replace)
+                    })
+                    .transpose()?;
+                self.cursor = target.unwrap_or_else(|| self.document.active_end());
+                self.last_find_result = Some(target.is_some());
+                self.replace_pending = target.is_some() && !*without_asking;
+                self.find = Some(spec);
+                self.replacement = Some(replace);
+                if *without_asking && let Some(edit) = edit {
+                    self.commit_edit(edit);
+                }
+            }
+            Command::AnswerReplace { accept } => {
+                if !self.replace_pending {
+                    return Err(EditError::UnqualifiedOperation(
+                        "no replacement question is pending",
+                    ));
+                }
+                if *accept {
+                    let replacement = self.replacement.as_ref().expect("pending replacement");
+                    let find_len = self.find.as_ref().expect("pending find").len();
+                    let edit = search::replacement_edit(
+                        &self.document,
+                        self.cursor,
+                        find_len,
+                        replacement,
+                    )?;
+                    self.commit_edit(edit);
+                }
+                self.replace_pending = false;
             }
             Command::RepeatFind => {
                 let spec = self
                     .find
                     .as_ref()
                     .ok_or(EditError::UnqualifiedOperation("no previous find"))?;
+                if self.replacement.is_some() {
+                    search::check_replace_context(self.formatting, self.insert)?;
+                }
                 let target = search::target(&self.document, self.cursor, spec, true)?;
+                let edit = if let (Some(cursor), Some(replacement)) = (target, &self.replacement) {
+                    Some(search::replacement_edit(
+                        &self.document,
+                        cursor,
+                        spec.len(),
+                        replacement,
+                    )?)
+                } else {
+                    None
+                };
                 self.cursor = target.unwrap_or_else(|| {
                     if spec.backwards {
                         0
@@ -583,6 +676,19 @@ impl Editor {
                     }
                 });
                 self.last_find_result = Some(target.is_some());
+                self.replace_pending = target.is_some()
+                    && self
+                        .replacement
+                        .as_ref()
+                        .is_some_and(|replacement| !replacement.without_asking);
+                if self
+                    .replacement
+                    .as_ref()
+                    .is_some_and(|replacement| replacement.without_asking)
+                    && let Some(edit) = edit
+                {
+                    self.commit_edit(edit);
+                }
             }
         }
         Ok(())

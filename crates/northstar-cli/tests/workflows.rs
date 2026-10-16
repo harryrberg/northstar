@@ -93,6 +93,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("erasure-")
                 || name.starts_with("word-")
                 || name.starts_with("find-")
+                || name.starts_with("replace-")
                 || name.starts_with("backdel-")
                 || name.starts_with("block-")
         })
@@ -120,6 +121,13 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
         for field in ["cursor_byte", "insert", "formatting"] {
             assert_eq!(report["compared_fields"][field], true);
             assert_eq!(report["state"][field], spec["expected"][field]);
+        }
+        if spec["profile"] == "ws4-ascii-replace-v1" {
+            assert_eq!(report["compared_fields"]["replace_pending"], true);
+            assert_eq!(
+                report["state"]["replace_pending"],
+                spec["expected"]["replace_pending"]
+            );
         }
         if spec["profile"] == "ws4-block-copy-v1"
             || (spec["profile"] == "ws4-block-move-delete-v1"

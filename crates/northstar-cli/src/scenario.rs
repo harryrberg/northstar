@@ -50,6 +50,7 @@ struct Expected {
     insert: Option<bool>,
     formatting: Option<Formatting>,
     find_found: Option<bool>,
+    replace_pending: Option<bool>,
     block_begin: Option<usize>,
     block_end: Option<usize>,
     marks_cleared: Option<bool>,
@@ -70,6 +71,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-line-erasure-v1"
                 | "ws4-word-erasure-v1"
                 | "ws4-ascii-find-v1"
+                | "ws4-ascii-replace-v1"
                 | "ws4-backspace-delete-v1"
                 | "ws4-block-copy-v1"
                 | "ws4-block-move-delete-v1"
@@ -92,16 +94,43 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | Command::NextCharacter
         )
     };
+    let replace = |command: &Command| {
+        matches!(
+            command,
+            Command::ReplaceLiteral { .. }
+                | Command::AnswerReplace { .. }
+                | Command::RepeatFind
+                | Command::DocumentStart
+                | Command::NextCharacter
+        )
+    };
     if (spec.profile == "ws4-ascii-find-v1" && spec.commands.iter().any(|command| !find(command)))
-        || (spec.profile != "ws4-ascii-find-v1"
-            && spec.commands.iter().any(|command| {
-                matches!(command, Command::FindLiteral { .. } | Command::RepeatFind)
-            }))
+        || (spec.profile == "ws4-ascii-replace-v1"
+            && spec.commands.iter().any(|command| !replace(command)))
+        || (!matches!(
+            spec.profile.as_str(),
+            "ws4-ascii-find-v1" | "ws4-ascii-replace-v1"
+        ) && spec.commands.iter().any(|command| {
+            matches!(
+                command,
+                Command::FindLiteral { .. }
+                    | Command::ReplaceLiteral { .. }
+                    | Command::AnswerReplace { .. }
+                    | Command::RepeatFind
+            )
+        }))
     {
-        return Err("find commands require their declared profile".into());
+        return Err("find and replace commands require their declared profiles".into());
     }
-    if (spec.profile == "ws4-ascii-find-v1") != spec.expected.find_found.is_some() {
-        return Err("find profile requires a declared found result".into());
+    if matches!(
+        spec.profile.as_str(),
+        "ws4-ascii-find-v1" | "ws4-ascii-replace-v1"
+    ) != spec.expected.find_found.is_some()
+    {
+        return Err("find or replace profile requires a declared found result".into());
+    }
+    if (spec.profile == "ws4-ascii-replace-v1") != spec.expected.replace_pending.is_some() {
+        return Err("replace profile requires a declared pending state".into());
     }
     let vertical = |command: &Command| matches!(command, Command::NextLine | Command::PreviousLine);
     if (spec.profile == "ws4-vertical-navigation-v1"
@@ -347,6 +376,13 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
     }
     if spec
         .expected
+        .replace_pending
+        .is_some_and(|x| x != snapshot.replace_pending)
+    {
+        mismatches.push("replace_pending");
+    }
+    if spec
+        .expected
         .formatting
         .is_some_and(|x| x != snapshot.formatting)
     {
@@ -381,7 +417,7 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
         "state": snapshot,
         "steps": steps,
         "find_found": editor.last_find_result(),
-        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some(), "find_found": spec.expected.find_found.is_some(), "block_begin": spec.expected.block_begin.is_some(), "block_end": spec.expected.block_end.is_some(), "marks_cleared": spec.expected.marks_cleared == Some(true)},
+        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some(), "find_found": spec.expected.find_found.is_some(), "replace_pending": spec.expected.replace_pending.is_some(), "block_begin": spec.expected.block_begin.is_some(), "block_end": spec.expected.block_end.is_some(), "marks_cleared": spec.expected.marks_cleared == Some(true)},
         "output_path": output,
         "target_executed": false,
         "provenance": spec.provenance,
