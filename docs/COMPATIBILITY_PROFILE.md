@@ -63,7 +63,11 @@ Seventeen synthetic scenarios compare Ctrl-Q F and Ctrl-L with retained DOS stat
 
 ## Ctrl-G deletion: ws4-delete-character-v1
 
-Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved bytes. On an ordinary text cell it removes that byte and keeps the cursor position. On a hard CRLF it joins two short ordinary lines. At EOF it has no effect. One high-bit text cell and Insert-off deletion are included. Windows Ctrl-G routes to the core command. [Observed cases and limits](DELETION.md) record source identities and the DOS reopen check. Backspace, the DOS Delete key, and soft-break deletion remain unqualified.
+Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved bytes. On an ordinary text cell it removes that byte and keeps the cursor position. On a hard CRLF it joins two short ordinary lines. At EOF it has no effect. One high-bit text cell and Insert-off deletion are included. Windows Ctrl-G routes to the core command. [Observed cases and limits](DELETION.md) record source identities and the DOS reopen check. Soft-break deletion remains unqualified.
+
+## Backspace and Delete: ws4-backspace-delete-v1
+
+Ten synthetic scenarios compare physical Backspace and Delete with retained DOS screenshots and saved bytes. Backspace removes the previous byte and moves the cursor back; Delete removes the byte under the cursor and leaves the cursor in place. Both can join an ordinary hard break. Document boundaries, Insert-off mode and high-bit text are included. The desktop routes both keys through the core; Delete shares Ctrl-G's deletion command. [Observations, source identities, DOS reopen check and limits](BACKSPACE_DELETE.md) define the scope.
 
 ## Ctrl-Y and Ctrl-U: ws4-line-erasure-v1
 

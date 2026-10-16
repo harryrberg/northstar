@@ -272,6 +272,7 @@ pub enum Command {
     NextLine,
     PreviousLine,
     DeleteCharacter,
+    Backspace,
     DeleteWord,
     DeleteLine,
     UneraseLine,
@@ -448,6 +449,13 @@ impl Editor {
             }
             Command::DeleteCharacter => {
                 self.commit_edit(erasure::delete_character(
+                    &self.document,
+                    self.cursor,
+                    self.formatting,
+                )?);
+            }
+            Command::Backspace => {
+                self.commit_edit(erasure::backspace(
                     &self.document,
                     self.cursor,
                     self.formatting,

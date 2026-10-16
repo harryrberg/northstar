@@ -55,8 +55,11 @@ fn type_text(text: &str) -> Event {
 }
 fn dispatch(keys: &mut Keyboard, session: &mut Session, event: Event) {
     if let Some(action) = keys.handle(&event) {
-        let Action::Edit(command) = action else {
-            panic!("unexpected action: {action:?}")
+        let command = match action {
+            Action::Edit(command) => command,
+            Action::Backspace => Command::Backspace,
+            Action::Delete => Command::DeleteCharacter,
+            _ => panic!("unexpected action: {action:?}"),
         };
         session.editor.apply(&command).unwrap();
     }
@@ -70,6 +73,10 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "wrap-type-multiple-wrapped-lines",
         "navword-next-over-hyphen",
         "navword-next-twice",
+        "backdel-backspace-middle",
+        "backdel-backspace-join",
+        "backdel-delete-middle",
+        "backdel-delete-join",
     ] {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../tests/oracles")
@@ -84,6 +91,16 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         fs::write(&source, &carrier).unwrap();
         let mut session = Session::open(&source).unwrap();
         let mut keyboard = Keyboard::default();
+        let initial_cursor = case["initial"]["cursor_byte"].as_u64().unwrap() as usize;
+        while session.editor.snapshot().cursor_byte < initial_cursor {
+            let previous = session.editor.snapshot().cursor_byte;
+            dispatch(&mut keyboard, &mut session, ctrl("d", false));
+            assert!(session.editor.snapshot().cursor_byte > previous);
+        }
+        assert_eq!(session.editor.snapshot().cursor_byte, initial_cursor);
+        if case["initial"]["insert"] == false {
+            dispatch(&mut keyboard, &mut session, ctrl("v", false));
+        }
         for value in case["commands"].as_array().unwrap() {
             let command: Command = serde_json::from_value(value.clone()).unwrap();
             match command {
@@ -115,7 +132,25 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 Command::PreviousWord => dispatch(&mut keyboard, &mut session, ctrl("a", false)),
                 Command::NextLine => dispatch(&mut keyboard, &mut session, ctrl("x", false)),
                 Command::PreviousLine => dispatch(&mut keyboard, &mut session, ctrl("e", false)),
-                Command::DeleteCharacter => dispatch(&mut keyboard, &mut session, ctrl("g", false)),
+                Command::DeleteCharacter => dispatch(
+                    &mut keyboard,
+                    &mut session,
+                    if case["profile"] == "ws4-backspace-delete-v1" {
+                        press(Key::Named(Named::Delete), Modifiers::empty(), None, false)
+                    } else {
+                        ctrl("g", false)
+                    },
+                ),
+                Command::Backspace => dispatch(
+                    &mut keyboard,
+                    &mut session,
+                    press(
+                        Key::Named(Named::Backspace),
+                        Modifiers::empty(),
+                        None,
+                        false,
+                    ),
+                ),
                 Command::DeleteWord => dispatch(&mut keyboard, &mut session, ctrl("t", false)),
                 Command::DeleteLine => dispatch(&mut keyboard, &mut session, ctrl("y", false)),
                 Command::UneraseLine => dispatch(&mut keyboard, &mut session, ctrl("u", false)),
@@ -153,6 +188,30 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         );
         assert_eq!(fs::read(source).unwrap(), carrier);
     }
+}
+
+#[test]
+fn legacy_backspace_and_delete_session_save_and_reopen() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("input.doc");
+    let mut carrier = b"ABCDE".to_vec();
+    carrier.resize(128, 0x1a);
+    fs::write(&source, &carrier).unwrap();
+    let mut session = DocumentSession::Legacy(Session::open(&source).unwrap());
+    for _ in 0..3 {
+        session.apply_command(&Command::NextCharacter).unwrap();
+    }
+    session.backspace().unwrap();
+    session.delete().unwrap();
+    let destination = scratch.0.join("output.doc");
+    session.save_as(&destination).unwrap();
+    assert_eq!(&fs::read(&destination).unwrap()[..3], b"ABE");
+    assert_eq!(&fs::read(&source).unwrap()[..5], b"ABCDE");
+    let reopened = Session::open(&destination).unwrap();
+    assert_eq!(
+        reopened.editor.document().bytes(),
+        fs::read(&destination).unwrap()
+    );
 }
 
 #[test]

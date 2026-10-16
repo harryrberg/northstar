@@ -67,6 +67,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-line-erasure-v1"
                 | "ws4-word-erasure-v1"
                 | "ws4-ascii-find-v1"
+                | "ws4-backspace-delete-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
@@ -120,10 +121,28 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
         && spec.commands.iter().any(|command| !deletion(command)))
         || (!matches!(
             spec.profile.as_str(),
-            "ws4-delete-character-v1" | "ws4-line-erasure-v1" | "ws4-word-erasure-v1"
+            "ws4-delete-character-v1"
+                | "ws4-line-erasure-v1"
+                | "ws4-word-erasure-v1"
+                | "ws4-backspace-delete-v1"
         ) && spec.commands.iter().any(deletion))
     {
         return Err("character deletion requires its declared profile".into());
+    }
+    let backspace_delete =
+        |command: &Command| matches!(command, Command::Backspace | Command::DeleteCharacter);
+    if (spec.profile == "ws4-backspace-delete-v1"
+        && spec
+            .commands
+            .iter()
+            .any(|command| !backspace_delete(command)))
+        || (spec.profile != "ws4-backspace-delete-v1"
+            && spec
+                .commands
+                .iter()
+                .any(|command| matches!(command, Command::Backspace)))
+    {
+        return Err("Backspace requires its declared profile".into());
     }
     let line_erasure = |command: &Command| {
         matches!(

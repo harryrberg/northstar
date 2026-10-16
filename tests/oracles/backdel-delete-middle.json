@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-backspace-delete-v1",
+  "id": "backdel-delete-middle",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-backdel-01/backdel-inputs.json",
+        "sha256": "a8ae0cfaa7b3e599b2e95a5268831fec25eef5280126377dab355e53c32a68a1"
+      },
+      {
+        "path": "runtime-northstar-backdel-01/events.json",
+        "sha256": "d9cc57d6d202c1000164d3c91f41bf8aeb621371a49a4549b322ff4f56855763"
+      },
+      {
+        "path": "runtime-northstar-backdel-01/d6-after.png",
+        "sha256": "6fd1274507dfad8fab7a3596b54c5d4d1348c1b3e0c8b2761e5c84bf8b459361"
+      },
+      {
+        "path": "runtime-northstar-backdel-01/files/D6.DOC",
+        "sha256": "f48fb48831a948efd30b50f704a8759086a34de0c87d83fd91780d4522243759"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document in an isolated DOSBox copy on 2026-10-16.",
+      "The action log identifies the BackSpace or Delete physical key and the save action.",
+      "Cursor byte offset is derived from observed L/C status and one-byte cells.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Other control cells, soft or page breaks, long lines and dot commands are outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41424344451a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 3,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_character"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "f48fb48831a948efd30b50f704a8759086a34de0c87d83fd91780d4522243759",
+    "cursor_byte": 3,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

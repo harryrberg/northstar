@@ -24,6 +24,7 @@
       <ComponentRef Id="WordNavigationGuide" />
       <ComponentRef Id="FindGuide" />
       <ComponentRef Id="DeletionGuide" />
+      <ComponentRef Id="BackspaceDeleteGuide" />
       <ComponentRef Id="ErasureGuide" />
       <ComponentRef Id="WordErasureGuide" />
     </Feature>
@@ -73,6 +74,10 @@
     <Component Id="DeletionGuide" Directory="INSTALLFOLDER" Guid="81D76939-872B-474C-8D26-C271B07A0848">
       <File Source="$(var.RepoRoot)\docs\DELETION.md" />
       <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="DeletionGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="BackspaceDeleteGuide" Directory="INSTALLFOLDER" Guid="EA4D734D-1A65-4C87-98FA-477B1456D1E0">
+      <File Source="$(var.RepoRoot)\docs\BACKSPACE_DELETE.md" />
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="BackspaceDeleteGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
     <Component Id="ErasureGuide" Directory="INSTALLFOLDER" Guid="AF80B827-5F1D-49FB-8A59-D7CAD644C4C2">
       <File Source="$(var.RepoRoot)\docs\ERASURE.md" />

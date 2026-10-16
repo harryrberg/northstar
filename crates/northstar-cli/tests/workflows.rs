@@ -93,6 +93,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("erasure-")
                 || name.starts_with("word-")
                 || name.starts_with("find-")
+                || name.starts_with("backdel-")
         })
         .collect();
     paths.sort();

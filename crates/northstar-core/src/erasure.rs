@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-//! Bounded WordStar Ctrl-G, Ctrl-T, Ctrl-Y, and Ctrl-U semantics.
+//! Bounded WordStar Backspace, Delete, Ctrl-G, Ctrl-T, Ctrl-Y, and Ctrl-U semantics.
 use crate::{AsciiLine, Document, Edit, EditError, Formatting, TokenKind};
 
 pub(super) enum ErasedText {
@@ -111,6 +111,28 @@ pub(super) fn delete_character(
     let mut active = document.bytes()[..end].to_vec();
     active.drain(remove);
     Ok(Edit::Replace { active, cursor })
+}
+
+/// Backspace targets the preceding complete token. On an ordinary hard CRLF,
+/// the existing character-deletion operation owns the join and its checks.
+pub(super) fn backspace(
+    document: &Document,
+    cursor: usize,
+    formatting: Formatting,
+) -> Result<Edit, EditError> {
+    check_formatting(formatting)?;
+    let end = document.checked_active_end()?;
+    if cursor == 0 {
+        let line = document.ascii_line(0, end)?;
+        check_line(document, &line, true)?;
+        return Ok(Edit::MoveTo(0));
+    }
+    let previous = document
+        .tokens()
+        .take_while(|token| token.range.start < end)
+        .find(|token| token.range.end == cursor)
+        .ok_or(EditError::InvalidCursor { offset: cursor })?;
+    delete_character(document, previous.range.start, formatting)
 }
 
 /// Ctrl-T deletes a word suffix, separator run, or hard break. A hard break

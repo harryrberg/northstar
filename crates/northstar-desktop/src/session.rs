@@ -72,6 +72,7 @@ impl DocumentSession {
                     | Command::NextWord
                     | Command::PreviousWord
                     | Command::DeleteCharacter
+                    | Command::Backspace
                     | Command::DeleteWord
                     | Command::DeleteLine
                     | Command::UneraseLine
@@ -102,7 +103,10 @@ impl DocumentSession {
 
     pub fn backspace(&mut self) -> Result<(), String> {
         match self {
-            Self::Legacy(_) => Err("Deletion is not yet qualified for WordStar files".into()),
+            Self::Legacy(session) => session
+                .editor
+                .apply(&Command::Backspace)
+                .map_err(|e| e.to_string()),
             Self::Utf8(session) => {
                 session.editor.backspace();
                 Ok(())
@@ -112,7 +116,10 @@ impl DocumentSession {
 
     pub fn delete(&mut self) -> Result<(), String> {
         match self {
-            Self::Legacy(_) => Err("Deletion is not yet qualified for WordStar files".into()),
+            Self::Legacy(session) => session
+                .editor
+                .apply(&Command::DeleteCharacter)
+                .map_err(|e| e.to_string()),
             Self::Utf8(session) => {
                 session.editor.delete();
                 Ok(())
