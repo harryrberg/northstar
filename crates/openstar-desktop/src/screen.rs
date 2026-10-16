@@ -301,9 +301,18 @@ impl Screen {
                 "This command is not implemented yet.",
             ),
             'C' => ("C protect a file", "This command is not implemented yet."),
-            'E' => ("E rename a file", "This command is not implemented yet."),
-            'O' => ("O copy a file", "This command is not implemented yet."),
-            'Y' => ("Y delete a file", "This command is not implemented yet."),
+            'E' => (
+                "E rename a file",
+                "Renames a regular file on the same volume to a new name.",
+            ),
+            'O' => (
+                "O copy a file",
+                "Copies a regular file under a new name without replacing a file.",
+            ),
+            'Y' => (
+                "Y delete a file",
+                "Erases a selected regular file after a Y/N confirmation.",
+            ),
             'R' => (
                 "R run a DOS command",
                 "This command is not implemented yet.",

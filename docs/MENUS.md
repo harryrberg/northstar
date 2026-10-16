@@ -10,8 +10,11 @@ The reference is the primary WordStar Professional 4.00 `WS.EXE` identified in [
 | F | Hide the directory, or ask for a match name before showing it. The default match name shows all modern filenames. |
 | J | Open help. An opening-menu letter selects a topic. The explanations are OpenStar text, not copied WordStar help. |
 | L | Choose an existing logged directory. Relative document and Save As paths use it. |
+| O | Copy one regular file to a new name without replacing an existing target. |
+| E | Rename one regular file on the same volume to a new name. |
+| Y | Delete one regular file after a Y/N confirmation. |
 | X | Exit. |
-| N, P, M, I, T, C, E, O, Y, R, Esc | Displayed but not implemented. |
+| N, P, M, I, T, C, R, Esc | Displayed but not implemented. |
 
 F2 starts a new UTF-8 document, F3 opens one, and F4 offers recovery. These are OpenStar extensions, separate from the WordStar 4.0 menu.
 
@@ -25,6 +28,6 @@ Ctrl-K S/D/Q/B/K/C/V/Y and Ctrl-Q R/F/A have the bounded behaviors in the [Windo
 
 ## Evidence and limits
 
-The isolated DOS runs in `C:/Projects/rea/investigations/wordstar/runtime-openstar-menu-03` capture F off, F on with its match-name question, Enter with the default match, and L with the directory question. The run in `runtime-openstar-menus-05` opens `CHAPTER1.DOC` from the copied program disk and captures Ctrl-K/Q/O/P after a one-second wait. The source manifest and ordered actions are retained with each run. Earlier opening and D screens are in `runtime-openstar-ui-help-02`; editor Help is in `runtime-spell-01`. These observations establish the visible menus and prompts in those starting states. They do not establish the behavior of every menu command, option, error, or file-system state. No screenshot or original executable is committed here.
+The isolated DOS runs in `C:/Projects/rea/investigations/wordstar/runtime-openstar-menu-03` capture F off, F on with its match-name question, Enter with the default match, and L with the directory question. The run in `runtime-openstar-menus-05` opens `CHAPTER1.DOC` from the copied program disk and captures Ctrl-K/Q/O/P after a one-second wait. [File operation evidence](FILE_OPERATIONS.md) records O, E and Y. The source manifest and ordered actions are retained with each run. Earlier opening and D screens are in `runtime-openstar-ui-help-02`; editor Help is in `runtime-spell-01`. These observations establish the visible menus and prompts in those starting states. They do not establish the behavior of every menu command, option, error, or file-system state. No screenshot or original executable is committed here.
 
-The menu build is incomplete. File operations, printing, formatting menus, shorthand, spelling, many navigation commands, original help levels, and most footer keys still need separate behavioral observations, implementation, and differential checks.
+The menu build is incomplete. Other file operations, printing, formatting menus, shorthand, spelling, many navigation commands, original help levels, and most footer keys still need separate behavioral observations, implementation, and differential checks.

@@ -3,6 +3,7 @@
 pub const APP_TITLE: &str = concat!("OpenStar 4.0 (", env!("CARGO_PKG_VERSION"), ")");
 
 pub mod directory;
+pub mod file_operations;
 pub mod input;
 pub mod projection;
 pub mod recovery;

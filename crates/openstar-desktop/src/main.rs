@@ -8,6 +8,7 @@ use iced::{
 use openstar_desktop::{
     APP_TITLE,
     directory::{DirectoryListing, resolve_path},
+    file_operations,
     input::{Action, Keyboard},
     projection::Projection,
     recovery::{RecoveryCandidate, RecoveryStore},
@@ -80,6 +81,16 @@ enum PathKind {
     SaveAs { done: bool },
     ChangeDirectory,
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FileAction {
+    Copy,
+    Rename,
+    Delete,
+}
+enum FileStage {
+    Source,
+    Target(PathBuf),
+}
 enum Dialog {
     Path {
         kind: PathKind,
@@ -88,6 +99,16 @@ enum Dialog {
     },
     DirectoryMatch {
         value: String,
+        error: String,
+    },
+    FilePrompt {
+        action: FileAction,
+        stage: FileStage,
+        value: String,
+        error: String,
+    },
+    DeleteConfirm {
+        path: PathBuf,
         error: String,
     },
     Discard(Next),
@@ -129,6 +150,8 @@ pub(crate) enum Message {
     NewUtf8,
     OpenUtf8,
     ChangeDirectory,
+    FileAction(FileAction),
+    ConfirmDelete,
     ToggleDirectory,
     Save(bool),
     SaveAs(bool),
@@ -500,6 +523,99 @@ impl App {
         });
         iced::widget::operation::focus("document-path")
     }
+    fn submit_file_prompt(&mut self) -> Task<Message> {
+        let Some(Dialog::FilePrompt {
+            action,
+            stage,
+            value,
+            error: _,
+        }) = self.dialog.take()
+        else {
+            return Task::none();
+        };
+        let path = match resolve_path(&self.logged_directory, &value) {
+            Ok(path) if !value.is_empty() => path,
+            Ok(_) => {
+                self.dialog = Some(Dialog::FilePrompt {
+                    action,
+                    stage,
+                    value,
+                    error: "Enter a file name".into(),
+                });
+                return Task::none();
+            }
+            Err(problem) => {
+                self.dialog = Some(Dialog::FilePrompt {
+                    action,
+                    stage,
+                    value,
+                    error: problem.to_string(),
+                });
+                return Task::none();
+            }
+        };
+        match stage {
+            FileStage::Source => match std::fs::metadata(&path) {
+                Ok(metadata) if metadata.is_file() => {
+                    if action == FileAction::Delete {
+                        self.dialog = Some(Dialog::DeleteConfirm {
+                            path,
+                            error: String::new(),
+                        });
+                        Task::none()
+                    } else {
+                        self.dialog = Some(Dialog::FilePrompt {
+                            action,
+                            stage: FileStage::Target(path),
+                            value: String::new(),
+                            error: String::new(),
+                        });
+                        iced::widget::operation::focus("document-path")
+                    }
+                }
+                Ok(_) => {
+                    self.dialog = Some(Dialog::FilePrompt {
+                        action,
+                        stage: FileStage::Source,
+                        value,
+                        error: "Not a regular file".into(),
+                    });
+                    Task::none()
+                }
+                Err(problem) => {
+                    self.dialog = Some(Dialog::FilePrompt {
+                        action,
+                        stage: FileStage::Source,
+                        value,
+                        error: problem.to_string(),
+                    });
+                    Task::none()
+                }
+            },
+            FileStage::Target(source) => {
+                let result = match action {
+                    FileAction::Copy => file_operations::copy(&source, &path),
+                    FileAction::Rename => file_operations::rename(&source, &path),
+                    FileAction::Delete => unreachable!(),
+                };
+                match result {
+                    Ok(()) => {
+                        self.notice.clear();
+                        self.refresh_directory();
+                    }
+                    Err(problem) => {
+                        self.dialog = Some(Dialog::FilePrompt {
+                            action,
+                            stage: FileStage::Target(source),
+                            value,
+                            error: problem.to_string(),
+                        });
+                    }
+                }
+                Task::none()
+            }
+        }
+    }
     fn refresh_directory(&mut self) {
         self.directory_listing = DirectoryListing::read(self.logged_directory.clone());
         self.directory_listing.retain_match(&self.directory_match);
@@ -508,6 +624,28 @@ impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::Open => return self.path_dialog(PathKind::OpenLegacy),
+            Message::FileAction(action) => {
+                self.keyboard.reset();
+                self.dialog = Some(Dialog::FilePrompt {
+                    action,
+                    stage: FileStage::Source,
+                    value: String::new(),
+                    error: String::new(),
+                });
+                return iced::widget::operation::focus("document-path");
+            }
+            Message::ConfirmDelete => {
+                if let Some(Dialog::DeleteConfirm { path, error }) = &mut self.dialog {
+                    match file_operations::delete(path) {
+                        Ok(()) => {
+                            self.dialog = None;
+                            self.notice.clear();
+                            self.refresh_directory();
+                        }
+                        Err(problem) => *error = problem.to_string(),
+                    }
+                }
+            }
             Message::NewUtf8 => {
                 self.find_dialog = None;
                 self.session = DocumentSession::Utf8(Utf8Session::new_at(None));
@@ -623,6 +761,11 @@ impl App {
                 | Some(Dialog::DirectoryMatch {
                     value: current,
                     error,
+                })
+                | Some(Dialog::FilePrompt {
+                    value: current,
+                    error,
+                    ..
                 }) => {
                     *current = value;
                     error.clear();
@@ -630,6 +773,9 @@ impl App {
                 _ => {}
             },
             Message::Submit => {
+                if matches!(self.dialog, Some(Dialog::FilePrompt { .. })) {
+                    return self.submit_file_prompt();
+                }
                 if matches!(&self.dialog, Some(Dialog::Path { kind: PathKind::ChangeDirectory, value, .. }) if value.is_empty())
                 {
                     self.dialog = None;
@@ -863,6 +1009,12 @@ impl App {
                             Some(Dialog::Discard(_)) if key.eq_ignore_ascii_case("n") => {
                                 Some(Message::Cancel)
                             }
+                            Some(Dialog::DeleteConfirm { .. }) if key.eq_ignore_ascii_case("y") => {
+                                Some(Message::ConfirmDelete)
+                            }
+                            Some(Dialog::DeleteConfirm { .. }) if key.eq_ignore_ascii_case("n") => {
+                                Some(Message::Cancel)
+                            }
                             Some(Dialog::Recovery { .. }) if key.eq_ignore_ascii_case("r") => {
                                 Some(Message::Recover)
                             }
@@ -894,6 +1046,9 @@ impl App {
                                 Key::Character(s) if s.eq_ignore_ascii_case("d")=>return self.update(Message::Open),
                                 Key::Character(s) if s.eq_ignore_ascii_case("l")=>return self.update(Message::ChangeDirectory),
                                 Key::Character(s) if s.eq_ignore_ascii_case("f")=>return self.update(Message::ToggleDirectory),
+                                Key::Character(s) if s.eq_ignore_ascii_case("o")=>return self.update(Message::FileAction(FileAction::Copy)),
+                                Key::Character(s) if s.eq_ignore_ascii_case("e")=>return self.update(Message::FileAction(FileAction::Rename)),
+                                Key::Character(s) if s.eq_ignore_ascii_case("y")=>return self.update(Message::FileAction(FileAction::Delete)),
                                 Key::Character(s) if s.eq_ignore_ascii_case("x")=>return self.begin(Next::Close(id)),
                                 Key::Character(s) if s.eq_ignore_ascii_case("j")=>return self.update(Message::Help),
                                 Key::Named(Named::F1)=>return self.update(Message::Help),
@@ -1168,6 +1323,12 @@ impl App {
                 ..
             } => "L",
             Dialog::DirectoryMatch { .. } => "F",
+            Dialog::FilePrompt { action, .. } => match action {
+                FileAction::Copy => "O",
+                FileAction::Rename => "E",
+                FileAction::Delete => "Y",
+            },
+            Dialog::DeleteConfirm { .. } => "Y",
             Dialog::Discard(_) => "?",
             Dialog::Recovery { .. } => "R",
             Dialog::Help { .. } => unreachable!("help uses the screen grid"),
@@ -1296,6 +1457,115 @@ impl App {
                 screen.put(9, 0, "Esc cancel   | Del erase", 7);
                 screen.put(11, 0, error, 7);
             }
+            Dialog::FilePrompt {
+                action,
+                stage,
+                error,
+                ..
+            } => {
+                match action {
+                    FileAction::Copy => screen.put(
+                        2,
+                        0,
+                        "Specify the name of the document that you wish to copy.",
+                        7,
+                    ),
+                    FileAction::Rename => screen.put(
+                        2,
+                        0,
+                        "Specify the name of the document that you wish to rename.",
+                        7,
+                    ),
+                    FileAction::Delete => {
+                        screen.put(
+                            2,
+                            0,
+                            "Specify the document that you wish to permanently erase from disk.",
+                            7,
+                        );
+                        screen.put(3, 0, "If you do not specify a drive, it will be erased from the logged drive.", 7);
+                        screen.put(
+                            5,
+                            0,
+                            "Select one file. You can cancel before confirming.",
+                            7,
+                        );
+                    }
+                }
+                let source_row = if *action == FileAction::Delete { 8 } else { 4 };
+                screen.put(
+                    source_row,
+                    0,
+                    match action {
+                        FileAction::Copy => "Document to be copied?",
+                        FileAction::Rename => "Document to be renamed?",
+                        FileAction::Delete => "Document to be erased?",
+                    },
+                    7,
+                );
+                screen.put(
+                    source_row + 1,
+                    0,
+                    "  Enter done  | Backspace erase left  | Esc cancel",
+                    7,
+                );
+                if let FileStage::Target(source) = stage {
+                    screen.put(
+                        source_row,
+                        if *action == FileAction::Copy { 23 } else { 24 },
+                        &source
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .chars()
+                            .take(54)
+                            .collect::<String>(),
+                        7,
+                    );
+                    screen.put(
+                        source_row + 2,
+                        0,
+                        if *action == FileAction::Copy {
+                            "Name a document to hold the new copy."
+                        } else {
+                            "What do you want its new name to be?"
+                        },
+                        7,
+                    );
+                }
+                screen.put(13, 0, error, 7);
+                if self.directory_visible {
+                    screen.show_directory(&self.directory_listing, 15, 0);
+                }
+            }
+            Dialog::DeleteConfirm { path, error } => {
+                screen.put(
+                    2,
+                    0,
+                    "Specify the document that you wish to permanently erase from disk.",
+                    7,
+                );
+                screen.put(
+                    3,
+                    0,
+                    "If you do not specify a drive, it will be erased from the logged drive.",
+                    7,
+                );
+                screen.put(
+                    8,
+                    0,
+                    &format!("Document to be erased? {}", path.display())
+                        .chars()
+                        .take(80)
+                        .collect::<String>(),
+                    7,
+                );
+                screen.put(9, 0, "Are you sure (Y/N)?", 7);
+                screen.put(11, 0, error, 7);
+                if self.directory_visible {
+                    screen.show_directory(&self.directory_listing, 14, 0);
+                }
+            }
             Dialog::Discard(_) => {
                 screen.put(3, 0, "The document has unsaved changes.", 7);
                 screen.put(
@@ -1367,6 +1637,37 @@ impl App {
             } => Some((value, 13.0, 53.0)),
             Dialog::Path { value, .. } => Some((value, 8.0, 18.0)),
             Dialog::DirectoryMatch { value, .. } => Some((value, 7.0, 27.0)),
+            Dialog::FilePrompt {
+                action,
+                stage,
+                value,
+                ..
+            } => Some(match stage {
+                FileStage::Source => (
+                    value,
+                    if *action == FileAction::Delete {
+                        8.0
+                    } else {
+                        4.0
+                    },
+                    if *action == FileAction::Copy {
+                        23.0
+                    } else if *action == FileAction::Rename {
+                        24.0
+                    } else {
+                        23.0
+                    },
+                ),
+                FileStage::Target(_) => (
+                    value,
+                    6.0,
+                    if *action == FileAction::Copy {
+                        39.0
+                    } else {
+                        40.0
+                    },
+                ),
+            }),
             _ => None,
         };
         if let Some((value, row, column)) = input_position {
@@ -1642,6 +1943,72 @@ mod tests {
         let _ = app.update(Message::Submit);
         assert!(!app.opening);
         assert_eq!(app.session.path(), Some(path.as_path()));
+    }
+
+    #[test]
+    fn opening_file_commands_stage_source_target_and_delete_confirmation() {
+        let scratch = Scratch::new();
+        let source = scratch.0.join("SOURCE.DOC");
+        let copied = scratch.0.join("COPY.DOC");
+        let renamed = scratch.0.join("RENAMED.DOC");
+        fs::write(&source, [0, 0x1a, 0xff]).unwrap();
+        let mut app = App::new_with_recovery(None, None);
+        app.logged_directory = scratch.0.clone();
+        app.refresh_directory();
+        app.window_focused = true;
+        let id = window::Id::unique();
+        let _ = app.update(Message::Event(
+            key(Key::Character("o".into()), false, Some("o")),
+            id,
+        ));
+        assert!(matches!(
+            app.dialog,
+            Some(Dialog::FilePrompt {
+                action: FileAction::Copy,
+                stage: FileStage::Source,
+                ..
+            })
+        ));
+        let _ = app.update(Message::PathChanged("SOURCE.DOC".into()));
+        let _ = app.update(Message::Submit);
+        assert!(matches!(
+            app.dialog,
+            Some(Dialog::FilePrompt {
+                stage: FileStage::Target(_),
+                ..
+            })
+        ));
+        let _ = app.update(Message::PathChanged("COPY.DOC".into()));
+        let _ = app.update(Message::Submit);
+        assert!(app.dialog.is_none());
+        assert_eq!(fs::read(&copied).unwrap(), fs::read(&source).unwrap());
+        let _ = app.update(Message::FileAction(FileAction::Rename));
+        let _ = app.update(Message::PathChanged("COPY.DOC".into()));
+        let _ = app.update(Message::Submit);
+        let _ = app.update(Message::PathChanged("RENAMED.DOC".into()));
+        let _ = app.update(Message::Submit);
+        assert!(renamed.exists());
+        assert!(!copied.exists());
+        let _ = app.update(Message::FileAction(FileAction::Delete));
+        let _ = app.update(Message::PathChanged("RENAMED.DOC".into()));
+        let _ = app.update(Message::Submit);
+        assert!(matches!(app.dialog, Some(Dialog::DeleteConfirm { .. })));
+        assert!(renamed.exists());
+        let _ = app.update(Message::Event(
+            key(Key::Character("n".into()), false, Some("n")),
+            id,
+        ));
+        assert!(app.dialog.is_none());
+        assert!(renamed.exists());
+        let _ = app.update(Message::FileAction(FileAction::Delete));
+        let _ = app.update(Message::PathChanged("RENAMED.DOC".into()));
+        let _ = app.update(Message::Submit);
+        let _ = app.update(Message::Event(
+            key(Key::Character("y".into()), false, Some("y")),
+            id,
+        ));
+        assert!(!renamed.exists());
+        assert!(source.exists());
     }
 
     #[test]
