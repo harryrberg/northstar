@@ -1,0 +1,82 @@
+{
+  "id": "navquick-block-begin",
+  "schema_version": 1,
+  "expected": {
+    "block_begin": 0,
+    "block_end": 4,
+    "carrier_sha256": "67cda60077217c67dc76e7ae786a57396707824785400b7e67f841b65360c806",
+    "cursor_byte": 0,
+    "formatting": {
+      "right_justify": false,
+      "document_mode": true,
+      "right_margin": 65,
+      "left_margin": 1,
+      "line_spacing": 1
+    },
+    "insert": true
+  },
+  "commands": [
+    {
+      "command": "mark_block_begin"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_end"
+    },
+    {
+      "command": "jump_block_begin"
+    }
+  ],
+  "initial": {
+    "formatting": {
+      "right_justify": false,
+      "document_mode": true,
+      "right_margin": 65,
+      "left_margin": 1,
+      "line_spacing": 1
+    },
+    "insert": true,
+    "cursor_byte": 0,
+    "carrier_hex": "4f4e452054574f0d0a544852454520464f55520d0a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a"
+  },
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "sources": [
+      {
+        "path": "runtime-openstar-quick-block-01/files/SEED.DOC",
+        "sha256": "67cda60077217c67dc76e7ae786a57396707824785400b7e67f841b65360c806"
+      },
+      {
+        "path": "runtime-openstar-quick-block-01/events.json",
+        "sha256": "e1b463f8eb863fda498cec3f1fb39871310f1edb522ebdcb7f18dcdd9628f341"
+      },
+      {
+        "path": "runtime-openstar-quick-block-01/04-mark-end.png",
+        "sha256": "3f6e5d760f02648374a8adb7db8e031f7d27e31168e1e2a35e21c5baf4f349e0"
+      },
+      {
+        "path": "runtime-openstar-quick-block-01/05-quick-begin.png",
+        "sha256": "261c9c4fc0dcb9c781deab73125dbd1b2f338c8df27e770559be75d42591e3ac"
+      }
+    ],
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "limitations": [
+      "Synthetic document opened in an isolated DOSBox copy on 2026-10-16.",
+      "Cursor byte offset is derived from observed L/C status and one-byte cells in named screenshots.",
+      "Formatting is declared for replay; DOS internal formatting state was not fully exposed.",
+      "Only placed marks and the final cursor on ordinary ASCII lines are compared."
+    ]
+  },
+  "profile": "ws4-quick-jump-v1"
+}

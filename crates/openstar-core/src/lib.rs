@@ -271,8 +271,11 @@ pub enum Command {
     Enter,
     ToggleInsert,
     DocumentStart,
+    DocumentEnd,
     LineStart,
     LineEnd,
+    JumpBlockBegin,
+    JumpBlockEnd,
     NextCharacter,
     PreviousCharacter,
     NextWord,
@@ -468,10 +471,21 @@ impl Editor {
         match command {
             Command::ToggleInsert => self.insert = !self.insert,
             Command::DocumentStart => self.cursor = 0,
+            Command::DocumentEnd => self.cursor = self.document.checked_active_end()?,
             Command::LineStart | Command::LineEnd => {
                 self.cursor = self
                     .document
                     .horizontal_boundary(self.cursor, matches!(command, Command::LineEnd))?;
+            }
+            Command::JumpBlockBegin | Command::JumpBlockEnd => {
+                self.cursor = if matches!(command, Command::JumpBlockBegin) {
+                    self.block.begin
+                } else {
+                    self.block.end
+                }
+                .ok_or(EditError::UnqualifiedOperation(
+                    "block marker has not yet been defined",
+                ))?;
             }
             Command::NextCharacter => {
                 let end = self.document.active_end();

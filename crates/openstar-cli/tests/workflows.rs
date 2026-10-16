@@ -90,6 +90,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("nav-")
                 || name.starts_with("navword-")
                 || name.starts_with("navline-")
+                || name.starts_with("navquick-")
                 || name.starts_with("delete-")
                 || name.starts_with("erasure-")
                 || name.starts_with("word-")

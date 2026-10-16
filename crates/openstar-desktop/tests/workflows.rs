@@ -81,6 +81,9 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "navline-second-start",
         "navline-second-end",
         "navline-empty-end",
+        "navquick-block-begin",
+        "navquick-block-end",
+        "navquick-document-end",
         "backdel-backspace-middle",
         "backdel-backspace-join",
         "backdel-delete-middle",
@@ -158,6 +161,25 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                         "s"
                     } else {
                         "d"
+                    };
+                    dispatch(&mut keyboard, &mut session, ctrl("q", false));
+                    dispatch(
+                        &mut keyboard,
+                        &mut session,
+                        press(
+                            Key::Character(key.into()),
+                            Modifiers::empty(),
+                            Some(key),
+                            false,
+                        ),
+                    );
+                }
+                Command::DocumentEnd | Command::JumpBlockBegin | Command::JumpBlockEnd => {
+                    let key = match command {
+                        Command::DocumentEnd => "c",
+                        Command::JumpBlockBegin => "b",
+                        Command::JumpBlockEnd => "k",
+                        _ => unreachable!(),
                     };
                     dispatch(&mut keyboard, &mut session, ctrl("q", false));
                     dispatch(

@@ -67,6 +67,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-ascii-wrap-v1"
                 | "ws4-vertical-navigation-v1"
                 | "ws4-horizontal-boundary-v1"
+                | "ws4-quick-jump-v1"
                 | "ws4-word-navigation-v1"
                 | "ws4-delete-character-v1"
                 | "ws4-line-erasure-v1"
@@ -147,6 +148,29 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     {
         return Err("line boundary movement requires its declared navigation profile".into());
     }
+    let quick_jump = |command: &Command| {
+        matches!(
+            command,
+            Command::DocumentEnd
+                | Command::JumpBlockBegin
+                | Command::JumpBlockEnd
+                | Command::MarkBlockBegin
+                | Command::MarkBlockEnd
+                | Command::NextCharacter
+        )
+    };
+    if (spec.profile == "ws4-quick-jump-v1"
+        && spec.commands.iter().any(|command| !quick_jump(command)))
+        || (spec.profile != "ws4-quick-jump-v1"
+            && spec.commands.iter().any(|command| {
+                matches!(
+                    command,
+                    Command::DocumentEnd | Command::JumpBlockBegin | Command::JumpBlockEnd
+                )
+            }))
+    {
+        return Err("quick jumps require their declared navigation profile".into());
+    }
     let word_navigation =
         |command: &Command| matches!(command, Command::NextWord | Command::PreviousWord);
     if (spec.profile == "ws4-word-navigation-v1"
@@ -206,7 +230,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     ) && spec.commands.iter().any(|command| !block_copy(command)))
         || (!matches!(
             spec.profile.as_str(),
-            "ws4-block-copy-v1" | "ws4-block-move-delete-v1"
+            "ws4-block-copy-v1" | "ws4-block-move-delete-v1" | "ws4-quick-jump-v1"
         ) && spec.commands.iter().any(|command| {
             matches!(
                 command,

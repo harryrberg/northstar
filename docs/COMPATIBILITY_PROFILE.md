@@ -57,6 +57,10 @@ Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synt
 
 Five synthetic scenarios compare Ctrl-Q S/D on the first, second and empty final physical lines. The cursor moves to the current line's first cell or the position after its last text cell without changing the carrier. [Measured cases and limits](LINE_BOUNDARIES.md) identify the retained DOS screens. The profile excludes opaque lines, dot commands, page-marked breaks and non-document mode.
 
+## Quick jumps: ws4-quick-jump-v1
+
+Three scenarios compare Ctrl-Q B/K movement to placed block marks and Ctrl-Q C movement to document end. They check cursor offsets, retained marks and unchanged carrier bytes against an isolated DOS run. [Evidence and limits](QUICK_JUMPS.md) also record the original's missing-marker message, whose full modal display is not yet reproduced.
+
 ## Word navigation: ws4-word-navigation-v1
 
 Twenty-seven scenarios compare Ctrl-A/Ctrl-F movement with retained DOS status and unchanged synthetic carrier bytes. Word movement is line-local. The measured punctuation cases distinguish comma as a separator from an internal hyphen that stays in a word. Marked letters move as ordinary letters; measured marked punctuation and periods before spaces act as separators. Ctrl-F on a hard CRLF reaches the next line start, but Ctrl-F from the preceding word does not cross the break. The core owns cursor movement; Windows Ctrl-A/Ctrl-F select the commands. [Observed cases and limits](WORD_NAVIGATION.md) record source identities. Other punctuation, soft breaks, and opaque selected lines remain unqualified.

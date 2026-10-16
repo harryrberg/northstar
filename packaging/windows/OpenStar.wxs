@@ -24,6 +24,7 @@
       <ComponentRef Id="RecoveryGuide" />
       <ComponentRef Id="NavigationGuide" />
       <ComponentRef Id="LineBoundariesGuide" />
+      <ComponentRef Id="QuickJumpsGuide" />
       <ComponentRef Id="WordNavigationGuide" />
       <ComponentRef Id="FindGuide" />
       <ComponentRef Id="ReplacementGuide" />
@@ -80,6 +81,10 @@
     <Component Id="LineBoundariesGuide" Directory="INSTALLFOLDER" Guid="D1D2F3BB-6B3A-4F03-B420-56C0CD204BF5">
       <File Source="$(var.RepoRoot)\docs\LINE_BOUNDARIES.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="LineBoundariesGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="QuickJumpsGuide" Directory="INSTALLFOLDER" Guid="66147BEF-0E92-4CEA-9C88-1268D8EBEA99">
+      <File Source="$(var.RepoRoot)\docs\QUICK_JUMPS.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="QuickJumpsGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
     <Component Id="WordNavigationGuide" Directory="INSTALLFOLDER" Guid="CAA49190-B031-4AB2-A0B7-C6A7C704BCD5">
       <File Source="$(var.RepoRoot)\docs\WORD_NAVIGATION.md" />

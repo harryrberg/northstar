@@ -1,0 +1,7 @@
+# Ctrl-Q B, K and C jumps
+
+WordStar Professional 4.00 `WS.EXE` has SHA-256 `535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d`. The isolated `runtime-openstar-quick-block-01` DOSBox run used the synthetic 128-byte `SEED.DOC` with `ONE TWO\r\nTHREE FOUR\r\n` and trailing 1A padding, SHA-256 `67cda60077217c67dc76e7ae786a57396707824785400b7e67f841b65360c806`. Its input manifest, seed construction, ordered keys, screenshots and final carrier remain under `C:/Projects/rea/investigations/wordstar`.
+
+Ctrl-K B marked line 1 column 1. After four Ctrl-D presses, Ctrl-K K marked column 5. Ctrl-Q B returned to column 1; Ctrl-Q K returned to column 5; Ctrl-Q C reached the empty final line, line 3 column 1. The three `navquick-*` CLI cases compare these cursor byte offsets, retained marks and unchanged carrier bytes. A desktop workflow sends the actual prefix keys and checks the same positions. A separate isolated `runtime-openstar-quick-block-02` run showed that Ctrl-Q B without a marker reports that the marker has not been defined and asks for Esc. OpenStar returns an explicit error without moving; its current notice does not reproduce that full modal screen.
+
+These observations cover placed marks and an ordinary ASCII carrier. Behavior after edits that change marks, missing end marks, other document structures and Ctrl-Q C with embedded padding remain unqualified. The core rejects a missing mark and a carrier with nonterminal 1A padding. UTF-8 mode does not expose these legacy jumps.

@@ -71,6 +71,9 @@ impl DocumentSession {
                     | Command::PreviousLine
                     | Command::LineStart
                     | Command::LineEnd
+                    | Command::DocumentEnd
+                    | Command::JumpBlockBegin
+                    | Command::JumpBlockEnd
                     | Command::NextWord
                     | Command::PreviousWord
                     | Command::DeleteCharacter

@@ -17,6 +17,28 @@ fn editor(active: &[u8], cursor: usize) -> Editor {
 }
 
 #[test]
+fn quick_block_jumps_require_a_mark_and_leave_carrier_unchanged() {
+    let mut editor = editor(b"ONE TWO\r\nTHREE FOUR\r\n", 0);
+    let carrier = editor.document().bytes().to_vec();
+    let before = editor.snapshot();
+    assert!(editor.apply(&Command::JumpBlockBegin).is_err());
+    assert!(editor.apply(&Command::JumpBlockEnd).is_err());
+    assert_eq!(editor.snapshot(), before);
+    editor.apply(&Command::MarkBlockBegin).unwrap();
+    for _ in 0..4 {
+        editor.apply(&Command::NextCharacter).unwrap();
+    }
+    editor.apply(&Command::MarkBlockEnd).unwrap();
+    editor.apply(&Command::JumpBlockBegin).unwrap();
+    assert_eq!(editor.snapshot().cursor_byte, 0);
+    editor.apply(&Command::JumpBlockEnd).unwrap();
+    assert_eq!(editor.snapshot().cursor_byte, 4);
+    editor.apply(&Command::DocumentEnd).unwrap();
+    assert_eq!(editor.snapshot().cursor_byte, 21);
+    assert_eq!(editor.document().bytes(), carrier);
+}
+
+#[test]
 fn missing_or_empty_block_rejects_copy_without_mutation() {
     let mut editor = editor(b"ABCDE", 2);
     let carrier = editor.document().bytes().to_vec();
