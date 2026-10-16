@@ -199,6 +199,36 @@ impl Session {
         ))
     }
 
+    /// Rebuild an unsaved copy without writing the source. The caller decides
+    /// whether the original path can remain attached after checking its bytes.
+    pub(crate) fn recover(
+        path: Option<PathBuf>,
+        baseline: Option<Vec<u8>>,
+        bytes: Vec<u8>,
+        saved_bytes: Vec<u8>,
+        cursor: usize,
+        insert: bool,
+        formatting: Formatting,
+    ) -> io::Result<Self> {
+        let editor = Editor::recover(
+            Document::from_bytes(bytes),
+            saved_bytes,
+            cursor,
+            insert,
+            formatting,
+        )
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        Ok(Self {
+            editor,
+            path,
+            baseline,
+        })
+    }
+
+    pub(crate) fn baseline(&self) -> Option<&[u8]> {
+        self.baseline.as_deref()
+    }
+
     /// No-clobber Save As. Failure keeps the active path and dirty checkpoint.
     pub fn save_as(&mut self, path: &Path) -> io::Result<()> {
         write_new_file(path, self.editor.document().bytes())?;
@@ -237,6 +267,22 @@ impl Utf8Session {
             editor: Utf8Editor::new(text),
             path: Some(path.to_owned()),
             baseline: Some(bytes),
+        })
+    }
+
+    pub(crate) fn recover(
+        path: Option<PathBuf>,
+        baseline: Option<Vec<u8>>,
+        text: String,
+        saved_text: String,
+        cursor: usize,
+    ) -> io::Result<Self> {
+        let editor = Utf8Editor::recover(text, saved_text, cursor)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        Ok(Self {
+            editor,
+            path,
+            baseline,
         })
     }
 

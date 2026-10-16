@@ -405,7 +405,7 @@ impl App {
             recovery_written: false,
             recovery_pending: false,
         };
-        if app.opening || app.session.is_utf8() {
+        if app.opening || app.session.path().is_some() {
             app.offer_recovery(app.opening, false);
         }
         app
@@ -496,26 +496,37 @@ impl App {
             Message::RecoveryTick => self.flush_recovery(),
             Message::Recover => {
                 if let Some(Dialog::Recovery { candidate, error }) = &mut self.dialog {
-                    let result = self
+                    let store = self
                         .recovery_store
                         .as_ref()
-                        .expect("recovery dialog requires a store")
-                        .restore(candidate);
+                        .expect("recovery dialog requires a store");
+                    let legacy = candidate.is_legacy();
+                    let result = if legacy {
+                        store.restore_legacy(candidate).map(|outcome| {
+                            (DocumentSession::Legacy(outcome.session), outcome.detached)
+                        })
+                    } else {
+                        store.restore(candidate).map(|outcome| {
+                            (DocumentSession::Utf8(outcome.session), outcome.detached)
+                        })
+                    };
                     match result {
-                        Ok(outcome) => {
+                        Ok((session, detached)) => {
                             self.recovery_id = candidate.id.clone();
                             self.recovery_written = true;
                             self.recovery_pending = false;
-                            self.session = DocumentSession::Utf8(outcome.session);
+                            self.session = session;
                             self.session_generation += 1;
                             self.projection = Projection::for_session(&self.session);
                             self.utf8_top_row = 0;
                             self.preferred_column = None;
                             self.opening = false;
                             self.dialog = None;
-                            self.notice = if outcome.detached {
+                            self.notice = if detached {
                                 "Original file changed or is missing. Recovered copy needs Save As."
                                     .into()
+                            } else if legacy {
+                                "Unsaved WordStar copy recovered. Save it when ready.".into()
                             } else {
                                 "Unsaved UTF-8 draft recovered. Save it when ready.".into()
                             };
@@ -573,7 +584,7 @@ impl App {
                 }
             }
             Message::Submit => {
-                let mut opened_utf8 = false;
+                let mut opened_document = false;
                 if let Some(Dialog::Path { kind, value, error }) = &mut self.dialog {
                     if value.is_empty() {
                         *error = "Enter a file path".into();
@@ -609,7 +620,8 @@ impl App {
                     match result {
                         Ok(()) => {
                             self.find_dialog = None;
-                            opened_utf8 = matches!(kind, PathKind::OpenUtf8);
+                            opened_document =
+                                matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8);
                             let saved_copy = matches!(kind, PathKind::SaveAs { .. });
                             if matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8) {
                                 self.session_generation += 1;
@@ -642,7 +654,7 @@ impl App {
                         }
                     }
                 }
-                if opened_utf8 {
+                if opened_document {
                     self.offer_recovery(false, false);
                 }
             }
@@ -865,7 +877,12 @@ impl App {
             return;
         };
         let path = if all { None } else { self.session.path() };
-        match store.find(path) {
+        let scan = if let Some(path) = path {
+            store.find_for_mode(path, !self.session.is_utf8())
+        } else {
+            store.find(None)
+        };
+        match scan {
             Ok(scan) => {
                 if let Some(candidate) = scan.candidate {
                     self.dialog = Some(Dialog::Recovery {
@@ -873,7 +890,7 @@ impl App {
                         error: String::new(),
                     });
                 } else if announce_empty {
-                    self.notice = "No unsaved UTF-8 draft found".into();
+                    self.notice = "No unsaved draft found".into();
                 }
                 if scan.invalid_files > 0 {
                     self.notice = format!(
@@ -887,9 +904,6 @@ impl App {
     }
 
     fn mark_recovery_changed(&mut self) {
-        if !self.session.is_utf8() {
-            return;
-        }
         if !self.session.modified() {
             if let Err(error) = self.clear_recovery() {
                 self.notice = format!("Recovery cleanup failed: {error}");
@@ -906,13 +920,14 @@ impl App {
         if !self.recovery_pending || !self.session.modified() {
             return;
         }
-        let DocumentSession::Utf8(session) = &self.session else {
-            return;
-        };
         let Some(store) = &self.recovery_store else {
             return;
         };
-        match store.write(&self.recovery_id, session) {
+        let result = match &self.session {
+            DocumentSession::Legacy(session) => store.write_legacy(&self.recovery_id, session),
+            DocumentSession::Utf8(session) => store.write(&self.recovery_id, session),
+        };
+        match result {
             Ok(()) => {
                 self.recovery_written = true;
                 self.recovery_pending = false;
@@ -976,7 +991,7 @@ impl App {
                 },
                 Dialog::Discard(_)=>column![text("Unsaved changes").size(24),text("Keep editing to save, or discard your changes and continue."),
                     row![button("Keep editing").on_press(Message::Cancel),button("Discard changes").on_press(Message::Discard)].spacing(18)].spacing(24).into(),
-                Dialog::Recovery{candidate,error}=>column![text("RECOVER UNSAVED UTF-8 DRAFT").size(24),
+                Dialog::Recovery{candidate,error}=>column![text(if candidate.is_legacy() { "RECOVER UNSAVED WORDSTAR COPY" } else { "RECOVER UNSAVED UTF-8 DRAFT" }).size(24),
                     text(candidate.path.as_ref().map(|path|path.display().to_string()).unwrap_or_else(||"Untitled document".into())),
                     text("Restore the separate copy without writing the original. If the original changed or disappeared, the copy opens without a file name and needs Save As."),
                     text(error),
@@ -991,7 +1006,7 @@ impl App {
                     text(if self.session.is_utf8() {
                         "Modern UTF-8 keeps exact text bytes. The screen wraps words without inserting line breaks. Movement and deletion follow graphemes. Wide or unsupported glyphs show a square placeholder. A separate recovery copy captures unsaved edits. Overwrite remains unfinished."
                     } else {
-                        "Legacy typing supports printable ASCII only. Backspace, Delete, Ctrl-G, vertical movement and other editing commands have bounded DOS-checked profiles. Norwegian letters, IME, clipboard text, other block operations and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
+                        "Legacy typing supports printable ASCII only. Backspace, Delete, Ctrl-G, vertical movement and other editing commands have bounded DOS-checked profiles. A separate recovery copy captures unsaved edits. Norwegian letters, IME, clipboard text, other block operations and undo remain unfinished. Visible original menu entries are not a promise of implemented behavior."
                     }),
                     text("The display is 80x25. Legacy comparison covers selected DOS screen states only. '?' page numbers are unknown; square cells are unrendered tokens."),
                     button("Esc: back").on_press(Message::Cancel)].spacing(22).into(),
@@ -1299,6 +1314,55 @@ mod tests {
         restarted.session.save_as(&copy).unwrap();
         restarted.clear_recovery().unwrap();
         assert_eq!(fs::read(copy).unwrap(), "æøå B".as_bytes());
+        assert!(
+            RecoveryStore::new(root)
+                .find(None)
+                .unwrap()
+                .candidate
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn app_restores_unsaved_wordstar_carrier_after_restart_without_writing_source() {
+        let scratch = Scratch::new();
+        let root = scratch.0.join("recovery");
+        let path = scratch.0.join("chapter.doc");
+        let mut original = b"ALPHA\r\nBETA".to_vec();
+        original.resize(128, 0x1a);
+        fs::write(&path, &original).unwrap();
+        let mut app = App::new_with_recovery(Some(RecoveryStore::new(root.clone())), None);
+        app.session = DocumentSession::Legacy(Session::open(&path).unwrap());
+        app.projection = Projection::for_session(&app.session);
+        app.opening = false;
+        let result = app.session.insert_text("X");
+        app.record_edit(result);
+        assert!(app.recovery_written);
+        let result = app.session.insert_text("Y");
+        app.record_edit(result);
+        assert!(app.recovery_pending);
+        let _ = app.update(Message::RecoveryTick);
+        assert_eq!(fs::read(&path).unwrap(), original);
+        drop(app);
+
+        let mut restarted = App::new_with_recovery(Some(RecoveryStore::new(root.clone())), None);
+        assert!(matches!(restarted.dialog, Some(Dialog::Recovery { .. })));
+        let _ = restarted.update(Message::Recover);
+        let DocumentSession::Legacy(session) = &restarted.session else {
+            panic!("Recovery must open the WordStar editor")
+        };
+        let mut expected = b"XYALPHA\r\nBETA".to_vec();
+        expected.resize(128, 0x1a);
+        assert_eq!(session.editor.document().bytes(), expected);
+        assert!(session.editor.snapshot().modified);
+        assert_eq!(fs::read(&path).unwrap(), original);
+        let _ = restarted.update(Message::Save(false));
+        assert_eq!(fs::read(&path).unwrap(), expected);
+        assert_eq!(
+            Session::open(&path).unwrap().editor.document().bytes(),
+            expected
+        );
+        assert_eq!(fs::read(scratch.0.join("chapter.BAK")).unwrap(), original);
         assert!(
             RecoveryStore::new(root)
                 .find(None)

@@ -392,6 +392,24 @@ impl Editor {
         })
     }
 
+    /// Restore a separate unsaved legacy copy and its last saved checkpoint.
+    /// This is modern recovery state, not a WordStar command.
+    pub fn recover(
+        document: Document,
+        saved_bytes: Vec<u8>,
+        cursor: usize,
+        insert: bool,
+        formatting: Formatting,
+    ) -> Result<Self, EditError> {
+        let mut editor = Self::restore_with_formatting(document, cursor, insert, formatting)?;
+        editor.original = saved_bytes;
+        Ok(editor)
+    }
+
+    pub fn saved_bytes(&self) -> &[u8] {
+        &self.original
+    }
+
     pub fn document(&self) -> &Document {
         &self.document
     }

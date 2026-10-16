@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
-//! Separate, bounded snapshots of unsaved UTF-8 drafts.
+//! Separate, bounded snapshots of unsaved UTF-8 and legacy drafts.
 
-use crate::session::{DOCUMENT_LIMIT, StagedFile, Utf8Session, read_document, replace_existing};
-use northstar_core::Utf8Editor;
+use crate::session::{
+    DOCUMENT_LIMIT, Session, StagedFile, Utf8Session, read_document, replace_existing,
+};
+use northstar_core::{Document, Editor, Formatting, Utf8Editor};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
@@ -15,11 +17,13 @@ use std::{
 };
 
 const RECORD_VERSION: u8 = 1;
+const LEGACY_RECORD_VERSION: u8 = 2;
 const RECORD_LIMIT: u64 = 16 * 1024 * 1024;
 const FILE_LIMIT: usize = 128;
 static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Record {
     version: u8,
     path: Option<PathBuf>,
@@ -32,10 +36,55 @@ struct Record {
     cursor_byte: usize,
 }
 
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LegacyRecord {
+    version: u8,
+    path: Option<PathBuf>,
+    opening_dir: Option<PathBuf>,
+    resolved_path: Option<PathBuf>,
+    baseline_sha256: Option<String>,
+    saved_bytes: Vec<u8>,
+    bytes: Vec<u8>,
+    bytes_sha256: String,
+    cursor_byte: usize,
+    insert: bool,
+    formatting: Formatting,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+enum RecoveryRecord {
+    Utf8(Record),
+    Legacy(LegacyRecord),
+}
+
+impl RecoveryRecord {
+    fn resolved_path(&self) -> Option<&Path> {
+        match self {
+            Self::Utf8(record) => record.resolved_path.as_deref(),
+            Self::Legacy(record) => record.resolved_path.as_deref(),
+        }
+    }
+
+    fn current_bytes(&self) -> &[u8] {
+        match self {
+            Self::Utf8(record) => record.text.as_bytes(),
+            Self::Legacy(record) => &record.bytes,
+        }
+    }
+}
+
 pub struct RecoveryCandidate {
     pub id: String,
     pub path: Option<PathBuf>,
-    record: Record,
+    record: RecoveryRecord,
+}
+
+impl RecoveryCandidate {
+    pub fn is_legacy(&self) -> bool {
+        matches!(self.record, RecoveryRecord::Legacy(_))
+    }
 }
 
 pub struct RecoveryScan {
@@ -45,6 +94,11 @@ pub struct RecoveryScan {
 
 pub struct RecoveryOutcome {
     pub session: Utf8Session,
+    pub detached: bool,
+}
+
+pub struct LegacyRecoveryOutcome {
+    pub session: Session,
     pub detached: bool,
 }
 
@@ -88,18 +142,7 @@ impl RecoveryStore {
     }
 
     pub fn write(&self, id: &str, session: &Utf8Session) -> io::Result<()> {
-        let destination = self.record_path(id)?;
-        let opening_dir = session
-            .path
-            .as_ref()
-            .filter(|path| !path.is_absolute())
-            .map(|_| env::current_dir())
-            .transpose()?;
-        let resolved_path = session.path.as_ref().map(|path| {
-            opening_dir
-                .as_ref()
-                .map_or_else(|| path.clone(), |dir| dir.join(path))
-        });
+        let (opening_dir, resolved_path) = recorded_path(session.path.as_deref())?;
         let record = Record {
             version: RECORD_VERSION,
             path: session.path.clone(),
@@ -111,6 +154,31 @@ impl RecoveryStore {
             text_sha256: digest(session.editor.text().as_bytes()),
             cursor_byte: session.editor.snapshot().cursor_byte,
         };
+        self.publish(id, &RecoveryRecord::Utf8(record))
+    }
+
+    pub fn write_legacy(&self, id: &str, session: &Session) -> io::Result<()> {
+        let (opening_dir, resolved_path) = recorded_path(session.path.as_deref())?;
+        let snapshot = session.editor.snapshot();
+        let bytes = session.editor.document().bytes();
+        let record = LegacyRecord {
+            version: LEGACY_RECORD_VERSION,
+            path: session.path.clone(),
+            opening_dir,
+            resolved_path,
+            baseline_sha256: session.baseline().map(digest),
+            saved_bytes: session.editor.saved_bytes().to_vec(),
+            bytes: bytes.to_vec(),
+            bytes_sha256: digest(bytes),
+            cursor_byte: snapshot.cursor_byte,
+            insert: snapshot.insert,
+            formatting: snapshot.formatting,
+        };
+        self.publish(id, &RecoveryRecord::Legacy(record))
+    }
+
+    fn publish(&self, id: &str, record: &RecoveryRecord) -> io::Result<()> {
+        let destination = self.record_path(id)?;
         let bytes = serde_json::to_vec(&record).map_err(io::Error::other)?;
         if bytes.len() as u64 > RECORD_LIMIT {
             return Err(io::Error::other("Recovery snapshot exceeds 16 MiB"));
@@ -131,6 +199,14 @@ impl RecoveryStore {
     }
 
     pub fn find(&self, path: Option<&Path>) -> io::Result<RecoveryScan> {
+        self.find_matching(path, None)
+    }
+
+    pub fn find_for_mode(&self, path: &Path, legacy: bool) -> io::Result<RecoveryScan> {
+        self.find_matching(Some(path), Some(legacy))
+    }
+
+    fn find_matching(&self, path: Option<&Path>, legacy: Option<bool>) -> io::Result<RecoveryScan> {
         let resolved = path.map(resolve_path).transpose()?;
         if self.root.exists() {
             self.check_root()?;
@@ -162,16 +238,14 @@ impl RecoveryStore {
             }
             match self.read_candidate(&entry_path) {
                 Ok(candidate)
-                    if resolved.as_deref().is_none_or(|selected| {
-                        candidate.record.resolved_path.as_deref() == Some(selected)
-                    }) && !candidate
-                        .record
-                        .resolved_path
-                        .as_ref()
-                        .is_some_and(|source| {
+                    if legacy.is_none_or(|selected| candidate.is_legacy() == selected)
+                        && resolved.as_deref().is_none_or(|selected| {
+                            candidate.record.resolved_path() == Some(selected)
+                        })
+                        && !candidate.record.resolved_path().is_some_and(|source| {
                             read_document(source)
                                 .ok()
-                                .is_some_and(|bytes| bytes == candidate.record.text.as_bytes())
+                                .is_some_and(|bytes| bytes == candidate.record.current_bytes())
                         }) =>
                 {
                     let modified = entry.metadata()?.modified().unwrap_or(UNIX_EPOCH);
@@ -190,31 +264,52 @@ impl RecoveryStore {
     }
 
     pub fn restore(&self, candidate: &RecoveryCandidate) -> io::Result<RecoveryOutcome> {
-        let record = &candidate.record;
-        let mut session = match (&record.resolved_path, &record.baseline_sha256) {
-            (Some(path), Some(expected)) => match Utf8Session::open(path) {
-                Ok(opened)
-                    if opened
-                        .baseline()
-                        .is_some_and(|bytes| digest(bytes) == *expected) =>
-                {
-                    opened
-                }
-                _ => Utf8Session::new_at(None),
-            },
-            (Some(path), None) if matches!(fs::symlink_metadata(path), Err(error) if error.kind() == io::ErrorKind::NotFound) => {
-                Utf8Session::new_at(Some(path.clone()))
-            }
-            _ => Utf8Session::new_at(None),
+        let RecoveryRecord::Utf8(record) = &candidate.record else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Not a UTF-8 recovery copy",
+            ));
         };
-        session.editor = Utf8Editor::recover(
+        let (path, baseline) = restore_binding(
+            record.resolved_path.as_deref(),
+            record.baseline_sha256.as_deref(),
+        );
+        let detached = path.is_none();
+        let session = Utf8Session::recover(
+            path,
+            baseline,
             record.text.clone(),
             record.saved_text.clone(),
             record.cursor_byte,
-        )
-        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-        let detached = session.path.is_none();
+        )?;
         Ok(RecoveryOutcome { session, detached })
+    }
+
+    pub fn restore_legacy(
+        &self,
+        candidate: &RecoveryCandidate,
+    ) -> io::Result<LegacyRecoveryOutcome> {
+        let RecoveryRecord::Legacy(record) = &candidate.record else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Not a WordStar recovery copy",
+            ));
+        };
+        let (path, baseline) = restore_binding(
+            record.resolved_path.as_deref(),
+            record.baseline_sha256.as_deref(),
+        );
+        let detached = path.is_none();
+        let session = Session::recover(
+            path,
+            baseline,
+            record.bytes.clone(),
+            record.saved_bytes.clone(),
+            record.cursor_byte,
+            record.insert,
+            record.formatting,
+        )?;
+        Ok(LegacyRecoveryOutcome { session, detached })
     }
 
     pub fn remove(&self, id: &str) -> io::Result<()> {
@@ -279,30 +374,37 @@ impl RecoveryStore {
                 "Recovery file is too large",
             ));
         }
-        let record: Record = serde_json::from_slice(&bytes)
+        let record: RecoveryRecord = serde_json::from_slice(&bytes)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-        if record.version != RECORD_VERSION
+        let valid = match &record {
+            RecoveryRecord::Utf8(record) => self.valid_utf8_record(record),
+            RecoveryRecord::Legacy(record) => self.valid_legacy_record(record),
+        };
+        if !valid {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Invalid recovery contents",
+            ));
+        }
+        let path = match &record {
+            RecoveryRecord::Utf8(record) => record.path.clone(),
+            RecoveryRecord::Legacy(record) => record.path.clone(),
+        };
+        Ok(RecoveryCandidate { id, path, record })
+    }
+
+    fn valid_utf8_record(&self, record: &Record) -> bool {
+        !(record.version != RECORD_VERSION
             || record.text.len() > DOCUMENT_LIMIT
             || record.saved_text.len() > DOCUMENT_LIMIT
             || record.text == record.saved_text
             || record.text_sha256 != digest(record.text.as_bytes())
-            || record.path.is_some() != record.resolved_path.is_some()
-            || (record.path.is_none() && record.baseline_sha256.is_some())
-            || record.path.as_ref().is_some_and(|path| {
-                record.resolved_path.as_ref()
-                    != Some(
-                        &record
-                            .opening_dir
-                            .as_ref()
-                            .map_or_else(|| path.clone(), |dir| dir.join(path)),
-                    )
-                    || record.opening_dir.is_some() == path.is_absolute()
-            })
-            || (record.path.is_none() && record.opening_dir.is_some())
-            || record
-                .resolved_path
-                .as_ref()
-                .is_some_and(|resolved| !resolved.is_absolute())
+            || !valid_recorded_path(
+                record.path.as_deref(),
+                record.opening_dir.as_deref(),
+                record.resolved_path.as_deref(),
+                record.baseline_sha256.as_deref(),
+            )
             || record
                 .baseline_sha256
                 .as_ref()
@@ -312,18 +414,33 @@ impl RecoveryStore {
                 record.saved_text.clone(),
                 record.cursor_byte,
             )
-            .is_err()
-        {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "Invalid recovery contents",
-            ));
-        }
-        Ok(RecoveryCandidate {
-            id,
-            path: record.path.clone(),
-            record,
-        })
+            .is_err())
+    }
+
+    fn valid_legacy_record(&self, record: &LegacyRecord) -> bool {
+        record.version == LEGACY_RECORD_VERSION
+            && record.bytes.len() <= DOCUMENT_LIMIT
+            && record.saved_bytes.len() <= DOCUMENT_LIMIT
+            && record.bytes != record.saved_bytes
+            && record.bytes_sha256 == digest(&record.bytes)
+            && valid_recorded_path(
+                record.path.as_deref(),
+                record.opening_dir.as_deref(),
+                record.resolved_path.as_deref(),
+                record.baseline_sha256.as_deref(),
+            )
+            && record
+                .baseline_sha256
+                .as_ref()
+                .is_none_or(|expected| *expected == digest(&record.saved_bytes))
+            && Editor::recover(
+                Document::from_bytes(record.bytes.clone()),
+                record.saved_bytes.clone(),
+                record.cursor_byte,
+                record.insert,
+                record.formatting,
+            )
+            .is_ok()
     }
 }
 
@@ -336,5 +453,50 @@ fn resolve_path(path: &Path) -> io::Result<PathBuf> {
         Ok(path.to_owned())
     } else {
         Ok(env::current_dir()?.join(path))
+    }
+}
+
+fn recorded_path(path: Option<&Path>) -> io::Result<(Option<PathBuf>, Option<PathBuf>)> {
+    let opening_dir = path
+        .filter(|path| !path.is_absolute())
+        .map(|_| env::current_dir())
+        .transpose()?;
+    let resolved_path = path.map(|path| {
+        opening_dir
+            .as_ref()
+            .map_or_else(|| path.to_owned(), |dir| dir.join(path))
+    });
+    Ok((opening_dir, resolved_path))
+}
+
+fn valid_recorded_path(
+    path: Option<&Path>,
+    opening_dir: Option<&Path>,
+    resolved_path: Option<&Path>,
+    baseline_sha256: Option<&str>,
+) -> bool {
+    match (path, opening_dir, resolved_path) {
+        (None, None, None) => baseline_sha256.is_none(),
+        (Some(path), None, Some(resolved)) if path.is_absolute() => resolved == path,
+        (Some(path), Some(dir), Some(resolved)) if !path.is_absolute() && dir.is_absolute() => {
+            resolved == dir.join(path)
+        }
+        _ => false,
+    }
+}
+
+fn restore_binding(
+    resolved_path: Option<&Path>,
+    baseline_sha256: Option<&str>,
+) -> (Option<PathBuf>, Option<Vec<u8>>) {
+    match (resolved_path, baseline_sha256) {
+        (Some(path), Some(expected)) => match read_document(path) {
+            Ok(bytes) if digest(&bytes) == expected => (Some(path.to_owned()), Some(bytes)),
+            _ => (None, None),
+        },
+        (Some(path), None) if matches!(fs::symlink_metadata(path), Err(error) if error.kind() == io::ErrorKind::NotFound) => {
+            (Some(path.to_owned()), None)
+        }
+        _ => (None, None),
     }
 }
