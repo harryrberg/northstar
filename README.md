@@ -99,10 +99,6 @@ Original executables, dictionaries, proprietary resources, decompiled source, an
 
 The desktop prototype includes IBM Plex Mono and a recreated VGA font under their respective licenses. [Font attribution and licenses](THIRD_PARTY_FONTS.md).
 
-## The name
-
-OpenStar combines the project's open-source character with the idea of a guiding star.
-
 ## Dedication
 
 Dedicated to George R. R. Martin and the world of *Game of Thrones*. Martin [described](https://georgerrmartin.com/notablog/2007/05/18/) writing his fiction in WordStar 4.0 on a DOS machine separate from the computer he used for the internet. He preferred typed commands to icons and mouse gestures. OpenStar seeks to preserve that familiar, distraction-free way of writing on current hardware, without requiring a dedicated DOS computer.
