@@ -76,7 +76,7 @@ fn retained_enter_scenarios_pass_through_the_real_cli() {
 }
 
 #[test]
-fn retained_editing_reformat_and_navigation_scenarios_match_bytes_cursor_and_modes() {
+fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_cursor_and_modes() {
     use sha2::{Digest, Sha256};
     let scratch = Scratch::new();
     let mut paths: Vec<_> = fs::read_dir(oracle("unused").parent().unwrap())
@@ -88,6 +88,7 @@ fn retained_editing_reformat_and_navigation_scenarios_match_bytes_cursor_and_mod
                 || name.starts_with("edit-")
                 || name.starts_with("wrap-")
                 || name.starts_with("nav-")
+                || name.starts_with("delete-")
         })
         .collect();
     paths.sort();
@@ -133,6 +134,36 @@ fn navigation_profile_does_not_admit_unqualified_commands() {
         spec["commands"] = json!([command]);
         let input = scratch.path(&format!("invalid-navigation-{index}.json"));
         let output = scratch.path(&format!("invalid-navigation-{index}.doc"));
+        fs::write(&input, serde_json::to_vec(&spec).unwrap()).unwrap();
+        assert!(
+            !run(&[
+                "replay".as_ref(),
+                input.as_os_str(),
+                "--output".as_ref(),
+                output.as_os_str(),
+            ])
+            .status
+            .success()
+        );
+        assert!(!output.exists());
+    }
+}
+
+#[test]
+fn deletion_profile_rejects_unqualified_commands_and_other_profiles_reject_deletion() {
+    let scratch = Scratch::new();
+    for (index, (profile, command)) in [
+        ("ws4-delete-character-v1", json!({"command":"enter"})),
+        ("ws4-ascii-edit-v1", json!({"command":"delete_character"})),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let mut spec = case("delete-ordinary");
+        spec["profile"] = json!(profile);
+        spec["commands"] = json!([command]);
+        let input = scratch.path(&format!("invalid-deletion-{index}.json"));
+        let output = scratch.path(&format!("invalid-deletion-{index}.doc"));
         fs::write(&input, serde_json::to_vec(&spec).unwrap()).unwrap();
         assert!(
             !run(&[

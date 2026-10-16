@@ -111,6 +111,7 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 }
                 Command::NextLine => dispatch(&mut keyboard, &mut session, ctrl("x", false)),
                 Command::PreviousLine => dispatch(&mut keyboard, &mut session, ctrl("e", false)),
+                Command::DeleteCharacter => dispatch(&mut keyboard, &mut session, ctrl("g", false)),
                 Command::Enter => dispatch(
                     &mut keyboard,
                     &mut session,
@@ -200,6 +201,32 @@ fn legacy_vertical_keys_follow_observed_clamping_and_preserve_the_file() {
         Session::open(&copy).unwrap().editor.document().bytes(),
         carrier
     );
+}
+
+#[test]
+fn legacy_ctrl_g_deletes_and_saved_file_reopens_with_the_dos_bytes() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("DEL1.DOC");
+    let mut carrier = b"ABCDE\r\nXYZ\r\n".to_vec();
+    carrier.resize(128, 0x1a);
+    fs::write(&source, &carrier).unwrap();
+    let mut session = Session::open(&source).unwrap();
+    let mut keyboard = Keyboard::default();
+    dispatch(&mut keyboard, &mut session, ctrl("d", false));
+    dispatch(&mut keyboard, &mut session, ctrl("g", false));
+    assert_eq!(session.editor.snapshot().cursor_byte, 1);
+    assert_eq!(&session.editor.document().bytes()[..4], b"ACDE");
+    let output = scratch.0.join("DEL1-OUT.DOC");
+    session.save_as(&output).unwrap();
+    assert_eq!(
+        format!("{:x}", Sha256::digest(fs::read(&output).unwrap())),
+        "27f16abd4838201af57adb1c0878f4a6f75ad8f2262d8785c91864222dbe7f60"
+    );
+    assert_eq!(
+        Session::open(&output).unwrap().editor.document().bytes(),
+        fs::read(&output).unwrap()
+    );
+    assert_eq!(fs::read(&source).unwrap(), carrier);
 }
 
 #[test]

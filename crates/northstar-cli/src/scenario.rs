@@ -61,12 +61,13 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-ascii-edit-v1"
                 | "ws4-ascii-wrap-v1"
                 | "ws4-vertical-navigation-v1"
+                | "ws4-delete-character-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
     }
     if spec.profile != "ws4-ascii-enter-v1" && spec.initial.formatting.is_none() {
-        return Err("reformat and editing scenarios require explicit initial formatting".into());
+        return Err("editing scenarios require explicit initial formatting".into());
     }
     if spec.profile == "ws4-ascii-enter-v1" && spec.commands.contains(&Command::Reformat) {
         return Err("reformat is outside the declared Enter profile".into());
@@ -77,6 +78,13 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
         || (spec.profile != "ws4-vertical-navigation-v1" && spec.commands.iter().any(vertical))
     {
         return Err("vertical movement requires its declared navigation profile".into());
+    }
+    let deletion = |command: &Command| matches!(command, Command::DeleteCharacter);
+    if (spec.profile == "ws4-delete-character-v1"
+        && spec.commands.iter().any(|command| !deletion(command)))
+        || (spec.profile != "ws4-delete-character-v1" && spec.commands.iter().any(deletion))
+    {
+        return Err("character deletion requires its declared profile".into());
     }
     if spec.commands.len() > 10_000 {
         return Err("scenario exceeds the 10000-command resource bound".into());

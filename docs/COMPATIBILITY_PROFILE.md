@@ -53,9 +53,13 @@ Nonspace typing beyond the margin with right justification on, hyphen wrapping a
 
 Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synthetic input identities. On ordinary one-cell physical lines, the current column is clamped to the destination's end. The clamped column is used by the next move; there is no retained preferred column. Empty lines, the first and last line, and one observed soft-break transition are included. The core moves without changing carrier bytes or Insert mode. The Windows adapter routes Ctrl-E/Ctrl-X and Up/Down to the same core commands. [Observed sequences and limits](NAVIGATION.md) record the evidence. Page-marked breaks, dot commands, and opaque selected lines are rejected until their navigation semantics are qualified.
 
+## Ctrl-G deletion: ws4-delete-character-v1
+
+Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved bytes. On an ordinary text cell it removes that byte and keeps the cursor position. On a hard CRLF it joins two short ordinary lines. At EOF it has no effect. One high-bit text cell and Insert-off deletion are included. Windows Ctrl-G routes to the core command. [Observed cases and limits](DELETION.md) record source identities and the DOS reopen check. Other deletion commands and soft-break deletion remain unqualified.
+
 ## Carrier serialization
 
-Explicit insertion, Enter and Ctrl-B serialize active bytes with at least two 1A bytes, padded to a multiple of 128 bytes. The old one-byte minimum was corrected using DOS captures at active lengths 126, 127, 128 and 129: their saved sizes are 128, 256, 256 and 256 bytes. The two-byte rule is a reconstruction generalized from these captures, not proof of every original save path or record boundary.
+Explicit insertion, deletion, Enter and Ctrl-B serialize active bytes with at least two 1A bytes, padded to a multiple of 128 bytes. The old one-byte minimum was corrected using DOS captures at active lengths 126, 127, 128 and 129: their saved sizes are 128, 256, 256 and 256 bytes. The two-byte rule is a reconstruction generalized from these captures, not proof of every original save path or record boundary.
 
 Ctrl-B also normalizes padding when active text is unchanged: 127 spaces grow from a 128-byte to a 256-byte carrier, while a 512-byte carrier containing only ALPHA shrinks to 128 bytes. Inspection, navigation, mode toggling, empty typing, and Enter that only moves the cursor preserve the exact original carrier. Selected Rust outputs have been reopened and saved in the original; see the Ctrl-B and editing reports for the tested scope.
 

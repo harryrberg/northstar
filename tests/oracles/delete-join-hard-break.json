@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-delete-character-v1",
+  "id": "delete-join-hard-break",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-del-01/DEL2-source.bin",
+        "sha256": "0fe3a6ab58b81269b36891d80377d65a22b008ff5593dedb26331f9f86d95ae2"
+      },
+      {
+        "path": "runtime-northstar-del-01/events.json",
+        "sha256": "52655ab61ecf44886d251f9ad054908e820e1b778b4d260d5d44ff899b629dd4"
+      },
+      {
+        "path": "runtime-northstar-del-01/del2-at-break.png",
+        "sha256": "7dceffc07d96096c80b97a5246458f7a02c9ad697e3995ba2c03c0fc8098b1aa"
+      },
+      {
+        "path": "runtime-northstar-del-01/del2-delete-break.png",
+        "sha256": "fc1a7fcfa59ac84ebc40743ca3a368d4018356d2da91a1d64f639119493a7d3a"
+      },
+      {
+        "path": "runtime-northstar-del-01/files/DEL2.DOC",
+        "sha256": "b51b9b2248bd8c0736934385ca4ed1c1ec788d04d6b15ccb89f8307b0e38a6b4"
+      }
+    ],
+    "limitations": [
+      "Synthetic document in isolated DOSBox WordStar 4.00 on 2026-10-16.",
+      "Cursor offsets and Insert state derive from the named before and after screens.",
+      "Saved bytes come from the isolated DOSBox copy; this case compares the final state only.",
+      "Soft and page-marked breaks, control cells, dot commands, and long-line joins remain unqualified."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41420d0a43441a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 2,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_character"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "b51b9b2248bd8c0736934385ca4ed1c1ec788d04d6b15ccb89f8307b0e38a6b4",
+    "cursor_byte": 2,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-delete-character-v1",
+  "id": "delete-insert-off",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-del-01/DEL5-source.bin",
+        "sha256": "e5ee02d6bdd3717a521e79f4537e6c2b0cb4012574b945b661ab9619cef0adc8"
+      },
+      {
+        "path": "runtime-northstar-del-01/events.json",
+        "sha256": "52655ab61ecf44886d251f9ad054908e820e1b778b4d260d5d44ff899b629dd4"
+      },
+      {
+        "path": "runtime-northstar-del-01/del5-overwrite.png",
+        "sha256": "813c06c9112aa92a64d45c9cd2bc57618b7ad0c1670244ada6536e89e882f17b"
+      },
+      {
+        "path": "runtime-northstar-del-01/del5-delete.png",
+        "sha256": "f1a3f176bc8b69edf47ada3c58dbc08188165f25e3b5c905a2cda920e741acb2"
+      },
+      {
+        "path": "runtime-northstar-del-01/files/DEL5.DOC",
+        "sha256": "a4c62b281857a9b0f55e1944900cb9b3ebf2bad053aa27501a508eacf330888a"
+      }
+    ],
+    "limitations": [
+      "Synthetic document in isolated DOSBox WordStar 4.00 on 2026-10-16.",
+      "Cursor offsets and Insert state derive from the named before and after screens.",
+      "Saved bytes come from the isolated DOSBox copy; this case compares the final state only.",
+      "Soft and page-marked breaks, control cells, dot commands, and long-line joins remain unqualified."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4142431a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 1,
+    "insert": false,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_character"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "a4c62b281857a9b0f55e1944900cb9b3ebf2bad053aa27501a508eacf330888a",
+    "cursor_byte": 1,
+    "insert": false,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

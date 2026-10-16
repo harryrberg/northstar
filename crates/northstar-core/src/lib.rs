@@ -264,6 +264,7 @@ pub enum Command {
     PreviousCharacter,
     NextLine,
     PreviousLine,
+    DeleteCharacter,
     Reformat,
 }
 
@@ -401,6 +402,13 @@ impl Editor {
                     &self.document,
                     self.cursor,
                     self.insert,
+                    self.formatting,
+                )?);
+            }
+            Command::DeleteCharacter => {
+                self.commit_edit(typing::delete_character(
+                    &self.document,
+                    self.cursor,
                     self.formatting,
                 )?);
             }
