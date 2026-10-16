@@ -138,7 +138,8 @@ impl Screen {
     }
     pub fn opening() -> Self {
         let mut s = Self::default();
-        s.put(0, 35, "OpenStar", 15);
+        let title = crate::APP_TITLE;
+        s.put(0, (80 - title.len()) / 2, title, 15);
         s.border(1, 10, " O P E N I N G   M E N U ");
         for (row, line) in [
             "     D open a document                    L change logged drive/directory",

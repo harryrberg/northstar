@@ -6,6 +6,7 @@ use iced::{
     window,
 };
 use openstar_desktop::{
+    APP_TITLE,
     input::{Action, Keyboard},
     projection::Projection,
     recovery::{RecoveryCandidate, RecoveryStore},
@@ -417,7 +418,7 @@ impl App {
             .map(|p| p.to_string_lossy())
             .unwrap_or("Untitled".into());
         format!(
-            "OpenStar: {path}{}",
+            "{APP_TITLE}: {path}{}",
             if self.session.modified() { " *" } else { "" }
         )
     }
@@ -996,7 +997,7 @@ impl App {
                     text("Restore the separate copy without writing the original. If the original changed or disappeared, the copy opens without a file name and needs Save As."),
                     text(error),
                     row![button("Restore copy").on_press(Message::Recover),button("Later").on_press(Message::SkipRecovery),button("Discard copy").on_press(Message::DiscardRecovery)].spacing(18)].spacing(20).into(),
-                Dialog::Help=>column![text("OPENSTAR HELP").size(24),
+                Dialog::Help=>column![text(format!("{} HELP", APP_TITLE.to_uppercase())).size(24),
                     text(if self.session.is_utf8() {
                         "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-Z undoes; Ctrl-Y or Ctrl-Shift-Z redoes. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {

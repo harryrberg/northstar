@@ -18,6 +18,8 @@ The portable `screen_oracle` test compares the screen's full 4,000-byte characte
 
 Before the shared-grid change, full screen and both fonts were inspected in the native Windows window at 2048x1152. The horizontally compressed Plex layout was inspected at 1120x700. The current proportional Plex layout retains the shared grid and is checked by a layout test. Its full-screen pixel output, other display resolutions, scaling settings, and platforms have not been tested after this change. The screen comparison proves cell content for the declared fixture, not pixel-level identity across fonts or displays.
 
+The 0.1.21 MSI shows the package version beside OpenStar on the opening screen, in the window title, and in Help. These labels use the desktop crate version so later releases show their own version without a separate text edit.
+
 The 0.1.20 MSI changes the product, executable, package, and installer name to OpenStar. The WordStar 4.0 reference and saved document format remain the same. The installer upgrades the previous NorthStar installation, and recovery also reads copies from its old location.
 
 The 0.1.19 MSI adds byte-preserving recovery copies for unsaved WordStar edits. Recovery attaches to the original path only when its bytes still match the saved baseline; otherwise the copy needs Save As. Existing UTF-8 records remain readable. App and storage tests cover interrupted sessions, exact carrier preservation, changed or missing sources, and malformed records. The installed 0.1.18 window opened for a native keyboard check, but the Windows automation helper could not send input because the foreground window did not report a process ID. A manual keyboard check of 0.1.19 remains open.
