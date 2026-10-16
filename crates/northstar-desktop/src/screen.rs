@@ -25,6 +25,72 @@ impl Default for Screen {
     }
 }
 impl Screen {
+    fn clear_find_header(&mut self) {
+        for row in 1..=9 {
+            self.cells[row].fill(Cell {
+                glyph: ' ',
+                attribute: 7,
+            });
+        }
+        self.cells[0][0] = Cell {
+            glyph: 'Q',
+            attribute: 0x70,
+        };
+        self.cells[0][1] = Cell {
+            glyph: 'F',
+            attribute: 0x70,
+        };
+    }
+
+    pub fn find_prompt(&mut self, term: &str, options: Option<&str>) {
+        self.clear_find_header();
+        self.put(2, 3, &format!("Find what? {term}"), 7);
+        self.put(3, 1, "↵ done  : Backspace or ^H erase left", 7);
+        self.put(4, 1, "^U cancel :          Del erase", 7);
+        if let Some(options) = options {
+            self.put(5, 3, &format!("Option(s)? {options}"), 7);
+            self.put(
+                6,
+                3,
+                "W whole words   U ignore case   B look backwards   ? wildcards",
+                7,
+            );
+            self.put(7, 3, "G start from beginning or end", 7);
+        }
+        self.cursor = None;
+    }
+
+    pub fn find_notice(&mut self, term: &str, repeated: bool) {
+        self.clear_find_header();
+        self.cells[0].fill(Cell {
+            glyph: ' ',
+            attribute: 0x70,
+        });
+        self.cells[0][0] = Cell {
+            glyph: if repeated { 'L' } else { 'Q' },
+            attribute: 0x70,
+        };
+        self.cells[0][1] = Cell {
+            glyph: if repeated { ' ' } else { 'F' },
+            attribute: 0x70,
+        };
+        self.put(0, 3, "Wait", 0x70);
+        self.put(
+            2,
+            0,
+            &format!(
+                "{}:  {term}",
+                if repeated {
+                    "End of search for"
+                } else {
+                    "Could not find"
+                }
+            ),
+            7,
+        );
+        self.put(4, 0, "Press Esc to continue.", 7);
+        self.cursor = None;
+    }
     pub fn put(&mut self, row: usize, column: usize, text: &str, attribute: u8) {
         if let Some(line) = self.cells.get_mut(row) {
             for (cell, glyph) in line.iter_mut().skip(column).zip(text.chars()) {

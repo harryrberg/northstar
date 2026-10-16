@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-ascii-find-v1",
+  "id": "find-ignore-case",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-find-01/files/FIND1.DOC",
+        "sha256": "1c8dfb2040ae260cd839ecdec9610482281feb1dd1b7ddc6fad6d54b8611a6d8"
+      },
+      {
+        "path": "runtime-northstar-find-01/events.json",
+        "sha256": "7363d3002371b9ae3f38a70e68e9451150d6d800c6cdd0db98b5846e1c9d4376"
+      },
+      {
+        "path": "runtime-northstar-find-01/find1-ignore-hit.png",
+        "sha256": "eb7a9a15b86ea46d001ae37e9c28dc537aa263d323ccbcc8c03407e3eebc0852"
+      }
+    ],
+    "limitations": [
+      "Synthetic document in an isolated DOSBox copy on 2026-10-16.",
+      "Cursor byte offset is derived from observed L/C status and one-byte cells.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Literal ASCII search only; wildcard and G options are outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "414c504841204245544120414c5048410d0a4245544120414c5048411a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "find_literal",
+      "text": "alpha",
+      "ignore_case": true,
+      "whole_words": false,
+      "backwards": false
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "1c8dfb2040ae260cd839ecdec9610482281feb1dd1b7ddc6fad6d54b8611a6d8",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    },
+    "find_found": true
+  }
+}

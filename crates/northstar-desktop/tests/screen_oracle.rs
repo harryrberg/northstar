@@ -5,6 +5,17 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::{fs, path::PathBuf};
 
+#[test]
+fn find_prompt_keeps_all_options_inside_the_eighty_column_header() {
+    let mut screen = Screen::default();
+    screen.find_prompt("cat", Some("WU"));
+    assert_eq!(screen.cells[2][3].glyph, 'F');
+    assert_eq!(screen.cells[5][3].glyph, 'O');
+    assert_eq!(screen.cells[6][3].glyph, 'W');
+    assert_eq!(screen.cells[6][64].glyph, 's');
+    assert!(screen.cursor.is_none());
+}
+
 fn screen_bytes(editor: &Editor, label: &str) -> Vec<u8> {
     let projection = Projection::new(editor);
     Screen::editor(&projection, &editor.snapshot(), label, None).monochrome_bytes()

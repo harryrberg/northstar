@@ -124,6 +124,7 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                     &mut session,
                     press(Key::Named(Named::Enter), Modifiers::empty(), None, false),
                 ),
+                Command::FindLiteral { .. } | Command::RepeatFind => unreachable!("other profile"),
             }
         }
         let expected = &case["expected"];

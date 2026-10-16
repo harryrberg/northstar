@@ -10,6 +10,7 @@ use std::{error::Error, fmt, ops::Range};
 mod erasure;
 mod formatting;
 mod reformat;
+mod search;
 mod typing;
 mod utf8;
 mod word_navigation;
@@ -258,7 +259,9 @@ enum Edit {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "command", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Command {
-    InsertAscii { text: String },
+    InsertAscii {
+        text: String,
+    },
     Enter,
     ToggleInsert,
     DocumentStart,
@@ -273,6 +276,13 @@ pub enum Command {
     DeleteLine,
     UneraseLine,
     Reformat,
+    FindLiteral {
+        text: String,
+        ignore_case: bool,
+        whole_words: bool,
+        backwards: bool,
+    },
+    RepeatFind,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -320,6 +330,8 @@ pub struct Editor {
     insert: bool,
     formatting: Formatting,
     erased_text: Option<erasure::ErasedText>,
+    find: Option<search::FindSpec>,
+    last_find_result: Option<bool>,
 }
 
 impl Editor {
@@ -349,11 +361,22 @@ impl Editor {
             insert,
             formatting,
             erased_text: None,
+            find: None,
+            last_find_result: None,
         })
     }
 
     pub fn document(&self) -> &Document {
         &self.document
+    }
+
+    /// The last qualified search result. None means no search has run yet.
+    pub fn last_find_result(&self) -> Option<bool> {
+        self.last_find_result
+    }
+
+    pub fn last_find_text(&self) -> Option<String> {
+        self.find.as_ref().map(|spec| spec.text())
     }
 
     /// Record a successfully persisted carrier. The caller must finish writing
@@ -469,6 +492,39 @@ impl Editor {
                     self.cursor,
                     self.formatting,
                 )?);
+            }
+            Command::FindLiteral {
+                text,
+                ignore_case,
+                whole_words,
+                backwards,
+            } => {
+                let spec = search::FindSpec::new(text, *ignore_case, *whole_words, *backwards)?;
+                let target = search::target(&self.document, self.cursor, &spec, false)?;
+                self.cursor = target.unwrap_or_else(|| {
+                    if *backwards {
+                        0
+                    } else {
+                        self.document.active_end()
+                    }
+                });
+                self.last_find_result = Some(target.is_some());
+                self.find = Some(spec);
+            }
+            Command::RepeatFind => {
+                let spec = self
+                    .find
+                    .as_ref()
+                    .ok_or(EditError::UnqualifiedOperation("no previous find"))?;
+                let target = search::target(&self.document, self.cursor, spec, true)?;
+                self.cursor = target.unwrap_or_else(|| {
+                    if spec.backwards {
+                        0
+                    } else {
+                        self.document.active_end()
+                    }
+                });
+                self.last_find_result = Some(target.is_some());
             }
         }
         Ok(())

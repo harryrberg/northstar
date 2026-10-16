@@ -4,6 +4,8 @@ use northstar_core::Command;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Action {
+    Find,
+    RepeatFind,
     Edit(Command),
     Text(String),
     Backspace,
@@ -76,6 +78,7 @@ impl Keyboard {
             }
             return Some(match (prefix, letter.as_str()) {
                 ('Q', "r") => Action::Edit(Command::DocumentStart),
+                ('Q', "f") if !utf8 => Action::Find,
                 ('K', "s") => Action::Save,
                 ('K', "d") => Action::SaveAndDone,
                 ('K', "q") => Action::Done,
@@ -100,6 +103,7 @@ impl Keyboard {
                 "t" if !utf8 => Some(Action::Edit(Command::DeleteWord)),
                 "y" if !utf8 => Some(Action::Edit(Command::DeleteLine)),
                 "u" if !utf8 => Some(Action::Edit(Command::UneraseLine)),
+                "l" if !utf8 => Some(Action::RepeatFind),
                 "e" => Some(if utf8 {
                     Action::MoveVertical(-1)
                 } else {

@@ -57,6 +57,10 @@ Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synt
 
 Eighteen scenarios compare Ctrl-A/Ctrl-F movement with retained DOS status and unchanged synthetic carrier bytes. Word movement is line-local. The measured punctuation cases distinguish comma as a separator from an internal hyphen that stays in a word. Ctrl-F on a hard CRLF reaches the next line start, but Ctrl-F from the preceding word does not cross the break. The core owns cursor movement; Windows Ctrl-A/Ctrl-F select the commands. [Observed cases and limits](WORD_NAVIGATION.md) record source identities. Other punctuation, marked text, soft breaks, and opaque selected lines remain unqualified.
 
+## Literal search: ws4-ascii-find-v1
+
+Seventeen synthetic scenarios compare Ctrl-Q F and Ctrl-L with retained DOS status screens and unchanged synthetic carrier bytes. Forward search, overlapping repetition, case sensitivity, whole words, backward search, and failure cursor positions are covered at declared starting positions. [Observed rules and limits](FIND.md) define the profile. The core owns search state; the Windows adapter displays the WordStar prompt.
+
 ## Ctrl-G deletion: ws4-delete-character-v1
 
 Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved bytes. On an ordinary text cell it removes that byte and keeps the cursor position. On a hard CRLF it joins two short ordinary lines. At EOF it has no effect. One high-bit text cell and Insert-off deletion are included. Windows Ctrl-G routes to the core command. [Observed cases and limits](DELETION.md) record source identities and the DOS reopen check. Backspace, the DOS Delete key, and soft-break deletion remain unqualified.

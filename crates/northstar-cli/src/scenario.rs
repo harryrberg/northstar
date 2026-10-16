@@ -49,6 +49,7 @@ struct Expected {
     cursor_byte: Option<usize>,
     insert: Option<bool>,
     formatting: Option<Formatting>,
+    find_found: Option<bool>,
 }
 
 pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
@@ -65,6 +66,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-delete-character-v1"
                 | "ws4-line-erasure-v1"
                 | "ws4-word-erasure-v1"
+                | "ws4-ascii-find-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
@@ -74,6 +76,26 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     }
     if spec.profile == "ws4-ascii-enter-v1" && spec.commands.contains(&Command::Reformat) {
         return Err("reformat is outside the declared Enter profile".into());
+    }
+    let find = |command: &Command| {
+        matches!(
+            command,
+            Command::FindLiteral { .. }
+                | Command::RepeatFind
+                | Command::DocumentStart
+                | Command::NextCharacter
+        )
+    };
+    if (spec.profile == "ws4-ascii-find-v1" && spec.commands.iter().any(|command| !find(command)))
+        || (spec.profile != "ws4-ascii-find-v1"
+            && spec.commands.iter().any(|command| {
+                matches!(command, Command::FindLiteral { .. } | Command::RepeatFind)
+            }))
+    {
+        return Err("find commands require their declared profile".into());
+    }
+    if (spec.profile == "ws4-ascii-find-v1") != spec.expected.find_found.is_some() {
+        return Err("find profile requires a declared found result".into());
     }
     let vertical = |command: &Command| matches!(command, Command::NextLine | Command::PreviousLine);
     if (spec.profile == "ws4-vertical-navigation-v1"
@@ -222,6 +244,13 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
     }
     if spec
         .expected
+        .find_found
+        .is_some_and(|x| Some(x) != editor.last_find_result())
+    {
+        mismatches.push("find_found");
+    }
+    if spec
+        .expected
         .formatting
         .is_some_and(|x| x != snapshot.formatting)
     {
@@ -255,7 +284,8 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
         "active_hex": hex(&editor.document().bytes()[..editor.document().active_end()]),
         "state": snapshot,
         "steps": steps,
-        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some()},
+        "find_found": editor.last_find_result(),
+        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some(), "find_found": spec.expected.find_found.is_some()},
         "output_path": output,
         "target_executed": false,
         "provenance": spec.provenance,

@@ -74,7 +74,9 @@ impl DocumentSession {
                     | Command::DeleteCharacter
                     | Command::DeleteWord
                     | Command::DeleteLine
-                    | Command::UneraseLine => {
+                    | Command::UneraseLine
+                    | Command::FindLiteral { .. }
+                    | Command::RepeatFind => {
                         return Err("This WordStar command is not available in UTF-8 mode".into());
                     }
                 }

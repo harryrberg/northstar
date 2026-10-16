@@ -47,6 +47,7 @@ struct App {
     projection: Projection,
     keyboard: Keyboard,
     dialog: Option<Dialog>,
+    find_dialog: Option<FindDialog>,
     notice: String,
     window_focused: bool,
     opening: bool,
@@ -84,6 +85,11 @@ enum Dialog {
     },
     Help,
 }
+enum FindDialog {
+    Term(String),
+    Options { term: String, flags: String },
+    Notice { term: String, repeated: bool },
+}
 #[derive(Debug, Clone)]
 pub(crate) enum Message {
     Event(Event, window::Id),
@@ -105,6 +111,101 @@ pub(crate) enum Message {
     DiscardRecovery,
 }
 impl App {
+    fn handle_find_event(&mut self, event: &keyboard::Event) {
+        use keyboard::{Event::KeyPressed, Key, key::Named};
+        let Some(dialog) = self.find_dialog.take() else {
+            return;
+        };
+        let KeyPressed {
+            key,
+            text,
+            modifiers,
+            ..
+        } = event
+        else {
+            self.find_dialog = Some(dialog);
+            return;
+        };
+        if *key == Key::Named(Named::Escape)
+            || (modifiers.control() && key.as_ref() == Key::Character("u"))
+        {
+            return;
+        }
+        match dialog {
+            FindDialog::Term(mut term) => match key {
+                Key::Named(Named::Enter) if !term.is_empty() => {
+                    self.find_dialog = Some(FindDialog::Options {
+                        term,
+                        flags: String::new(),
+                    })
+                }
+                Key::Named(Named::Backspace | Named::Delete) => {
+                    term.pop();
+                    self.find_dialog = Some(FindDialog::Term(term));
+                }
+                _ => {
+                    if !modifiers.control()
+                        && !modifiers.alt()
+                        && !modifiers.logo()
+                        && let Some(value) = text
+                        && value.bytes().all(|byte| (0x20..=0x7e).contains(&byte))
+                        && term.len() + value.len() <= 64
+                    {
+                        term.push_str(value);
+                    }
+                    self.find_dialog = Some(FindDialog::Term(term));
+                }
+            },
+            FindDialog::Options { term, mut flags } => match key {
+                Key::Named(Named::Enter) => {
+                    let command = northstar_core::Command::FindLiteral {
+                        text: term.clone(),
+                        whole_words: flags.contains('W'),
+                        ignore_case: flags.contains('U'),
+                        backwards: flags.contains('B'),
+                    };
+                    let result = self.session.apply_command(&command);
+                    self.record_edit(result);
+                    if let DocumentSession::Legacy(session) = &self.session
+                        && session.editor.last_find_result() == Some(false)
+                    {
+                        self.find_dialog = Some(FindDialog::Notice {
+                            term,
+                            repeated: false,
+                        });
+                    }
+                }
+                Key::Named(Named::Backspace | Named::Delete) => {
+                    flags.pop();
+                    self.find_dialog = Some(FindDialog::Options { term, flags });
+                }
+                _ => {
+                    let mut unsupported = false;
+                    if !modifiers.control()
+                        && !modifiers.alt()
+                        && !modifiers.logo()
+                        && let Some(value) = text
+                    {
+                        for ch in value.chars().map(|ch| ch.to_ascii_uppercase()) {
+                            if "WUB".contains(ch) && !flags.contains(ch) {
+                                flags.push(ch);
+                            } else if "G?".contains(ch) {
+                                unsupported = true;
+                            }
+                        }
+                    }
+                    if unsupported {
+                        self.notice = "G and wildcard search options are not yet qualified".into();
+                    } else {
+                        self.find_dialog = Some(FindDialog::Options { term, flags });
+                    }
+                }
+            },
+            notice @ FindDialog::Notice { .. } => {
+                self.find_dialog = Some(notice);
+            }
+        }
+    }
     fn new() -> Self {
         match RecoveryStore::default_location() {
             Ok(store) => Self::new_with_recovery(Some(store), None),
@@ -149,6 +250,7 @@ impl App {
             projection,
             keyboard: Keyboard::default(),
             dialog: None,
+            find_dialog: None,
             notice,
             window_focused: false,
             opening,
@@ -219,6 +321,7 @@ impl App {
         }
     }
     fn path_dialog(&mut self, kind: PathKind) -> Task<Message> {
+        self.find_dialog = None;
         self.keyboard.reset();
         let value = match kind {
             PathKind::OpenLegacy | PathKind::OpenUtf8 => String::new(),
@@ -235,6 +338,7 @@ impl App {
         match message {
             Message::Open => return self.path_dialog(PathKind::OpenLegacy),
             Message::NewUtf8 => {
+                self.find_dialog = None;
                 self.session = DocumentSession::Utf8(Utf8Session::new_at(None));
                 self.session_generation += 1;
                 self.projection = Projection::for_session(&self.session);
@@ -363,6 +467,7 @@ impl App {
                     };
                     match result {
                         Ok(()) => {
+                            self.find_dialog = None;
                             opened_utf8 = matches!(kind, PathKind::OpenUtf8);
                             let saved_copy = matches!(kind, PathKind::SaveAs { .. });
                             if matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8) {
@@ -457,6 +562,10 @@ impl App {
                         _ => {}
                     }
                 }
+                if self.find_dialog.is_some() && self.window_focused {
+                    self.handle_find_event(&event);
+                    return Task::none();
+                }
                 if self.dialog.is_some() {
                     if matches!(
                         event,
@@ -495,6 +604,31 @@ impl App {
                             Some(Action::Edit(command)) => {
                                 let result = self.session.apply_command(&command);
                                 self.record_edit(result);
+                            }
+                            Some(Action::Find) => {
+                                self.find_dialog = Some(FindDialog::Term(String::new()));
+                                self.notice.clear();
+                            }
+                            Some(Action::RepeatFind) => {
+                                let term = match &self.session {
+                                    DocumentSession::Legacy(session) => {
+                                        session.editor.last_find_text()
+                                    }
+                                    DocumentSession::Utf8(_) => None,
+                                };
+                                let result = self
+                                    .session
+                                    .apply_command(&northstar_core::Command::RepeatFind);
+                                self.record_edit(result);
+                                if let (Some(term), DocumentSession::Legacy(session)) =
+                                    (term, &self.session)
+                                    && session.editor.last_find_result() == Some(false)
+                                {
+                                    self.find_dialog = Some(FindDialog::Notice {
+                                        term,
+                                        repeated: true,
+                                    });
+                                }
                             }
                             Some(Action::Text(text)) => {
                                 let result = self.session.insert_text(&text);
@@ -702,7 +836,7 @@ impl App {
                     text(if self.session.is_utf8() {
                         "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-Z undoes; Ctrl-Y or Ctrl-Shift-Z redoes. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {
-                        "WordStar: Ctrl-S/Ctrl-D move by character, Ctrl-A/Ctrl-F by word, and Ctrl-E/Ctrl-X by line. Ctrl-G deletes a character, Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text. Ctrl-Q R starts document; Ctrl-V toggles insert; Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
+                        "WordStar: Ctrl-S/Ctrl-D move by character, Ctrl-A/Ctrl-F by word, and Ctrl-E/Ctrl-X by line. Ctrl-Q F finds text; Ctrl-L repeats. Ctrl-G deletes a character, Ctrl-T deletes a word, Ctrl-Y deletes a line, Ctrl-U inserts the last erased text. Ctrl-Q R starts document; Ctrl-V toggles insert; Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
                     }),
                     text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, F4 for recovery, and X to exit."),
                     text(if self.session.is_utf8() {
@@ -759,7 +893,14 @@ impl App {
                 ),
             }
         };
-        if !self.notice.is_empty() {
+        if let Some(find) = &self.find_dialog {
+            match find {
+                FindDialog::Term(term) => screen.find_prompt(term, None),
+                FindDialog::Options { term, flags } => screen.find_prompt(term, Some(flags)),
+                FindDialog::Notice { term, repeated } => screen.find_notice(term, *repeated),
+            }
+        }
+        if self.find_dialog.is_none() && !self.notice.is_empty() {
             screen.cells[22].fill(northstar_desktop::screen::Cell {
                 glyph: ' ',
                 attribute: 0x70,
@@ -787,6 +928,10 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use iced::keyboard::{
+        Key, Location, Modifiers,
+        key::{Named, NativeCode, Physical},
+    };
     use std::{
         fs,
         sync::atomic::{AtomicUsize, Ordering},
@@ -809,6 +954,82 @@ mod tests {
         fn drop(&mut self) {
             fs::remove_dir_all(&self.0).unwrap();
         }
+    }
+
+    fn key(key: Key, control: bool, text: Option<&str>) -> Event {
+        Event::Keyboard(keyboard::Event::KeyPressed {
+            modified_key: key.clone(),
+            key,
+            physical_key: Physical::Unidentified(NativeCode::Unidentified),
+            location: Location::Standard,
+            modifiers: if control {
+                Modifiers::CTRL
+            } else {
+                Modifiers::empty()
+            },
+            text: text.map(Into::into),
+            repeat: false,
+        })
+    }
+
+    #[test]
+    fn legacy_find_prompt_options_repeat_and_failure_flow_through_app() {
+        let scratch = Scratch::new();
+        let path = scratch.0.join("find.doc");
+        let mut carrier = b"CAT cat CAT".to_vec();
+        carrier.resize(128, 0x1a);
+        fs::write(&path, &carrier).unwrap();
+        let mut app = App::new_with_recovery(None, None);
+        app.session = DocumentSession::Legacy(Session::open(&path).unwrap());
+        app.projection = Projection::for_session(&app.session);
+        app.opening = false;
+        app.window_focused = true;
+        let id = window::Id::unique();
+        for event in [
+            key(Key::Character("q".into()), true, None),
+            key(Key::Character("f".into()), false, Some("f")),
+            key(Key::Character("c".into()), false, Some("cat")),
+            key(Key::Named(Named::Enter), false, None),
+            key(Key::Character("u".into()), false, Some("u")),
+            key(Key::Named(Named::Enter), false, None),
+        ] {
+            let _ = app.update(Message::Event(event, id));
+        }
+        let DocumentSession::Legacy(session) = &app.session else {
+            panic!()
+        };
+        assert_eq!(session.editor.snapshot().cursor_byte, 0);
+        assert!(app.find_dialog.is_none());
+        let _ = app.update(Message::Event(
+            key(Key::Character("l".into()), true, None),
+            id,
+        ));
+        let DocumentSession::Legacy(session) = &app.session else {
+            panic!()
+        };
+        assert_eq!(session.editor.snapshot().cursor_byte, 4);
+        let _ = app.update(Message::Event(
+            key(Key::Character("l".into()), true, None),
+            id,
+        ));
+        let _ = app.update(Message::Event(
+            key(Key::Character("l".into()), true, None),
+            id,
+        ));
+        assert!(matches!(
+            app.find_dialog,
+            Some(FindDialog::Notice { repeated: true, .. })
+        ));
+        let _ = app.update(Message::Event(
+            key(Key::Named(Named::Escape), false, None),
+            id,
+        ));
+        assert!(app.find_dialog.is_none());
+        let DocumentSession::Legacy(session) = &app.session else {
+            panic!()
+        };
+        assert_eq!(session.editor.snapshot().cursor_byte, 11);
+        assert_eq!(fs::read(&path).unwrap(), carrier);
     }
 
     #[test]
