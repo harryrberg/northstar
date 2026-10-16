@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-block-move-delete-v1",
+  "id": "block-move-end",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-move-01/block-inputs.json",
+        "sha256": "19934f8d7d687a234a9bc23ca301e9db7affb0db5eb6c64b696b2bfbd16e7c02"
+      },
+      {
+        "path": "runtime-northstar-move-01/events.json",
+        "sha256": "ec2691ddc32a7f68305b1d19d53179f68a3aceee9651cefd688bb966cac3e01d"
+      },
+      {
+        "path": "runtime-northstar-move-01/m1-after-move.png",
+        "sha256": "3929f09ea543d5419304e88e03aefcfc7cd81a786c202896b88307d6c422feb6"
+      },
+      {
+        "path": "runtime-northstar-move-01/files/MOVE1.DOC",
+        "sha256": "2ad6dea2c647fa465644835d59b23baf21bc8d0a071e2789a324e23a2db90b61"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document in an isolated DOSBox copy on 2026-10-16.",
+      "Physical Ctrl-K B/K, Ctrl-K V or Y and save are recorded in the action log.",
+      "Cursor and mark offsets are derived from the visible one-byte cells and selection; no internal state is exposed.",
+      "Only one-line ASCII documents are qualified; move targets document end and delete requires the cursor after the selection."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "414243444520464748494a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_begin"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_end"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "move_block"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "2ad6dea2c647fa465644835d59b23baf21bc8d0a071e2789a324e23a2db90b61",
+    "cursor_byte": 8,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    },
+    "block_begin": 8,
+    "block_end": 11
+  }
+}

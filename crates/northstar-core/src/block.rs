@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-//! Bounded WordStar block marks and copy.
+//! Bounded WordStar block marks, copy, move, and delete.
 use crate::{Document, Edit, EditError, Formatting, TokenKind};
 
 #[derive(Clone, Copy, Default)]
@@ -15,7 +15,7 @@ fn check_formatting(formatting: Formatting) -> Result<(), EditError> {
         || formatting.right_justify
     {
         return Err(EditError::UnqualifiedOperation(
-            "block copy requires document mode, single spacing, margins 1/65, and justification off",
+            "block operation requires document mode, single spacing, margins 1/65, and justification off",
         ));
     }
     Ok(())
@@ -30,7 +30,7 @@ fn check_lines(document: &Document, begin: usize, end: usize) -> Result<(), Edit
     let check_line = |start: usize, finish: usize, unsupported: Option<usize>| {
         if finish - start > 65 {
             return Err(EditError::UnqualifiedOperation(
-                "block copy on a line beyond the qualified right margin",
+                "block operation on a line beyond the qualified right margin",
             ));
         }
         if document
@@ -56,7 +56,7 @@ fn check_lines(document: &Document, begin: usize, end: usize) -> Result<(), Edit
                 }
                 if token.range.start < end && token.range.end > begin && (soft || page_marker) {
                     return Err(EditError::UnqualifiedOperation(
-                        "block copy across a soft or page-marked break",
+                        "block operation across a soft or page-marked break",
                     ));
                 }
                 line_start = token.range.end;
@@ -94,19 +94,7 @@ pub(super) fn copy(
     formatting: Formatting,
     marks: Marks,
 ) -> Result<(Edit, Marks), EditError> {
-    check_formatting(formatting)?;
-    let active_end = document.checked_active_end()?;
-    let (Some(begin), Some(end)) = (marks.begin, marks.end) else {
-        return Err(EditError::UnqualifiedOperation("block is not defined"));
-    };
-    if end <= begin {
-        return Err(EditError::UnqualifiedOperation(
-            "block end is at or before block start",
-        ));
-    }
-    if end > active_end {
-        return Err(EditError::InvalidCursor { offset: end });
-    }
+    let (active_end, begin, end) = selected(document, formatting, marks)?;
     check_lines(document, begin, end)?;
     let copied = &document.bytes()[begin..end];
     let new_length =
@@ -142,4 +130,91 @@ pub(super) fn copy(
             end: Some(shift(end, false)),
         },
     ))
+}
+
+fn selected(
+    document: &Document,
+    formatting: Formatting,
+    marks: Marks,
+) -> Result<(usize, usize, usize), EditError> {
+    check_formatting(formatting)?;
+    let active_end = document.checked_active_end()?;
+    let (Some(begin), Some(end)) = (marks.begin, marks.end) else {
+        return Err(EditError::UnqualifiedOperation("block is not defined"));
+    };
+    if end <= begin {
+        return Err(EditError::UnqualifiedOperation(
+            "block end is at or before block start",
+        ));
+    }
+    if end > active_end {
+        return Err(EditError::InvalidCursor { offset: end });
+    }
+    Ok((active_end, begin, end))
+}
+
+fn single_line(
+    document: &Document,
+    active_end: usize,
+    begin: usize,
+    end: usize,
+    cursor: usize,
+) -> Result<(), EditError> {
+    let line = document.ascii_line(begin, active_end)?;
+    if line.start != 0 || line.end != active_end || end > line.end || cursor < end {
+        return Err(EditError::UnqualifiedOperation(
+            "block move or delete requires a one-line document and cursor after the block",
+        ));
+    }
+    check_lines(document, line.start, line.end)?;
+    Ok(())
+}
+
+pub(super) fn move_after(
+    document: &Document,
+    cursor: usize,
+    formatting: Formatting,
+    marks: Marks,
+) -> Result<(Edit, Marks), EditError> {
+    let (active_end, begin, end) = selected(document, formatting, marks)?;
+    single_line(document, active_end, begin, end, cursor)?;
+    if cursor != active_end {
+        return Err(EditError::UnqualifiedOperation(
+            "block movement requires the destination at document end",
+        ));
+    }
+    let length = end - begin;
+    let moved_begin = cursor - length;
+    let mut active = Vec::with_capacity(active_end);
+    active.extend_from_slice(&document.bytes()[..begin]);
+    active.extend_from_slice(&document.bytes()[end..cursor]);
+    active.extend_from_slice(&document.bytes()[begin..end]);
+    active.extend_from_slice(&document.bytes()[cursor..active_end]);
+    Ok((
+        Edit::Replace {
+            active,
+            cursor: moved_begin,
+        },
+        Marks {
+            begin: Some(moved_begin),
+            end: Some(cursor),
+        },
+    ))
+}
+
+pub(super) fn delete(
+    document: &Document,
+    cursor: usize,
+    formatting: Formatting,
+    marks: Marks,
+) -> Result<Edit, EditError> {
+    let (active_end, begin, end) = selected(document, formatting, marks)?;
+    single_line(document, active_end, begin, end, cursor)?;
+    let mut active = Vec::with_capacity(active_end - (end - begin));
+    active.extend_from_slice(&document.bytes()[..begin]);
+    active.extend_from_slice(&document.bytes()[end..active_end]);
+    Ok(Edit::Replace {
+        active,
+        cursor: begin,
+    })
 }

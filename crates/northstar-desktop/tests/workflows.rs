@@ -85,6 +85,10 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "block-copy-insert-off",
         "block-copy-repeat-before-source",
         "block-copy-repeat-inside-source",
+        "block-move-end",
+        "block-move-inline",
+        "block-move-then-copy",
+        "block-delete-inline",
     ] {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../tests/oracles")
@@ -159,11 +163,17 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                         false,
                     ),
                 ),
-                Command::MarkBlockBegin | Command::MarkBlockEnd | Command::CopyBlock => {
+                Command::MarkBlockBegin
+                | Command::MarkBlockEnd
+                | Command::CopyBlock
+                | Command::MoveBlock
+                | Command::DeleteBlock => {
                     let key = match command {
                         Command::MarkBlockBegin => "b",
                         Command::MarkBlockEnd => "k",
                         Command::CopyBlock => "c",
+                        Command::MoveBlock => "v",
+                        Command::DeleteBlock => "y",
                         _ => unreachable!(),
                     };
                     dispatch(&mut keyboard, &mut session, ctrl("k", false));
@@ -198,7 +208,10 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
             session.editor.snapshot().insert,
             expected["insert"].as_bool().unwrap()
         );
-        if case["profile"] == "ws4-block-copy-v1" {
+        if case["profile"] == "ws4-block-copy-v1"
+            || (case["profile"] == "ws4-block-move-delete-v1"
+                && case["expected"]["marks_cleared"] != true)
+        {
             assert_eq!(
                 session.editor.snapshot().block_begin,
                 Some(expected["block_begin"].as_u64().unwrap() as usize)
@@ -207,6 +220,10 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 session.editor.snapshot().block_end,
                 Some(expected["block_end"].as_u64().unwrap() as usize)
             );
+        }
+        if case["expected"]["marks_cleared"] == true {
+            assert_eq!(session.editor.snapshot().block_begin, None);
+            assert_eq!(session.editor.snapshot().block_end, None);
         }
         let destination = scratch.0.join(format!("{name}-output.doc"));
         session.save_as(&destination).unwrap();

@@ -76,6 +76,8 @@ impl DocumentSession {
                     | Command::MarkBlockBegin
                     | Command::MarkBlockEnd
                     | Command::CopyBlock
+                    | Command::MoveBlock
+                    | Command::DeleteBlock
                     | Command::DeleteWord
                     | Command::DeleteLine
                     | Command::UneraseLine

@@ -121,11 +121,19 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
             assert_eq!(report["compared_fields"][field], true);
             assert_eq!(report["state"][field], spec["expected"][field]);
         }
-        if spec["profile"] == "ws4-block-copy-v1" {
+        if spec["profile"] == "ws4-block-copy-v1"
+            || (spec["profile"] == "ws4-block-move-delete-v1"
+                && spec["expected"]["marks_cleared"] != true)
+        {
             for field in ["block_begin", "block_end"] {
                 assert_eq!(report["compared_fields"][field], true);
                 assert_eq!(report["state"][field], spec["expected"][field]);
             }
+        }
+        if spec["expected"]["marks_cleared"] == true {
+            assert_eq!(report["compared_fields"]["marks_cleared"], true);
+            assert_eq!(report["state"]["block_begin"], serde_json::Value::Null);
+            assert_eq!(report["state"]["block_end"], serde_json::Value::Null);
         }
         assert_eq!(report["target_executed"], false);
     }

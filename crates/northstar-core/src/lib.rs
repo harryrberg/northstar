@@ -277,6 +277,8 @@ pub enum Command {
     MarkBlockBegin,
     MarkBlockEnd,
     CopyBlock,
+    MoveBlock,
+    DeleteBlock,
     DeleteWord,
     DeleteLine,
     UneraseLine,
@@ -484,6 +486,30 @@ impl Editor {
                     block::copy(&self.document, self.cursor, self.formatting, self.block)?;
                 self.commit_edit(edit);
                 self.block = marks;
+            }
+            Command::MoveBlock => {
+                if !self.insert {
+                    return Err(EditError::UnqualifiedOperation(
+                        "block movement with Insert off",
+                    ));
+                }
+                let (edit, marks) =
+                    block::move_after(&self.document, self.cursor, self.formatting, self.block)?;
+                self.commit_edit(edit);
+                self.block = marks;
+            }
+            Command::DeleteBlock => {
+                if !self.insert {
+                    return Err(EditError::UnqualifiedOperation(
+                        "block deletion with Insert off",
+                    ));
+                }
+                self.commit_edit(block::delete(
+                    &self.document,
+                    self.cursor,
+                    self.formatting,
+                    self.block,
+                )?);
             }
             Command::DeleteWord => {
                 if let Some((edit, erased)) =

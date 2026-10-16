@@ -71,7 +71,11 @@ Ten synthetic scenarios compare physical Backspace and Delete with retained DOS 
 
 ## Block marks and copy: ws4-block-copy-v1
 
-Eight synthetic scenarios compare Ctrl-K B, Ctrl-K K and Ctrl-K C against retained DOS screenshots and saved bytes. The marks define a half-open byte range. Copy inserts those bytes at the cursor, leaves the cursor in place and retains the selection for repeated copying. Copy before and inside the selection, an ordinary hard CRLF, and Insert-off mode are covered. Incomplete or empty blocks are rejected atomically. [Observed cases, source identities, DOS reopen check and limits](BLOCK_COPY.md) define the scope. Block movement, deletion, hiding, and later editing while marked remain unqualified.
+Eight synthetic scenarios compare Ctrl-K B, Ctrl-K K and Ctrl-K C against retained DOS screenshots and saved bytes. The marks define a half-open byte range. Copy inserts those bytes at the cursor, leaves the cursor in place and retains the selection for repeated copying. Copy before and inside the selection, an ordinary hard CRLF, and Insert-off mode are covered. Incomplete or empty blocks are rejected atomically. [Observed cases, source identities, DOS reopen check and limits](BLOCK_COPY.md) define the scope. Block hiding and later editing while marked remain unqualified.
+
+## Block move and delete: ws4-block-move-delete-v1
+
+Four synthetic scenarios compare Ctrl-K V and Ctrl-K Y with retained DOS screens and saved files. In a one-line ASCII document, move to document end relocates the block and its marks. Delete with the cursor after the block clears the marks. The move case also checks a subsequent copy. [Observed cases, DOS reopen check and unresolved behavior](BLOCK_MOVE_DELETE.md) define the narrower boundary. Other move destinations and deletion in a multiline document are not implemented because their observed results do not follow the single-line byte rule.
 
 ## Ctrl-Y and Ctrl-U: ws4-line-erasure-v1
 

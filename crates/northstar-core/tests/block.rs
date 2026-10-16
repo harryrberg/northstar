@@ -92,3 +92,65 @@ fn copied_hard_break_validates_the_destination_suffix() {
     assert_eq!(editor.snapshot(), before);
     assert_eq!(editor.document().bytes(), bytes);
 }
+
+#[test]
+fn move_and_delete_reject_unmeasured_ranges_atomically() {
+    let mut editor = editor(b"ABCDE", 1);
+    editor.apply(&Command::MarkBlockBegin).unwrap();
+    editor.apply(&Command::NextCharacter).unwrap();
+    editor.apply(&Command::NextCharacter).unwrap();
+    editor.apply(&Command::MarkBlockEnd).unwrap();
+    let bytes = editor.document().bytes().to_vec();
+    editor.apply(&Command::DocumentStart).unwrap();
+    let before = editor.snapshot();
+    assert!(editor.apply(&Command::MoveBlock).is_err());
+    assert!(editor.apply(&Command::DeleteBlock).is_err());
+    assert_eq!(editor.snapshot(), before);
+    assert_eq!(editor.document().bytes(), bytes);
+
+    for _ in 0..4 {
+        editor.apply(&Command::NextCharacter).unwrap();
+    }
+    let before = editor.snapshot();
+    assert!(editor.apply(&Command::MoveBlock).is_err());
+    assert_eq!(editor.snapshot(), before);
+    assert_eq!(editor.document().bytes(), bytes);
+
+    let mut other = self::editor(b"AB\r\nCD", 1);
+    other.apply(&Command::MarkBlockBegin).unwrap();
+    for _ in 0..3 {
+        other.apply(&Command::NextCharacter).unwrap();
+    }
+    other.apply(&Command::MarkBlockEnd).unwrap();
+    let before = other.snapshot();
+    let bytes = other.document().bytes().to_vec();
+    assert!(other.apply(&Command::DeleteBlock).is_err());
+    assert_eq!(other.snapshot(), before);
+    assert_eq!(other.document().bytes(), bytes);
+
+    let mut other = self::editor(b"ABCDE", 1);
+    other.apply(&Command::MarkBlockBegin).unwrap();
+    other.apply(&Command::NextCharacter).unwrap();
+    other.apply(&Command::NextCharacter).unwrap();
+    other.apply(&Command::MarkBlockEnd).unwrap();
+    other.apply(&Command::NextCharacter).unwrap();
+    other.apply(&Command::NextCharacter).unwrap();
+    other.apply(&Command::ToggleInsert).unwrap();
+    let before = other.snapshot();
+    let bytes = other.document().bytes().to_vec();
+    assert!(other.apply(&Command::MoveBlock).is_err());
+    assert!(other.apply(&Command::DeleteBlock).is_err());
+    assert_eq!(other.snapshot(), before);
+    assert_eq!(other.document().bytes(), bytes);
+
+    let mut other = self::editor(b"ABCDE\r\nFG", 1);
+    other.apply(&Command::MarkBlockBegin).unwrap();
+    other.apply(&Command::NextCharacter).unwrap();
+    other.apply(&Command::NextCharacter).unwrap();
+    other.apply(&Command::MarkBlockEnd).unwrap();
+    let before = other.snapshot();
+    let bytes = other.document().bytes().to_vec();
+    assert!(other.apply(&Command::DeleteBlock).is_err());
+    assert_eq!(other.snapshot(), before);
+    assert_eq!(other.document().bytes(), bytes);
+}
