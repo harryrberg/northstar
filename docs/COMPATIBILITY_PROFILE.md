@@ -53,6 +53,10 @@ Nonspace typing beyond the margin with right justification on, hyphen wrapping a
 
 Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synthetic input identities. On ordinary one-cell physical lines, the current column is clamped to the destination's end. The clamped column is used by the next move; there is no retained preferred column. Empty lines, the first and last line, and one observed soft-break transition are included. The core moves without changing carrier bytes or Insert mode. The Windows adapter routes Ctrl-E/Ctrl-X and Up/Down to the same core commands. [Observed sequences and limits](NAVIGATION.md) record the evidence. Page-marked breaks, dot commands, and opaque selected lines are rejected until their navigation semantics are qualified.
 
+## Line boundaries: ws4-horizontal-boundary-v1
+
+Five synthetic scenarios compare Ctrl-Q S/D on the first, second and empty final physical lines. The cursor moves to the current line's first cell or the position after its last text cell without changing the carrier. [Measured cases and limits](LINE_BOUNDARIES.md) identify the retained DOS screens. The profile excludes opaque lines, dot commands, page-marked breaks and non-document mode.
+
 ## Word navigation: ws4-word-navigation-v1
 
 Twenty-seven scenarios compare Ctrl-A/Ctrl-F movement with retained DOS status and unchanged synthetic carrier bytes. Word movement is line-local. The measured punctuation cases distinguish comma as a separator from an internal hyphen that stays in a word. Marked letters move as ordinary letters; measured marked punctuation and periods before spaces act as separators. Ctrl-F on a hard CRLF reaches the next line start, but Ctrl-F from the preceding word does not cross the break. The core owns cursor movement; Windows Ctrl-A/Ctrl-F select the commands. [Observed cases and limits](WORD_NAVIGATION.md) record source identities. Other punctuation, soft breaks, and opaque selected lines remain unqualified.

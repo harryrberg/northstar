@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "limitations": [
+      "Synthetic document opened in an isolated DOSBox copy on 2026-10-16.",
+      "Cursor byte offset is derived from the observed L/C status and one-byte cells in the named screenshots.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Compares cursor position and unchanged carrier bytes on ordinary ASCII hard lines only."
+    ],
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "classification": "retained_runtime_comparison",
+    "sources": [
+      {
+        "path": "runtime-openstar-quick-line-01/files/SEED.DOC",
+        "sha256": "67cda60077217c67dc76e7ae786a57396707824785400b7e67f841b65360c806"
+      },
+      {
+        "path": "runtime-openstar-quick-line-01/events.json",
+        "sha256": "b4f03e0ae94870d286e0240e3296fc8f8f495e251e2c50cd5d6334591244823a"
+      },
+      {
+        "path": "runtime-openstar-quick-line-01/02-column-five.png",
+        "sha256": "9caaa60e42fd9a7da671050ebfb51fef4c7e0f1737dbd6c776c378778ba5bdf1"
+      },
+      {
+        "path": "runtime-openstar-quick-line-01/03-quick-start.png",
+        "sha256": "a2b24f3a9c626d28c79fc5b389cc3cd2ad5bebe033a02390f39cd487e19cb18f"
+      }
+    ]
+  },
+  "expected": {
+    "cursor_byte": 0,
+    "insert": true,
+    "carrier_sha256": "67cda60077217c67dc76e7ae786a57396707824785400b7e67f841b65360c806",
+    "formatting": {
+      "left_margin": 1,
+      "document_mode": true,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1
+    }
+  },
+  "id": "navline-first-start",
+  "commands": [
+    {
+      "command": "line_start"
+    }
+  ],
+  "initial": {
+    "cursor_byte": 4,
+    "insert": true,
+    "carrier_hex": "4f4e452054574f0d0a544852454520464f55520d0a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "formatting": {
+      "left_margin": 1,
+      "document_mode": true,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1
+    }
+  },
+  "profile": "ws4-horizontal-boundary-v1"
+}

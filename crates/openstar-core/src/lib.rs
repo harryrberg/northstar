@@ -236,6 +236,11 @@ impl Document {
             lines[next].start + column.min(lines[next].end - lines[next].start),
         ))
     }
+
+    fn horizontal_boundary(&self, cursor: usize, end: bool) -> Result<usize, EditError> {
+        let line = self.ascii_line(cursor, self.checked_active_end()?)?;
+        Ok(if end { line.end } else { line.start })
+    }
 }
 
 struct AsciiLine {
@@ -266,6 +271,8 @@ pub enum Command {
     Enter,
     ToggleInsert,
     DocumentStart,
+    LineStart,
+    LineEnd,
     NextCharacter,
     PreviousCharacter,
     NextWord,
@@ -461,6 +468,11 @@ impl Editor {
         match command {
             Command::ToggleInsert => self.insert = !self.insert,
             Command::DocumentStart => self.cursor = 0,
+            Command::LineStart | Command::LineEnd => {
+                self.cursor = self
+                    .document
+                    .horizontal_boundary(self.cursor, matches!(command, Command::LineEnd))?;
+            }
             Command::NextCharacter => {
                 let end = self.document.active_end();
                 if let Some(token) = self

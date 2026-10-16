@@ -79,6 +79,8 @@ impl Keyboard {
             }
             return Some(match (prefix, letter.as_str()) {
                 ('Q', "r") => Action::Edit(Command::DocumentStart),
+                ('Q', "s") if !utf8 => Action::Edit(Command::LineStart),
+                ('Q', "d") if !utf8 => Action::Edit(Command::LineEnd),
                 ('Q', "f") if !utf8 => Action::Find,
                 ('Q', "a") if !utf8 => Action::Replace,
                 ('K', "s") => Action::Save,

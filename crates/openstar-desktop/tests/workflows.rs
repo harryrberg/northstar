@@ -76,6 +76,11 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "navword-marked-letter-inside",
         "navword-marked-letter-from-space",
         "navword-marked-period-next",
+        "navline-first-start",
+        "navline-first-end",
+        "navline-second-start",
+        "navline-second-end",
+        "navline-empty-end",
         "backdel-backspace-middle",
         "backdel-backspace-join",
         "backdel-delete-middle",
@@ -144,6 +149,24 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                             Key::Character("r".into()),
                             Modifiers::empty(),
                             Some("r"),
+                            false,
+                        ),
+                    );
+                }
+                Command::LineStart | Command::LineEnd => {
+                    let key = if matches!(command, Command::LineStart) {
+                        "s"
+                    } else {
+                        "d"
+                    };
+                    dispatch(&mut keyboard, &mut session, ctrl("q", false));
+                    dispatch(
+                        &mut keyboard,
+                        &mut session,
+                        press(
+                            Key::Character(key.into()),
+                            Modifiers::empty(),
+                            Some(key),
                             false,
                         ),
                     );

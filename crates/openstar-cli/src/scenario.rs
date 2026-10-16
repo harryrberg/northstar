@@ -66,6 +66,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-ascii-edit-v1"
                 | "ws4-ascii-wrap-v1"
                 | "ws4-vertical-navigation-v1"
+                | "ws4-horizontal-boundary-v1"
                 | "ws4-word-navigation-v1"
                 | "ws4-delete-character-v1"
                 | "ws4-line-erasure-v1"
@@ -138,6 +139,13 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
         || (spec.profile != "ws4-vertical-navigation-v1" && spec.commands.iter().any(vertical))
     {
         return Err("vertical movement requires its declared navigation profile".into());
+    }
+    let horizontal = |command: &Command| matches!(command, Command::LineStart | Command::LineEnd);
+    if (spec.profile == "ws4-horizontal-boundary-v1"
+        && spec.commands.iter().any(|command| !horizontal(command)))
+        || (spec.profile != "ws4-horizontal-boundary-v1" && spec.commands.iter().any(horizontal))
+    {
+        return Err("line boundary movement requires its declared navigation profile".into());
     }
     let word_navigation =
         |command: &Command| matches!(command, Command::NextWord | Command::PreviousWord);

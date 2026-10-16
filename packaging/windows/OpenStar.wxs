@@ -20,8 +20,10 @@
       <ComponentRef Id="PlexLicense" />
       <ComponentRef Id="PrototypeGuide" />
       <ComponentRef Id="MenuGuide" />
+      <ComponentRef Id="FileOperationsGuide" />
       <ComponentRef Id="RecoveryGuide" />
       <ComponentRef Id="NavigationGuide" />
+      <ComponentRef Id="LineBoundariesGuide" />
       <ComponentRef Id="WordNavigationGuide" />
       <ComponentRef Id="FindGuide" />
       <ComponentRef Id="ReplacementGuide" />
@@ -63,6 +65,10 @@
       <File Source="$(var.RepoRoot)\docs\MENUS.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="MenuGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
+    <Component Id="FileOperationsGuide" Directory="INSTALLFOLDER" Guid="B5936F0E-C7EA-45A4-BEFE-564F7D7597EE">
+      <File Source="$(var.RepoRoot)\docs\FILE_OPERATIONS.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="FileOperationsGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
     <Component Id="RecoveryGuide" Directory="INSTALLFOLDER" Guid="4970E41A-2E49-4422-9114-082C91F94752">
       <File Source="$(var.RepoRoot)\docs\RECOVERY.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="RecoveryGuide" Type="integer" Value="1" KeyPath="yes" />
@@ -70,6 +76,10 @@
     <Component Id="NavigationGuide" Directory="INSTALLFOLDER" Guid="5A08750E-5DA1-40C9-B169-5F46C044BD1B">
       <File Source="$(var.RepoRoot)\docs\NAVIGATION.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="NavigationGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="LineBoundariesGuide" Directory="INSTALLFOLDER" Guid="D1D2F3BB-6B3A-4F03-B420-56C0CD204BF5">
+      <File Source="$(var.RepoRoot)\docs\LINE_BOUNDARIES.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="LineBoundariesGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
     <Component Id="WordNavigationGuide" Directory="INSTALLFOLDER" Guid="CAA49190-B031-4AB2-A0B7-C6A7C704BCD5">
       <File Source="$(var.RepoRoot)\docs\WORD_NAVIGATION.md" />
