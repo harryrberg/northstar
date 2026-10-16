@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-word-navigation-v1",
+  "id": "navword-marked-hyphen-next",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/files/M6.DOC",
+        "sha256": "bd70901a1546cc9852a20853bf0732a56755bcf3969925863c1ee249f89c6e9f"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/marked-wordnav-cases.json",
+        "sha256": "ab0ce0f7cf2564599839a5d3e8fec21494bd764b5a3ee847ee4f01b6002c883f"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/events.json",
+        "sha256": "2899569dc1140ee32a6e530405ba5f751ce4dea42ac5e77b038ca5f6781e9f47"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/m6-open.png",
+        "sha256": "00c88961d8b3a433d2c4704654b70acdc60adcdc417515baea457ba9ef3f4df5"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/m6-result.png",
+        "sha256": "f34c4fe0de52a044602a1fc2de8c7057241e996b9a039732da5b3893468dd9c4"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document opened and saved in an isolated DOSBox copy on 2026-10-16.",
+      "Cursor byte offset is derived from the observed L/C status and one-byte cells in the named screenshots.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Compares cursor placement and unchanged carrier bytes; other command behavior is outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4f4e45ad2054574f1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_word"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "bd70901a1546cc9852a20853bf0732a56755bcf3969925863c1ee249f89c6e9f",
+    "cursor_byte": 5,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

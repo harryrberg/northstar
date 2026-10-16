@@ -11,10 +11,7 @@ fn starts(document: &Document, line: &AsciiLine) -> Result<Vec<usize>, EditError
         .take_while(|token| token.range.start < line.end)
     {
         let word_cell = match token.kind {
-            TokenKind::Text {
-                value,
-                high_bit: false,
-            } if value.is_ascii_alphanumeric() => true,
+            TokenKind::Text { value, .. } if value.is_ascii_alphanumeric() => true,
             TokenKind::Text {
                 value: b'-',
                 high_bit: false,
@@ -29,6 +26,14 @@ fn starts(document: &Document, line: &AsciiLine) -> Result<Vec<usize>, EditError
                 value: b' ' | b',',
                 high_bit: false,
             } => false,
+            TokenKind::Text {
+                value: b'-' | b',' | b'.',
+                high_bit: true,
+            } if document.bytes().get(token.range.end) == Some(&b' ') => false,
+            TokenKind::Text {
+                value: b'.',
+                high_bit: false,
+            } if document.bytes().get(token.range.end) == Some(&b' ') => false,
             _ => {
                 return Err(EditError::UnsupportedDocument {
                     offset: token.range.start,

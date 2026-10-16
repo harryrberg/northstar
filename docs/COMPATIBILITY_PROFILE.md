@@ -55,7 +55,7 @@ Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synt
 
 ## Word navigation: ws4-word-navigation-v1
 
-Eighteen scenarios compare Ctrl-A/Ctrl-F movement with retained DOS status and unchanged synthetic carrier bytes. Word movement is line-local. The measured punctuation cases distinguish comma as a separator from an internal hyphen that stays in a word. Ctrl-F on a hard CRLF reaches the next line start, but Ctrl-F from the preceding word does not cross the break. The core owns cursor movement; Windows Ctrl-A/Ctrl-F select the commands. [Observed cases and limits](WORD_NAVIGATION.md) record source identities. Other punctuation, marked text, soft breaks, and opaque selected lines remain unqualified.
+Twenty-seven scenarios compare Ctrl-A/Ctrl-F movement with retained DOS status and unchanged synthetic carrier bytes. Word movement is line-local. The measured punctuation cases distinguish comma as a separator from an internal hyphen that stays in a word. Marked letters move as ordinary letters; measured marked punctuation and periods before spaces act as separators. Ctrl-F on a hard CRLF reaches the next line start, but Ctrl-F from the preceding word does not cross the break. The core owns cursor movement; Windows Ctrl-A/Ctrl-F select the commands. [Observed cases and limits](WORD_NAVIGATION.md) record source identities. Other punctuation, soft breaks, and opaque selected lines remain unqualified.
 
 ## Literal search: ws4-ascii-find-v1
 

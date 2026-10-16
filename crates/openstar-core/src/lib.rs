@@ -315,7 +315,7 @@ impl fmt::Display for EditError {
         match self {
             Self::UnsupportedDocument { offset } => write!(
                 f,
-                "editing is not qualified for the document token at byte {offset}"
+                "this command is not qualified for the document token at byte {offset}"
             ),
             Self::InvalidCursor { offset } => {
                 write!(f, "byte {offset} is not an active token boundary")

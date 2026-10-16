@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-word-navigation-v1",
+  "id": "navword-marked-letter-from-space",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/files/M3.DOC",
+        "sha256": "0e21da88381a9a835ebd963076bae36beae96dc5ef6f5f1bf1c974ad1ea8b6ae"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/marked-wordnav-cases.json",
+        "sha256": "ab0ce0f7cf2564599839a5d3e8fec21494bd764b5a3ee847ee4f01b6002c883f"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/events.json",
+        "sha256": "2899569dc1140ee32a6e530405ba5f751ce4dea42ac5e77b038ca5f6781e9f47"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/m3-open.png",
+        "sha256": "26cc159393dedc834df3b65c51b9f42ab0acae662d5fc94a1e1ce6212ff7870e"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/m3-cursor.png",
+        "sha256": "993e47e5e0883d811019e8937b18f1454b62ccc08a20c44a15612bfa1201d611"
+      },
+      {
+        "path": "runtime-openstar-wordnav-highbit-02/m3-result.png",
+        "sha256": "18ba4bb9499772c4906e2a00603cf215a1807a3f3658799d2bd95dfcd18ce981"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document opened and saved in an isolated DOSBox copy on 2026-10-16.",
+      "Cursor byte offset is derived from the observed L/C status and one-byte cells in the named screenshots.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Compares cursor placement and unchanged carrier bytes; other command behavior is outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4f4ec52054574f1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 3,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "previous_word"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "0e21da88381a9a835ebd963076bae36beae96dc5ef6f5f1bf1c974ad1ea8b6ae",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}
