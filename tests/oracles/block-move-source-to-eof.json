@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-block-move-delete-v1",
+  "id": "block-move-source-to-eof",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-block-boundary-06/block-inputs.json",
+        "sha256": "6422b7030a152a1a261cab32eb3d33ff2d847c670a6c28e949522c14efa61c04"
+      },
+      {
+        "path": "runtime-northstar-block-boundary-06/events.json",
+        "sha256": "bb0679c3ea20d072d31ce1f8ebe603d4b4f4744306bb8367d9682423dfa6ff8f"
+      },
+      {
+        "path": "runtime-northstar-block-boundary-06/mend-moved.png",
+        "sha256": "d965754296dda5eac5aebf9aa4c7dfa74edbf2607ab459202ddb94ad6042aa7e"
+      },
+      {
+        "path": "runtime-northstar-block-boundary-06/files/MEND.DOC",
+        "sha256": "7679a956531652a4bdbeba2bfc4faa1777f23c710431e2f716df1dbad9102171"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document in an isolated DOSBox copy on 2026-10-16.",
+      "Physical block-mark, move or delete keys and save are recorded in the action log.",
+      "Cursor and mark offsets are derived from visible one-byte cells, selection highlighting and later copy where applicable.",
+      "The observed one-byte-before-EOF loss is excluded from this case; unmeasured formatting and control cells remain outside the profile."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41424344451a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_begin"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_end"
+    },
+    {
+      "command": "document_start"
+    },
+    {
+      "command": "move_block"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "7679a956531652a4bdbeba2bfc4faa1777f23c710431e2f716df1dbad9102171",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    },
+    "block_begin": 0,
+    "block_end": 3
+  }
+}

@@ -153,20 +153,34 @@ fn selected(
     Ok((active_end, begin, end))
 }
 
-fn single_line(
+fn check_terminal_suffix(active_end: usize, end: usize) -> Result<(), EditError> {
+    if active_end - end == 1 {
+        return Err(EditError::UnqualifiedOperation(
+            "the DOS original also removes the final byte when the block ends one byte before EOF",
+        ));
+    }
+    Ok(())
+}
+
+fn move_line(
     document: &Document,
     active_end: usize,
     begin: usize,
     end: usize,
     cursor: usize,
 ) -> Result<(), EditError> {
-    let line = document.ascii_line(begin, active_end)?;
-    if line.start != 0 || line.end != active_end || end > line.end || cursor < end {
+    let source = document.ascii_line(begin, active_end)?;
+    let destination = document.ascii_line(cursor, active_end)?;
+    if end > source.end
+        || source.start != destination.start
+        || source.end != destination.end
+        || (cursor >= begin && cursor <= end)
+    {
         return Err(EditError::UnqualifiedOperation(
-            "block move or delete requires a one-line document and cursor after the block",
+            "block move requires source and destination on the same line, outside the block",
         ));
     }
-    check_lines(document, line.start, line.end)?;
+    check_lines(document, source.start, source.end)?;
     Ok(())
 }
 
@@ -177,19 +191,26 @@ pub(super) fn move_after(
     marks: Marks,
 ) -> Result<(Edit, Marks), EditError> {
     let (active_end, begin, end) = selected(document, formatting, marks)?;
-    single_line(document, active_end, begin, end, cursor)?;
-    if cursor != active_end {
-        return Err(EditError::UnqualifiedOperation(
-            "block movement requires the destination at document end",
-        ));
-    }
+    check_terminal_suffix(active_end, end)?;
+    move_line(document, active_end, begin, end, cursor)?;
     let length = end - begin;
-    let moved_begin = cursor - length;
     let mut active = Vec::with_capacity(active_end);
-    active.extend_from_slice(&document.bytes()[..begin]);
-    active.extend_from_slice(&document.bytes()[end..cursor]);
-    active.extend_from_slice(&document.bytes()[begin..end]);
-    active.extend_from_slice(&document.bytes()[cursor..active_end]);
+    let moved_begin = if cursor < begin {
+        active.extend_from_slice(&document.bytes()[..cursor]);
+        active.extend_from_slice(&document.bytes()[begin..end]);
+        active.extend_from_slice(&document.bytes()[cursor..begin]);
+        active.extend_from_slice(&document.bytes()[end..active_end]);
+        cursor
+    } else {
+        active.extend_from_slice(&document.bytes()[..begin]);
+        active.extend_from_slice(&document.bytes()[end..cursor]);
+        active.extend_from_slice(&document.bytes()[begin..end]);
+        active.extend_from_slice(&document.bytes()[cursor..active_end]);
+        cursor - length
+    };
+    let staged = Document::from_bytes(active.clone());
+    let line = staged.ascii_line(moved_begin, active_end)?;
+    check_lines(&staged, line.start, line.end)?;
     Ok((
         Edit::Replace {
             active,
@@ -197,7 +218,7 @@ pub(super) fn move_after(
         },
         Marks {
             begin: Some(moved_begin),
-            end: Some(cursor),
+            end: Some(moved_begin + length),
         },
     ))
 }
@@ -209,10 +230,29 @@ pub(super) fn delete(
     marks: Marks,
 ) -> Result<Edit, EditError> {
     let (active_end, begin, end) = selected(document, formatting, marks)?;
-    single_line(document, active_end, begin, end, cursor)?;
+    check_terminal_suffix(active_end, end)?;
+    if cursor < end {
+        return Err(EditError::UnqualifiedOperation(
+            "block deletion with the cursor before the end mark is not qualified",
+        ));
+    }
+    check_lines(document, begin, end)?;
+    let breaks = document
+        .tokens()
+        .filter(|token| token.range.start >= begin && token.range.end <= end)
+        .filter(|token| matches!(token.kind, TokenKind::LineBreak { .. }))
+        .count();
+    if breaks > 1 {
+        return Err(EditError::UnqualifiedOperation(
+            "block deletion across more than one hard break is not qualified",
+        ));
+    }
     let mut active = Vec::with_capacity(active_end - (end - begin));
     active.extend_from_slice(&document.bytes()[..begin]);
     active.extend_from_slice(&document.bytes()[end..active_end]);
+    let staged = Document::from_bytes(active.clone());
+    let line = staged.ascii_line(begin, active.len())?;
+    check_lines(&staged, line.start, line.end)?;
     Ok(Edit::Replace {
         active,
         cursor: begin,

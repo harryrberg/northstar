@@ -103,12 +103,11 @@ fn move_and_delete_reject_unmeasured_ranges_atomically() {
     let bytes = editor.document().bytes().to_vec();
     editor.apply(&Command::DocumentStart).unwrap();
     let before = editor.snapshot();
-    assert!(editor.apply(&Command::MoveBlock).is_err());
     assert!(editor.apply(&Command::DeleteBlock).is_err());
     assert_eq!(editor.snapshot(), before);
     assert_eq!(editor.document().bytes(), bytes);
 
-    for _ in 0..4 {
+    for _ in 0..2 {
         editor.apply(&Command::NextCharacter).unwrap();
     }
     let before = editor.snapshot();
@@ -143,7 +142,7 @@ fn move_and_delete_reject_unmeasured_ranges_atomically() {
     assert_eq!(other.snapshot(), before);
     assert_eq!(other.document().bytes(), bytes);
 
-    let mut other = self::editor(b"ABCDE\r\nFG", 1);
+    let mut other = self::editor(b"ABCDE", 2);
     other.apply(&Command::MarkBlockBegin).unwrap();
     other.apply(&Command::NextCharacter).unwrap();
     other.apply(&Command::NextCharacter).unwrap();
@@ -153,4 +152,24 @@ fn move_and_delete_reject_unmeasured_ranges_atomically() {
     assert!(other.apply(&Command::DeleteBlock).is_err());
     assert_eq!(other.snapshot(), before);
     assert_eq!(other.document().bytes(), bytes);
+    other.apply(&Command::DocumentStart).unwrap();
+    let before = other.snapshot();
+    assert!(other.apply(&Command::MoveBlock).is_err());
+    assert_eq!(other.snapshot(), before);
+    assert_eq!(other.document().bytes(), bytes);
+}
+
+#[test]
+fn block_delete_rejects_two_hard_breaks_atomically() {
+    let mut editor = editor(b"AB\r\nCD\r\nEFG", 1);
+    editor.apply(&Command::MarkBlockBegin).unwrap();
+    for _ in 0..6 {
+        editor.apply(&Command::NextCharacter).unwrap();
+    }
+    editor.apply(&Command::MarkBlockEnd).unwrap();
+    let before = editor.snapshot();
+    let bytes = editor.document().bytes().to_vec();
+    assert!(editor.apply(&Command::DeleteBlock).is_err());
+    assert_eq!(editor.snapshot(), before);
+    assert_eq!(editor.document().bytes(), bytes);
 }

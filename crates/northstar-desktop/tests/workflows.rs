@@ -89,6 +89,22 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "block-move-inline",
         "block-move-then-copy",
         "block-delete-inline",
+        "block-move-before-source",
+        "block-move-before-near-source",
+        "block-move-before-interior",
+        "block-move-before-adjacent",
+        "block-move-after-interior",
+        "block-move-before-first-line",
+        "block-move-before-following-line",
+        "block-move-before-then-copy",
+        "block-move-source-to-eof",
+        "block-delete-suffix-two",
+        "block-delete-through-eof",
+        "block-delete-with-following-line",
+        "block-delete-across-break",
+        "block-delete-across-break-following",
+        "block-delete-through-break",
+        "block-delete-break-nonterminal-suffix",
     ] {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../tests/oracles")

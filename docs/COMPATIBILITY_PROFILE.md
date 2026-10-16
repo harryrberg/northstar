@@ -75,7 +75,7 @@ Eight synthetic scenarios compare Ctrl-K B, Ctrl-K K and Ctrl-K C against retain
 
 ## Block move and delete: ws4-block-move-delete-v1
 
-Four synthetic scenarios compare Ctrl-K V and Ctrl-K Y with retained DOS screens and saved files. In a one-line ASCII document, move to document end relocates the block and its marks. Delete with the cursor after the block clears the marks. The move case also checks a subsequent copy. [Observed cases, DOS reopen check and unresolved behavior](BLOCK_MOVE_DELETE.md) define the narrower boundary. Other move destinations and deletion in a multiline document are not implemented because their observed results do not follow the single-line byte rule.
+Twenty synthetic scenarios compare Ctrl-K V and Ctrl-K Y with retained DOS screens and saved files. On an ordinary ASCII physical line, move relocates the block and its marks to a cursor position before or after the source. Delete clears the marks and can span one ordinary hard CRLF; it requires the cursor at or after the end mark. An end mark exactly one active byte before EOF is rejected because the DOS original loses that final byte in the measured move and delete cases. [Observed cases, DOS reopen checks and unresolved behavior](BLOCK_MOVE_DELETE.md) define the boundary. Cross-line movement and deletion across multiple breaks remain unqualified.
 
 ## Ctrl-Y and Ctrl-U: ws4-line-erasure-v1
 
