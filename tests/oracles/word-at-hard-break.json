@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-word-erasure-v1",
+  "id": "word-at-hard-break",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-word-01/W5-source.bin",
+        "sha256": "074434c6e3cbd76f35f8902bd8b79ea0834372202601465f4d5f7024b38dd38b"
+      },
+      {
+        "path": "runtime-northstar-word-01/word-cases.json",
+        "sha256": "d0d95b6d4ada0e3b2c280dde823ec1c23e06e474ae458d36124bb20172fec50c"
+      },
+      {
+        "path": "runtime-northstar-word-01/events.json",
+        "sha256": "34b4e0c678b7a24eade100bfbf1da4607be6553b8bd388e742410a1dc0938999"
+      },
+      {
+        "path": "runtime-northstar-word-01/w5-cursor.png",
+        "sha256": "d8d85192e2a4607cdb6bbda335e244dff2b9af5523f9fa3f8b4c4044972f27f0"
+      },
+      {
+        "path": "runtime-northstar-word-01/w5-deleted.png",
+        "sha256": "3e4edd096976092f5f30b0607de1cf15cf5e2e1b283d15e53629678a7a035c7c"
+      },
+      {
+        "path": "runtime-northstar-word-01/w5-open.png",
+        "sha256": "0e7fad08ff8cda581d8ff531e0c4ff2d35ce758ced526557e4260a893321c7ec"
+      },
+      {
+        "path": "runtime-northstar-word-01/w5-saved.png",
+        "sha256": "3e4edd096976092f5f30b0607de1cf15cf5e2e1b283d15e53629678a7a035c7c"
+      },
+      {
+        "path": "runtime-northstar-word-01/files/W5.DOC",
+        "sha256": "1eca70e0f8066769d644710e01b5f461603ae7442516f9ae92fed036f1e9b537"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte input and isolated DOSBox WordStar 4.00 runtime on 2026-10-16.",
+      "Initial bytes were constructed before opening. The named source carrier was regenerated from the recorded construction manifest after the run and matches its recorded hash.",
+      "Cursor and Insert state derive from ordered key events and named screenshots.",
+      "Saved bytes come from the isolated output file. Only this command sequence is compared."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4f4e450d0a54574f1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 3,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_word"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "1eca70e0f8066769d644710e01b5f461603ae7442516f9ae92fed036f1e9b537",
+    "cursor_byte": 3,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

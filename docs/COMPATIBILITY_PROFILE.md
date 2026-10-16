@@ -55,11 +55,15 @@ Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synt
 
 ## Ctrl-G deletion: ws4-delete-character-v1
 
-Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved bytes. On an ordinary text cell it removes that byte and keeps the cursor position. On a hard CRLF it joins two short ordinary lines. At EOF it has no effect. One high-bit text cell and Insert-off deletion are included. Windows Ctrl-G routes to the core command. [Observed cases and limits](DELETION.md) record source identities and the DOS reopen check. Other deletion commands and soft-break deletion remain unqualified.
+Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved bytes. On an ordinary text cell it removes that byte and keeps the cursor position. On a hard CRLF it joins two short ordinary lines. At EOF it has no effect. One high-bit text cell and Insert-off deletion are included. Windows Ctrl-G routes to the core command. [Observed cases and limits](DELETION.md) record source identities and the DOS reopen check. Backspace, the DOS Delete key, and soft-break deletion remain unqualified.
 
 ## Ctrl-Y and Ctrl-U: ws4-line-erasure-v1
 
 Fourteen synthetic scenarios compare whole-line deletion and reuse of the deleted-line buffer with retained DOS runs. Ctrl-Y deletes an ordinary physical line, including its hard CRLF when present, and moves to the line start. Ctrl-U inserts a copy of the buffer at the current cursor, leaves the cursor and Insert mode unchanged, and keeps the buffer for later use. Ctrl-G does not fill or clear this buffer in the observed sequences. [Cases, source identities, interoperability check, and limits](ERASURE.md) define the scope. The core owns the buffer; CLI and desktop adapters select commands without reproducing its rules.
+
+## Ctrl-T word erasure: ws4-word-erasure-v1
+
+Twenty-seven synthetic scenarios compare Ctrl-T and its shared Ctrl-U buffer with retained DOS runs. At a word, Ctrl-T removes text from the cursor to a measured boundary; at spaces it removes the space run. On an ordinary hard break it joins the lines and clears the buffer. At EOF it leaves the buffer alone. Punctuation and adjacent-space cases are qualified only where measured. [Exact observations, source identities, interoperability check, and limits](WORD_ERASURE.md) define the scope. The core owns all erasure state.
 
 ## Carrier serialization
 

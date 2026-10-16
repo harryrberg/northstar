@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-word-erasure-v1",
+  "id": "word-eof-keeps-word-buffer",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-word-02/T5-source.bin",
+        "sha256": "e13754865c5c71429c98dba02921191f924c815a33c7051dbdceb99c954d9bf9"
+      },
+      {
+        "path": "runtime-northstar-word-02/word-cases.json",
+        "sha256": "26a88763f1bdf48638c98a5875f4e0818a30f820bdf2d054ea5a8e26c8ed9add"
+      },
+      {
+        "path": "runtime-northstar-word-02/events.json",
+        "sha256": "51f6a4af0e1eb7a01944939eabd75abba2eb76ce06b005f5c761d0aca5c9f4a2"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-1.png",
+        "sha256": "9d6180b74927edf0cee0ebbefbd7302c776bf3ef198043c8c609a0fd8134a70c"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-2.png",
+        "sha256": "cc6609d6d3a51b4ae17e33fafebab7842a461ef66a21a866e272a34d032c3bf0"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-3.png",
+        "sha256": "5014a0cb4bd34821583684a669289542d0a5ff2a43aef2bc48c2cf5b7ed266a3"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-4.png",
+        "sha256": "9deca56f3ee37e0f81b675cc69a57436271042c129c0972d06ac3689e366cc6b"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-5.png",
+        "sha256": "97b936e2c84673ed6f2838d4116681fdd4e7738ab63cd5d1288e4f39cbdb0eab"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-6.png",
+        "sha256": "ab4f7bff552df18e73d0a9989c4a8b26eb22e2ddf9481265760f867039449055"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-7.png",
+        "sha256": "bcc229173edf722d69fc35d017700d96c5d1bc330150189c5f13a7d628117c94"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-open.png",
+        "sha256": "1b22612fa6bc1fa0077cdc691212779c436e9ce3b3cdab2dbe5b8692b3273246"
+      },
+      {
+        "path": "runtime-northstar-word-02/t5-saved.png",
+        "sha256": "bcc229173edf722d69fc35d017700d96c5d1bc330150189c5f13a7d628117c94"
+      },
+      {
+        "path": "runtime-northstar-word-02/files/T5.DOC",
+        "sha256": "1d4dd7f231f301d60d203a52bf53c88d60471f4b73ce6154a966c20552ce6e33"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte input and isolated DOSBox WordStar 4.00 runtime on 2026-10-16.",
+      "Initial bytes were constructed before opening. The named source carrier was regenerated from the recorded construction manifest after the run and matches its recorded hash.",
+      "Cursor and Insert state derive from ordered key events and named screenshots.",
+      "Saved bytes come from the isolated output file. Only this command sequence is compared."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4f4e452054574f1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_word"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "delete_word"
+    },
+    {
+      "command": "unerase_line"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "1d4dd7f231f301d60d203a52bf53c88d60471f4b73ce6154a966c20552ce6e33",
+    "cursor_byte": 4,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

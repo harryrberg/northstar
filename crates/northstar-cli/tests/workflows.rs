@@ -90,6 +90,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("nav-")
                 || name.starts_with("delete-")
                 || name.starts_with("erasure-")
+                || name.starts_with("word-")
         })
         .collect();
     paths.sort();
@@ -196,6 +197,37 @@ fn line_erasure_profile_rejects_unqualified_commands_and_other_profiles_reject_l
         spec["commands"] = json!([command]);
         let input = scratch.path(&format!("invalid-erasure-{index}.json"));
         let output = scratch.path(&format!("invalid-erasure-{index}.doc"));
+        fs::write(&input, serde_json::to_vec(&spec).unwrap()).unwrap();
+        assert!(
+            !run(&[
+                "replay".as_ref(),
+                input.as_os_str(),
+                "--output".as_ref(),
+                output.as_os_str(),
+            ])
+            .status
+            .success()
+        );
+        assert!(!output.exists());
+    }
+}
+
+#[test]
+fn word_erasure_profile_rejects_unqualified_commands_and_other_profiles_reject_word_erasure() {
+    let scratch = Scratch::new();
+    for (index, (profile, command)) in [
+        ("ws4-word-erasure-v1", json!({"command":"reformat"})),
+        ("ws4-ascii-edit-v1", json!({"command":"delete_word"})),
+        ("ws4-line-erasure-v1", json!({"command":"delete_word"})),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let mut spec = case("word-at-word-start");
+        spec["profile"] = json!(profile);
+        spec["commands"] = json!([command]);
+        let input = scratch.path(&format!("invalid-word-{index}.json"));
+        let output = scratch.path(&format!("invalid-word-{index}.doc"));
         fs::write(&input, serde_json::to_vec(&spec).unwrap()).unwrap();
         assert!(
             !run(&[

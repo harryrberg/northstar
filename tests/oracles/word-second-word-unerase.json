@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-word-erasure-v1",
+  "id": "word-second-word-unerase",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-word-04/R1-source.bin",
+        "sha256": "4396305460e3f2373930732d1a61b188d81bda2dab8ba060e2f05c77ec63dae3"
+      },
+      {
+        "path": "runtime-northstar-word-04/word-cases.json",
+        "sha256": "426b363bc24aeb6c379b626e3ba4c53e4654814fa5fc9c0836ba13c52d2cdcf8"
+      },
+      {
+        "path": "runtime-northstar-word-04/events.json",
+        "sha256": "34aaddea2608af8aa96425aa83fad06016bb29cfcd7974325da6ba67071336a0"
+      },
+      {
+        "path": "runtime-northstar-word-04/r1-cursor.png",
+        "sha256": "df305de9228ed29bd12da482ac0247fab61ba47c3edc47e8c82b61de02327a70"
+      },
+      {
+        "path": "runtime-northstar-word-04/r1-deleted.png",
+        "sha256": "20bf912ce2dce45269bf96e173af2d0439ba2277edd81922a7345dde01ff6a9e"
+      },
+      {
+        "path": "runtime-northstar-word-04/r1-open.png",
+        "sha256": "40f1782d18054fd2fe7f249ba152f3c24f52a262469f0e175a2d087a0ff50a84"
+      },
+      {
+        "path": "runtime-northstar-word-04/r1-saved.png",
+        "sha256": "df305de9228ed29bd12da482ac0247fab61ba47c3edc47e8c82b61de02327a70"
+      },
+      {
+        "path": "runtime-northstar-word-04/r1-unerased.png",
+        "sha256": "c91c67e4f5476982cd4a5c5c2d73650f7cf1510787e196a21d2744265be1751d"
+      },
+      {
+        "path": "runtime-northstar-word-04/files/R1.DOC",
+        "sha256": "4396305460e3f2373930732d1a61b188d81bda2dab8ba060e2f05c77ec63dae3"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte input and isolated DOSBox WordStar 4.00 runtime on 2026-10-16.",
+      "The named source carrier was regenerated from the pre-action construction record and matches its recorded hash.",
+      "Initial cursor derives from four recorded Ctrl-D key actions and the cursor screenshot.",
+      "Saved bytes, final cursor, and Insert state are compared for this command sequence."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4f4e452054574f2054485245451a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 4,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_word"
+    },
+    {
+      "command": "unerase_line"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "4396305460e3f2373930732d1a61b188d81bda2dab8ba060e2f05c77ec63dae3",
+    "cursor_byte": 4,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

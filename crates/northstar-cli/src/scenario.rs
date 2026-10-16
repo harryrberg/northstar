@@ -63,6 +63,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-vertical-navigation-v1"
                 | "ws4-delete-character-v1"
                 | "ws4-line-erasure-v1"
+                | "ws4-word-erasure-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
@@ -85,7 +86,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
         && spec.commands.iter().any(|command| !deletion(command)))
         || (!matches!(
             spec.profile.as_str(),
-            "ws4-delete-character-v1" | "ws4-line-erasure-v1"
+            "ws4-delete-character-v1" | "ws4-line-erasure-v1" | "ws4-word-erasure-v1"
         ) && spec.commands.iter().any(deletion))
     {
         return Err("character deletion requires its declared profile".into());
@@ -101,15 +102,38 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | Command::ToggleInsert
         )
     };
+    let word_erasure = |command: &Command| {
+        matches!(
+            command,
+            Command::DeleteWord
+                | Command::UneraseLine
+                | Command::DeleteLine
+                | Command::DeleteCharacter
+                | Command::NextCharacter
+                | Command::ToggleInsert
+        )
+    };
     if (spec.profile == "ws4-line-erasure-v1"
         && spec.commands.iter().any(|command| !line_erasure(command)))
-        || (spec.profile != "ws4-line-erasure-v1"
+        || (!matches!(
+            spec.profile.as_str(),
+            "ws4-line-erasure-v1" | "ws4-word-erasure-v1"
+        ) && spec
+            .commands
+            .iter()
+            .any(|command| matches!(command, Command::DeleteLine | Command::UneraseLine)))
+    {
+        return Err("line erasure requires its declared profile".into());
+    }
+    if (spec.profile == "ws4-word-erasure-v1"
+        && spec.commands.iter().any(|command| !word_erasure(command)))
+        || (spec.profile != "ws4-word-erasure-v1"
             && spec
                 .commands
                 .iter()
-                .any(|command| matches!(command, Command::DeleteLine | Command::UneraseLine)))
+                .any(|command| matches!(command, Command::DeleteWord)))
     {
-        return Err("line erasure requires its declared profile".into());
+        return Err("word erasure requires its declared profile".into());
     }
     if spec.commands.len() > 10_000 {
         return Err("scenario exceeds the 10000-command resource bound".into());

@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-word-erasure-v1",
+  "id": "word-comma-unerase",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-word-02/T6-source.bin",
+        "sha256": "168142db90b086de5ee355d69f7f6795ab2331f3de78bc67b98313702916cc6d"
+      },
+      {
+        "path": "runtime-northstar-word-02/word-cases.json",
+        "sha256": "26a88763f1bdf48638c98a5875f4e0818a30f820bdf2d054ea5a8e26c8ed9add"
+      },
+      {
+        "path": "runtime-northstar-word-02/events.json",
+        "sha256": "51f6a4af0e1eb7a01944939eabd75abba2eb76ce06b005f5c761d0aca5c9f4a2"
+      },
+      {
+        "path": "runtime-northstar-word-02/t6-1.png",
+        "sha256": "38a18dc0d47ed1b2bdd22d8d9102c92831707763d8f2981891d0966f4c547009"
+      },
+      {
+        "path": "runtime-northstar-word-02/t6-2.png",
+        "sha256": "ab390c9b1de5db1736bde7ec1c502ae6555a4b3cded4ba7e744d657ce79c257a"
+      },
+      {
+        "path": "runtime-northstar-word-02/t6-cursor.png",
+        "sha256": "f33bd07c8376e2ec2f908a04c8e50f313612efcc8c4bba440f83c06288909c68"
+      },
+      {
+        "path": "runtime-northstar-word-02/t6-open.png",
+        "sha256": "11ed68faa94af6ea6b5f5681e1ec7f20af2b5c02eac5f155aa1e09d4ab0542e7"
+      },
+      {
+        "path": "runtime-northstar-word-02/t6-saved.png",
+        "sha256": "ab390c9b1de5db1736bde7ec1c502ae6555a4b3cded4ba7e744d657ce79c257a"
+      },
+      {
+        "path": "runtime-northstar-word-02/files/T6.DOC",
+        "sha256": "168142db90b086de5ee355d69f7f6795ab2331f3de78bc67b98313702916cc6d"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte input and isolated DOSBox WordStar 4.00 runtime on 2026-10-16.",
+      "Initial bytes were constructed before opening. The named source carrier was regenerated from the recorded construction manifest after the run and matches its recorded hash.",
+      "Cursor and Insert state derive from ordered key events and named screenshots.",
+      "Saved bytes come from the isolated output file. Only this command sequence is compared."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4f4e452c54574f1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 3,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_word"
+    },
+    {
+      "command": "unerase_line"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "168142db90b086de5ee355d69f7f6795ab2331f3de78bc67b98313702916cc6d",
+    "cursor_byte": 3,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

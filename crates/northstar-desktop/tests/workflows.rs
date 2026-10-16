@@ -112,6 +112,7 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 Command::NextLine => dispatch(&mut keyboard, &mut session, ctrl("x", false)),
                 Command::PreviousLine => dispatch(&mut keyboard, &mut session, ctrl("e", false)),
                 Command::DeleteCharacter => dispatch(&mut keyboard, &mut session, ctrl("g", false)),
+                Command::DeleteWord => dispatch(&mut keyboard, &mut session, ctrl("t", false)),
                 Command::DeleteLine => dispatch(&mut keyboard, &mut session, ctrl("y", false)),
                 Command::UneraseLine => dispatch(&mut keyboard, &mut session, ctrl("u", false)),
                 Command::Enter => dispatch(
@@ -254,6 +255,24 @@ fn legacy_ctrl_y_and_ctrl_u_restore_a_line_through_the_keyboard_adapter() {
         carrier
     );
     assert_eq!(fs::read(&source).unwrap(), carrier);
+}
+
+#[test]
+fn legacy_ctrl_t_and_ctrl_u_restore_a_word_through_the_keyboard_adapter() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("WORD.DOC");
+    let mut carrier = b"ONE TWO".to_vec();
+    carrier.resize(128, 0x1a);
+    fs::write(&source, &carrier).unwrap();
+    let mut session = Session::open(&source).unwrap();
+    let mut keyboard = Keyboard::default();
+    dispatch(&mut keyboard, &mut session, ctrl("t", false));
+    assert_eq!(&session.editor.document().bytes()[..4], b" TWO");
+    dispatch(&mut keyboard, &mut session, ctrl("u", false));
+    assert_eq!(session.editor.document().bytes(), carrier);
+    let output = scratch.0.join("WORD-OUT.DOC");
+    session.save_as(&output).unwrap();
+    assert_eq!(fs::read(&output).unwrap(), carrier);
 }
 
 #[test]

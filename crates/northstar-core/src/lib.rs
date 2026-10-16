@@ -266,6 +266,7 @@ pub enum Command {
     NextLine,
     PreviousLine,
     DeleteCharacter,
+    DeleteWord,
     DeleteLine,
     UneraseLine,
     Reformat,
@@ -315,7 +316,7 @@ pub struct Editor {
     cursor: usize,
     insert: bool,
     formatting: Formatting,
-    erased_line: Option<Vec<u8>>,
+    erased_text: Option<erasure::ErasedText>,
 }
 
 impl Editor {
@@ -344,7 +345,7 @@ impl Editor {
             cursor,
             insert,
             formatting,
-            erased_line: None,
+            erased_text: None,
         })
     }
 
@@ -417,12 +418,20 @@ impl Editor {
                     self.formatting,
                 )?);
             }
+            Command::DeleteWord => {
+                if let Some((edit, erased)) =
+                    erasure::delete_word(&self.document, self.cursor, self.formatting)?
+                {
+                    self.commit_edit(edit);
+                    self.erased_text = Some(erasure::ErasedText::Word(erased));
+                }
+            }
             Command::DeleteLine => {
                 if let Some((edit, erased)) =
                     erasure::delete_line(&self.document, self.cursor, self.formatting)?
                 {
                     self.commit_edit(edit);
-                    self.erased_line = Some(erased);
+                    self.erased_text = Some(erasure::ErasedText::Line(erased));
                 }
             }
             Command::UneraseLine => {
@@ -430,7 +439,7 @@ impl Editor {
                     &self.document,
                     self.cursor,
                     self.formatting,
-                    self.erased_line.as_deref(),
+                    self.erased_text.as_ref(),
                 )?);
             }
             Command::InsertAscii { text } => {

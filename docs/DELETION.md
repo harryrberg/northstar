@@ -2,7 +2,7 @@
 
 Ctrl-G deletes the character under the cursor in the bounded WordStar 4.00 document profile. It leaves the cursor at the same byte position and does not change Insert mode. On an ordinary hard CRLF, it removes both break bytes and joins two short lines. At the active document end it does nothing. Windows Ctrl-G selects the core command; the Backspace and Delete keys remain unqualified in legacy mode.
 
-Ctrl-G does not fill the buffer used by Ctrl-U. [Ctrl-Y line erasure and Ctrl-U insertion](ERASURE.md) have a separate observed profile.
+Ctrl-G does not fill the buffer used by Ctrl-U. [Ctrl-Y line erasure](ERASURE.md) and [Ctrl-T word erasure](WORD_ERASURE.md) have separate observed profiles.
 
 ## DOS observations
 
@@ -22,4 +22,4 @@ Each saved file contains 1A padding to 128 bytes. The five comparisons check sav
 
 ## Boundary
 
-The profile requires document mode, single spacing, margins 1/65, and right justification off. The core accepts printable one-byte text, including high-bit markers, on the selected line. A hard-break join also requires an ordinary next line and a combined length no greater than the tested right margin of 65. It rejects soft or page-marked break deletion, soft spaces, selected control cells, framed characters, dot-command lines, unresolved EOF payload, and unsupported formatting before changing state. Deletion on longer lines, Ctrl-T word erasure, Backspace, the DOS Delete key, word and line erasure, and interaction with automatic reflow require separate DOS observations. The profile is `ws4-delete-character-v1`; CLI replay accepts only `delete_character` under that profile.
+The profile requires document mode, single spacing, margins 1/65, and right justification off. The core accepts printable one-byte text, including high-bit markers, on the selected line. A hard-break join also requires an ordinary next line and a combined length no greater than the tested right margin of 65. It rejects soft or page-marked break deletion, soft spaces, selected control cells, framed characters, dot-command lines, unresolved EOF payload, and unsupported formatting before changing state. Deletion on longer lines, Backspace, the DOS Delete key, and interaction with automatic reflow require separate DOS observations. [Ctrl-T word erasure](WORD_ERASURE.md) and [Ctrl-Y line erasure](ERASURE.md) have their own profiles. The profile is `ws4-delete-character-v1`; CLI replay accepts only `delete_character` under that profile.
