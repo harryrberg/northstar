@@ -62,6 +62,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-ascii-wrap-v1"
                 | "ws4-vertical-navigation-v1"
                 | "ws4-delete-character-v1"
+                | "ws4-line-erasure-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
@@ -82,9 +83,33 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     let deletion = |command: &Command| matches!(command, Command::DeleteCharacter);
     if (spec.profile == "ws4-delete-character-v1"
         && spec.commands.iter().any(|command| !deletion(command)))
-        || (spec.profile != "ws4-delete-character-v1" && spec.commands.iter().any(deletion))
+        || (!matches!(
+            spec.profile.as_str(),
+            "ws4-delete-character-v1" | "ws4-line-erasure-v1"
+        ) && spec.commands.iter().any(deletion))
     {
         return Err("character deletion requires its declared profile".into());
+    }
+    let line_erasure = |command: &Command| {
+        matches!(
+            command,
+            Command::DeleteLine
+                | Command::UneraseLine
+                | Command::DeleteCharacter
+                | Command::NextCharacter
+                | Command::InsertAscii { .. }
+                | Command::ToggleInsert
+        )
+    };
+    if (spec.profile == "ws4-line-erasure-v1"
+        && spec.commands.iter().any(|command| !line_erasure(command)))
+        || (spec.profile != "ws4-line-erasure-v1"
+            && spec
+                .commands
+                .iter()
+                .any(|command| matches!(command, Command::DeleteLine | Command::UneraseLine)))
+    {
+        return Err("line erasure requires its declared profile".into());
     }
     if spec.commands.len() > 10_000 {
         return Err("scenario exceeds the 10000-command resource bound".into());

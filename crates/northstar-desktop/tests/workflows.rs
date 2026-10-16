@@ -112,6 +112,8 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 Command::NextLine => dispatch(&mut keyboard, &mut session, ctrl("x", false)),
                 Command::PreviousLine => dispatch(&mut keyboard, &mut session, ctrl("e", false)),
                 Command::DeleteCharacter => dispatch(&mut keyboard, &mut session, ctrl("g", false)),
+                Command::DeleteLine => dispatch(&mut keyboard, &mut session, ctrl("y", false)),
+                Command::UneraseLine => dispatch(&mut keyboard, &mut session, ctrl("u", false)),
                 Command::Enter => dispatch(
                     &mut keyboard,
                     &mut session,
@@ -225,6 +227,31 @@ fn legacy_ctrl_g_deletes_and_saved_file_reopens_with_the_dos_bytes() {
     assert_eq!(
         Session::open(&output).unwrap().editor.document().bytes(),
         fs::read(&output).unwrap()
+    );
+    assert_eq!(fs::read(&source).unwrap(), carrier);
+}
+
+#[test]
+fn legacy_ctrl_y_and_ctrl_u_restore_a_line_through_the_keyboard_adapter() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("LINE.DOC");
+    let mut carrier = b"AB\r\nCD".to_vec();
+    carrier.resize(128, 0x1a);
+    fs::write(&source, &carrier).unwrap();
+    let mut session = Session::open(&source).unwrap();
+    let mut keyboard = Keyboard::default();
+    dispatch(&mut keyboard, &mut session, ctrl("y", false));
+    assert_eq!(&session.editor.document().bytes()[..2], b"CD");
+    assert_eq!(session.editor.snapshot().cursor_byte, 0);
+    dispatch(&mut keyboard, &mut session, ctrl("u", false));
+    assert_eq!(session.editor.document().bytes(), carrier);
+    assert_eq!(session.editor.snapshot().cursor_byte, 0);
+    let output = scratch.0.join("LINE-OUT.DOC");
+    session.save_as(&output).unwrap();
+    assert_eq!(fs::read(&output).unwrap(), carrier);
+    assert_eq!(
+        Session::open(&output).unwrap().editor.document().bytes(),
+        carrier
     );
     assert_eq!(fs::read(&source).unwrap(), carrier);
 }

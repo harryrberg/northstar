@@ -95,6 +95,8 @@ impl Keyboard {
                 "s" => Some(Action::Edit(Command::PreviousCharacter)),
                 "d" => Some(Action::Edit(Command::NextCharacter)),
                 "g" if !utf8 => Some(Action::Edit(Command::DeleteCharacter)),
+                "y" if !utf8 => Some(Action::Edit(Command::DeleteLine)),
+                "u" if !utf8 => Some(Action::Edit(Command::UneraseLine)),
                 "e" => Some(if utf8 {
                     Action::MoveVertical(-1)
                 } else {

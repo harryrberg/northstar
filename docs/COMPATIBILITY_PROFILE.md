@@ -57,6 +57,10 @@ Seven scenarios compare Ctrl-E/Ctrl-X movement with retained DOS status and synt
 
 Five synthetic scenarios compare Ctrl-G with retained DOS screenshots and saved bytes. On an ordinary text cell it removes that byte and keeps the cursor position. On a hard CRLF it joins two short ordinary lines. At EOF it has no effect. One high-bit text cell and Insert-off deletion are included. Windows Ctrl-G routes to the core command. [Observed cases and limits](DELETION.md) record source identities and the DOS reopen check. Other deletion commands and soft-break deletion remain unqualified.
 
+## Ctrl-Y and Ctrl-U: ws4-line-erasure-v1
+
+Fourteen synthetic scenarios compare whole-line deletion and reuse of the deleted-line buffer with retained DOS runs. Ctrl-Y deletes an ordinary physical line, including its hard CRLF when present, and moves to the line start. Ctrl-U inserts a copy of the buffer at the current cursor, leaves the cursor and Insert mode unchanged, and keeps the buffer for later use. Ctrl-G does not fill or clear this buffer in the observed sequences. [Cases, source identities, interoperability check, and limits](ERASURE.md) define the scope. The core owns the buffer; CLI and desktop adapters select commands without reproducing its rules.
+
 ## Carrier serialization
 
 Explicit insertion, deletion, Enter and Ctrl-B serialize active bytes with at least two 1A bytes, padded to a multiple of 128 bytes. The old one-byte minimum was corrected using DOS captures at active lengths 126, 127, 128 and 129: their saved sizes are 128, 256, 256 and 256 bytes. The two-byte rule is a reconstruction generalized from these captures, not proof of every original save path or record boundary.

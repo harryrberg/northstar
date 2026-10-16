@@ -7,6 +7,7 @@
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, ops::Range};
 
+mod erasure;
 mod formatting;
 mod reformat;
 mod typing;
@@ -265,6 +266,8 @@ pub enum Command {
     NextLine,
     PreviousLine,
     DeleteCharacter,
+    DeleteLine,
+    UneraseLine,
     Reformat,
 }
 
@@ -312,6 +315,7 @@ pub struct Editor {
     cursor: usize,
     insert: bool,
     formatting: Formatting,
+    erased_line: Option<Vec<u8>>,
 }
 
 impl Editor {
@@ -340,6 +344,7 @@ impl Editor {
             cursor,
             insert,
             formatting,
+            erased_line: None,
         })
     }
 
@@ -406,10 +411,26 @@ impl Editor {
                 )?);
             }
             Command::DeleteCharacter => {
-                self.commit_edit(typing::delete_character(
+                self.commit_edit(erasure::delete_character(
                     &self.document,
                     self.cursor,
                     self.formatting,
+                )?);
+            }
+            Command::DeleteLine => {
+                if let Some((edit, erased)) =
+                    erasure::delete_line(&self.document, self.cursor, self.formatting)?
+                {
+                    self.commit_edit(edit);
+                    self.erased_line = Some(erased);
+                }
+            }
+            Command::UneraseLine => {
+                self.commit_edit(erasure::unerase_line(
+                    &self.document,
+                    self.cursor,
+                    self.formatting,
+                    self.erased_line.as_deref(),
                 )?);
             }
             Command::InsertAscii { text } => {

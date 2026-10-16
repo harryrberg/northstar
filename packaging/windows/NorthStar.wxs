@@ -22,6 +22,7 @@
       <ComponentRef Id="RecoveryGuide" />
       <ComponentRef Id="NavigationGuide" />
       <ComponentRef Id="DeletionGuide" />
+      <ComponentRef Id="ErasureGuide" />
     </Feature>
 
     <Component Id="DesktopExecutable" Directory="INSTALLFOLDER" Guid="08FBB73A-5EFD-48DE-8D56-3036D8ECFFC1">
@@ -61,6 +62,10 @@
     <Component Id="DeletionGuide" Directory="INSTALLFOLDER" Guid="81D76939-872B-474C-8D26-C271B07A0848">
       <File Source="$(var.RepoRoot)\docs\DELETION.md" />
       <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="DeletionGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="ErasureGuide" Directory="INSTALLFOLDER" Guid="AF80B827-5F1D-49FB-8A59-D7CAD644C4C2">
+      <File Source="$(var.RepoRoot)\docs\ERASURE.md" />
+      <RegistryValue Root="HKCU" Key="Software\NorthStar\Prototype" Name="ErasureGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
   </Package>
 </Wix>

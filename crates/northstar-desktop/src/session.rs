@@ -69,7 +69,9 @@ impl DocumentSession {
                     | Command::Reformat
                     | Command::NextLine
                     | Command::PreviousLine
-                    | Command::DeleteCharacter => {
+                    | Command::DeleteCharacter
+                    | Command::DeleteLine
+                    | Command::UneraseLine => {
                         return Err("This WordStar command is not available in UTF-8 mode".into());
                     }
                 }

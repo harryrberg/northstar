@@ -702,7 +702,7 @@ impl App {
                     text(if self.session.is_utf8() {
                         "UTF-8: type or paste with Ctrl-V, move with arrows or Ctrl-S/D/E/X, use Backspace/Delete, Enter and Ctrl-Q R. Ctrl-Z undoes; Ctrl-Y or Ctrl-Shift-Z redoes. Ctrl-K S saves; Ctrl-K D saves and returns to the menu. Ctrl-Shift-S saves a copy."
                     } else {
-                        "WordStar: Ctrl-S/Ctrl-D and Ctrl-E/Ctrl-X move, Ctrl-G deletes a character, Ctrl-Q R starts document, Ctrl-V toggles insert, Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
+                        "WordStar: Ctrl-S/Ctrl-D and Ctrl-E/Ctrl-X move, Ctrl-G deletes a character, Ctrl-Y deletes a line, Ctrl-U inserts the last deleted line. Ctrl-Q R starts document; Ctrl-V toggles insert; Ctrl-B aligns. Ctrl-K S saves; Ctrl-Shift-S saves a copy."
                     }),
                     text("F11 toggles full screen; F12 changes font. The opening menu uses D for WordStar files, F2 for a new UTF-8 document, F3 to open a UTF-8 file, F4 for recovery, and X to exit."),
                     text(if self.session.is_utf8() {

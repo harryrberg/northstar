@@ -2,6 +2,8 @@
 
 Ctrl-G deletes the character under the cursor in the bounded WordStar 4.00 document profile. It leaves the cursor at the same byte position and does not change Insert mode. On an ordinary hard CRLF, it removes both break bytes and joins two short lines. At the active document end it does nothing. Windows Ctrl-G selects the core command; the Backspace and Delete keys remain unqualified in legacy mode.
 
+Ctrl-G does not fill the buffer used by Ctrl-U. [Ctrl-Y line erasure and Ctrl-U insertion](ERASURE.md) have a separate observed profile.
+
 ## DOS observations
 
 The reference is the primary floppy `WS.EXE`, SHA-256 `535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d`. On 2026-10-16, `runtime-northstar-del-01` opened five 128-byte synthetic documents in an isolated DOSBox copy. The retained action log, before and after screenshots, exact input carriers and saved output files are under `C:/Projects/rea/investigations/wordstar`. `python tools/verify-local-evidence.py C:/Projects/rea/investigations/wordstar` verifies the sources named by the five `delete-*.json` CLI cases.
@@ -20,4 +22,4 @@ Each saved file contains 1A padding to 128 bytes. The five comparisons check sav
 
 ## Boundary
 
-The profile requires document mode, single spacing, margins 1/65, and right justification off. The core accepts printable one-byte text, including high-bit markers, on the selected line. A hard-break join also requires an ordinary next line and a combined length no greater than the tested right margin of 65. It rejects soft or page-marked break deletion, soft spaces, selected control cells, framed characters, dot-command lines, unresolved EOF payload, and unsupported formatting before changing state. Deletion on longer lines, Ctrl-U unerase, Backspace, the DOS Delete key, word and line erasure, and interaction with automatic reflow require separate DOS observations. The profile is `ws4-delete-character-v1`; CLI replay accepts only `delete_character` under that profile.
+The profile requires document mode, single spacing, margins 1/65, and right justification off. The core accepts printable one-byte text, including high-bit markers, on the selected line. A hard-break join also requires an ordinary next line and a combined length no greater than the tested right margin of 65. It rejects soft or page-marked break deletion, soft spaces, selected control cells, framed characters, dot-command lines, unresolved EOF payload, and unsupported formatting before changing state. Deletion on longer lines, Ctrl-T word erasure, Backspace, the DOS Delete key, word and line erasure, and interaction with automatic reflow require separate DOS observations. The profile is `ws4-delete-character-v1`; CLI replay accepts only `delete_character` under that profile.

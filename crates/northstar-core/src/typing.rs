@@ -3,7 +3,7 @@
 use crate::{Document, Edit, EditError, Formatting, formatting};
 use std::ops::Range;
 
-pub(super) fn check_formatting(formatting: Formatting) -> Result<(), EditError> {
+fn check_formatting(formatting: Formatting) -> Result<(), EditError> {
     if (formatting.left_margin, formatting.right_margin) != (1, 65)
         || formatting.line_spacing != 1
         || !formatting.document_mode
@@ -13,79 +13,6 @@ pub(super) fn check_formatting(formatting: Formatting) -> Result<(), EditError> 
         ));
     }
     Ok(())
-}
-
-pub(super) fn delete_character(
-    document: &Document,
-    cursor: usize,
-    formatting: Formatting,
-) -> Result<Edit, EditError> {
-    check_formatting(formatting)?;
-    if formatting.right_justify {
-        return Err(EditError::UnqualifiedOperation(
-            "character deletion with right justification",
-        ));
-    }
-    let end = document.checked_active_end()?;
-    let line = document.ascii_line(cursor, end)?;
-    if line.end - line.start > 65 {
-        return Err(EditError::UnqualifiedOperation(
-            "deleting on a line beyond the qualified right margin",
-        ));
-    }
-    if document.tokens().any(|token| {
-        token.range.start >= line.start
-            && token.range.start < line.end
-            && matches!(token.kind, crate::TokenKind::SoftSpace)
-    }) {
-        return Err(EditError::UnqualifiedOperation(
-            "deleting on a line with soft spaces",
-        ));
-    }
-    if cursor == end {
-        return Ok(Edit::MoveTo(cursor));
-    }
-    let remove = if cursor < line.end {
-        cursor..cursor + 1
-    } else {
-        let next = line.next.ok_or(EditError::UnqualifiedOperation(
-            "delete at an unresolved line boundary",
-        ))?;
-        let break_token = document
-            .tokens()
-            .find(|token| token.range.start == cursor)
-            .ok_or(EditError::InvalidCursor { offset: cursor })?;
-        if !matches!(
-            break_token.kind,
-            crate::TokenKind::LineBreak {
-                soft: false,
-                page_marker: false
-            }
-        ) {
-            return Err(EditError::UnqualifiedOperation(
-                "deleting a soft or page-marked line break",
-            ));
-        }
-        let following = document.ascii_line(next, end)?;
-        if document.tokens().any(|token| {
-            token.range.start >= following.start
-                && token.range.start < following.end
-                && matches!(token.kind, crate::TokenKind::SoftSpace)
-        }) {
-            return Err(EditError::UnqualifiedOperation(
-                "joining a line with soft spaces",
-            ));
-        }
-        if line.end - line.start + following.end - following.start > 65 {
-            return Err(EditError::UnqualifiedOperation(
-                "joining lines beyond the qualified right margin",
-            ));
-        }
-        cursor..next
-    };
-    let mut active = document.bytes()[..end].to_vec();
-    active.drain(remove);
-    Ok(Edit::Replace { active, cursor })
 }
 
 pub(super) fn type_ascii(

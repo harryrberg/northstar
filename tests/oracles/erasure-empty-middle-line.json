@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-line-erasure-v1",
+  "id": "erasure-empty-middle-line",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-northstar-undo-02/E1-source.bin",
+        "sha256": "8747f5874c1679ac1f840a093dc2960b050caf85736a3f7a45194c6e3bf7bd7a"
+      },
+      {
+        "path": "runtime-northstar-undo-02/events.json",
+        "sha256": "412f8c09025c7995eac127a1c5f30e788d26add3fe6e85cf6b8e582cbbab6ec2"
+      },
+      {
+        "path": "runtime-northstar-undo-02/e1-open.png",
+        "sha256": "26b3de0e3647be51116e1f9c0faae6791e69b43b02b2ab727489191dc44b2880"
+      },
+      {
+        "path": "runtime-northstar-undo-02/e1-blank-deleted.png",
+        "sha256": "8e10ef1e3f9f49424055167d00014636aec336c23cc367e65b29f049e706e119"
+      },
+      {
+        "path": "runtime-northstar-undo-02/e1-unerased.png",
+        "sha256": "be4a9395f7fd2191769ad573fbdffc2df31e15d42d2fb9246da24711f908a7bf"
+      },
+      {
+        "path": "runtime-northstar-undo-02/files/E1.DOC",
+        "sha256": "8747f5874c1679ac1f840a093dc2960b050caf85736a3f7a45194c6e3bf7bd7a"
+      }
+    ],
+    "limitations": [
+      "Synthetic input and isolated DOSBox WordStar 4.00 runtime on 2026-10-16.",
+      "Initial cursor and Insert state derive from the recorded key sequence and named screenshots.",
+      "Final bytes come from the isolated saved file; final cursor and mode come from the named screenshots.",
+      "Only the declared command sequence is compared. Soft breaks, dot commands, controls, and large lines remain unqualified."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41420d0a0d0a43441a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 4,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_line"
+    },
+    {
+      "command": "unerase_line"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "8747f5874c1679ac1f840a093dc2960b050caf85736a3f7a45194c6e3bf7bd7a",
+    "cursor_byte": 4,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}
