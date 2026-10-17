@@ -65,6 +65,7 @@ impl DocumentSession {
                     Command::NextCharacter => editor.next(),
                     Command::Enter => editor.enter(),
                     Command::InsertAscii { .. }
+                    | Command::InsertHardBreak
                     | Command::ToggleInsert
                     | Command::Reformat
                     | Command::NextLine

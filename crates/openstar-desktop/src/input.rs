@@ -119,6 +119,7 @@ impl Keyboard {
                 "f" if !utf8 => Some(Action::Edit(Command::NextWord)),
                 "g" if !utf8 => Some(Action::Edit(Command::DeleteCharacter)),
                 "t" if !utf8 => Some(Action::Edit(Command::DeleteWord)),
+                "n" if !utf8 => Some(Action::Edit(Command::InsertHardBreak)),
                 "y" if !utf8 => Some(Action::Edit(Command::DeleteLine)),
                 "u" if !utf8 => Some(Action::Edit(Command::UneraseLine)),
                 "l" if !utf8 => Some(Action::RepeatFind),

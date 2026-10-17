@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-hard-break-v1",
+  "id": "hard-break-insert-off",
+  "provenance": {
+    "classification": "retained_runtime_comparison_with_derived_cursor",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "CTRL_N_TRACE.md",
+        "sha256": "f6fc0834f8e10de1e9243ab32f1687bc4717433e0fe17b6c31e19fcb9b4f5a7b"
+      },
+      {
+        "path": "runtime-ctrl-n-01/observations.json",
+        "sha256": "391741c6ba752a9ec8989fb758c6dcfe0c3b211b67dbf362eb4227425cd1a313"
+      },
+      {
+        "path": "runtime-ctrl-n-01/files/NOFF.DOC",
+        "sha256": "e4521231e5564ad8b26c64b3fcf8b08576f508a8b4fa4fa15608fe91fc228e64"
+      }
+    ],
+    "limitations": [
+      "Default CTLNFL=FF and an ordinary hard-terminated ASCII line are the measured conditions.",
+      "Saved carrier and Insert state are directly observed; cursor byte 5 is derived from the unchanged left gap-buffer pointer after Ctrl-N, not from a retained post-command screen.",
+      "Right-justification state was not retained for this DOS comparison; the replay uses the desktop setting and does not compare formatting.",
+      "The semantic replay does not execute the DOS program or its save menu."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "414c504841424554410d0a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 5,
+    "insert": false,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "insert_hard_break"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "e4521231e5564ad8b26c64b3fcf8b08576f508a8b4fa4fa15608fe91fc228e64",
+    "cursor_byte": 5,
+    "insert": false,
+    "formatting": null,
+    "find_found": null,
+    "replace_pending": null,
+    "block_begin": null,
+    "block_end": null,
+    "marks_cleared": null
+  }
+}

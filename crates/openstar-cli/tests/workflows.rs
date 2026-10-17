@@ -98,6 +98,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("replace-")
                 || name.starts_with("backdel-")
                 || name.starts_with("block-")
+                || name.starts_with("hard-break-")
         })
         .collect();
     paths.sort();
@@ -120,9 +121,18 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
         let report: Value = serde_json::from_slice(&output.stdout).unwrap();
         let saved_hash = format!("{:x}", Sha256::digest(fs::read(saved).unwrap()));
         assert_eq!(saved_hash, spec["expected"]["carrier_sha256"]);
-        for field in ["cursor_byte", "insert", "formatting"] {
+        for field in ["cursor_byte", "insert"] {
             assert_eq!(report["compared_fields"][field], true);
             assert_eq!(report["state"][field], spec["expected"][field]);
+        }
+        if spec["profile"] == "ws4-hard-break-v1" {
+            assert_eq!(report["compared_fields"]["formatting"], false);
+        } else {
+            assert_eq!(report["compared_fields"]["formatting"], true);
+            assert_eq!(
+                report["state"]["formatting"],
+                spec["expected"]["formatting"]
+            );
         }
         if spec["profile"] == "ws4-ascii-replace-v1" {
             assert_eq!(report["compared_fields"]["replace_pending"], true);

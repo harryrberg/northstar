@@ -23,6 +23,7 @@
       <ComponentRef Id="FileOperationsGuide" />
       <ComponentRef Id="RecoveryGuide" />
       <ComponentRef Id="NavigationGuide" />
+      <ComponentRef Id="HardBreakGuide" />
       <ComponentRef Id="LineBoundariesGuide" />
       <ComponentRef Id="QuickJumpsGuide" />
       <ComponentRef Id="WordNavigationGuide" />
@@ -77,6 +78,10 @@
     <Component Id="NavigationGuide" Directory="INSTALLFOLDER" Guid="5A08750E-5DA1-40C9-B169-5F46C044BD1B">
       <File Source="$(var.RepoRoot)\docs\NAVIGATION.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="NavigationGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="HardBreakGuide" Directory="INSTALLFOLDER" Guid="0FC12869-2082-4907-923B-E48F34D23947">
+      <File Source="$(var.RepoRoot)\docs\HARD_BREAK.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="HardBreakGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
     <Component Id="LineBoundariesGuide" Directory="INSTALLFOLDER" Guid="D1D2F3BB-6B3A-4F03-B420-56C0CD204BF5">
       <File Source="$(var.RepoRoot)\docs\LINE_BOUNDARIES.md" />

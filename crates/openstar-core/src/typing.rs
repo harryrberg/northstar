@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-//! ASCII typing, bounded automatic wrapping, and Enter.
+//! ASCII typing, bounded automatic wrapping, Enter, and Ctrl-N.
 use crate::{Document, Edit, EditError, Formatting, formatting};
 use std::ops::Range;
 
@@ -145,6 +145,40 @@ pub(super) fn enter(
         return Ok(Edit::MoveTo(next));
     }
     let at = if insert { cursor } else { line.end };
+    hard_break_at(document, end, at, at + 2)
+}
+
+pub(super) fn insert_hard_break(
+    document: &Document,
+    cursor: usize,
+    formatting: Formatting,
+) -> Result<Edit, EditError> {
+    check_formatting(formatting)?;
+    let end = document.checked_active_end()?;
+    let line = document.ascii_line(cursor, end)?;
+    if line.end - line.start > 65
+        || !document.bytes()[line.start..line.end]
+            .iter()
+            .all(|byte| (0x20..=0x7e).contains(byte))
+        || line
+            .next
+            .is_some_and(|_| document.bytes()[line.end] != b'\r')
+    {
+        return Err(EditError::UnqualifiedOperation(
+            "Ctrl-N outside an ordinary ASCII line",
+        ));
+    }
+    // The retained Ctrl-N gap-buffer trace inserts on the right of the gap;
+    // unlike Enter, the cursor remains before the new CR/LF.
+    hard_break_at(document, end, cursor, cursor)
+}
+
+fn hard_break_at(
+    document: &Document,
+    end: usize,
+    at: usize,
+    next_cursor: usize,
+) -> Result<Edit, EditError> {
     if document.bytes().get(at).is_some_and(|b| b & 0x7f == b'.') {
         return Err(EditError::UnqualifiedOperation(
             "creating a dot-command line",
@@ -154,6 +188,6 @@ pub(super) fn enter(
     active.splice(at..at, b"\r\n".iter().copied());
     Ok(Edit::Replace {
         active,
-        cursor: at + 2,
+        cursor: next_cursor,
     })
 }

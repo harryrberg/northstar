@@ -35,6 +35,10 @@ Enter with Insert on inserts a hard CRLF at the cursor, preserving any existing 
 
 Token-boundary movement, document-start navigation, and insert-mode toggling support replay. Their use in the declared sequences is compared; arbitrary visual navigation is not qualified.
 
+## Ctrl-N: ws4-hard-break-v1
+
+Two retained DOS runs with the distributed `CTLNFL=FF` setting show Ctrl-N inserting an ordinary hard CRLF at the cursor, with Insert both on and off. The saved bytes match the two CLI and desktop comparison scenarios. The cursor staying before the new break is derived from the unchanged left gap-buffer pointer, not a post-command screen. [Evidence, restrictions and untested cases](HARD_BREAK.md) define this profile. The `CTLNFL=00` memory-modified branch is excluded.
+
 ## Ctrl-B: ws4-ascii-reformat-v1
 
 Reformat scenarios require explicit initial formatting. The supported settings are document mode, single spacing, margins 1/65, and right justification off. Ctrl-B starts at document start or immediately after an ordinary hard CRLF; it rebuilds one paragraph and moves to the next hard paragraph or EOF. The current implementation handles printable ASCII, existing highbit markers, soft spaces and ordinary soft breaks. [The 27 comparisons and exact exclusions](CTRL_B.md) define the evidence boundary.

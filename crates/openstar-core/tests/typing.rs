@@ -99,3 +99,19 @@ fn enter_does_not_silently_create_an_unqualified_dot_command_line() {
     assert_eq!(editor.document().bytes(), raw);
     assert_eq!(editor.snapshot(), before);
 }
+
+#[test]
+fn ctrl_n_rejects_unmeasured_line_shapes_without_changing_state() {
+    for raw in [
+        b"ALPHA\xc1BETA\r\n".as_slice(),
+        b"ALPHA\x8d\nBETA",
+        b"ALPHA\tBETA\r\n",
+        b".RM 65\r\n",
+    ] {
+        let mut editor = Editor::restore(Document::from_bytes(raw.to_vec()), 0, false).unwrap();
+        let before = editor.snapshot();
+        assert!(editor.apply(&Command::InsertHardBreak).is_err());
+        assert_eq!(editor.document().bytes(), raw);
+        assert_eq!(editor.snapshot(), before);
+    }
+}

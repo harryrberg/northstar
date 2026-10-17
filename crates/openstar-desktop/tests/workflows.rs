@@ -116,6 +116,8 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "block-delete-across-break-following",
         "block-delete-through-break",
         "block-delete-break-nonterminal-suffix",
+        "hard-break-insert-on",
+        "hard-break-insert-off",
     ] {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../tests/oracles")
@@ -260,6 +262,7 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                     &mut session,
                     press(Key::Named(Named::Enter), Modifiers::empty(), None, false),
                 ),
+                Command::InsertHardBreak => dispatch(&mut keyboard, &mut session, ctrl("n", false)),
                 Command::FindLiteral { .. }
                 | Command::ReplaceLiteral { .. }
                 | Command::AnswerReplace { .. }

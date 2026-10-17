@@ -62,6 +62,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
         || !matches!(
             spec.profile.as_str(),
             "ws4-ascii-enter-v1"
+                | "ws4-hard-break-v1"
                 | "ws4-ascii-reformat-v1"
                 | "ws4-ascii-edit-v1"
                 | "ws4-ascii-wrap-v1"
@@ -86,6 +87,16 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     }
     if spec.profile == "ws4-ascii-enter-v1" && spec.commands.contains(&Command::Reformat) {
         return Err("reformat is outside the declared Enter profile".into());
+    }
+    if (spec.profile == "ws4-hard-break-v1"
+        && spec
+            .commands
+            .iter()
+            .any(|command| !matches!(command, Command::InsertHardBreak)))
+        || (spec.profile != "ws4-hard-break-v1"
+            && spec.commands.contains(&Command::InsertHardBreak))
+    {
+        return Err("Ctrl-N requires its declared hard-break profile".into());
     }
     let find = |command: &Command| {
         matches!(

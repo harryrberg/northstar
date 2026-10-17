@@ -269,6 +269,7 @@ pub enum Command {
         text: String,
     },
     Enter,
+    InsertHardBreak,
     ToggleInsert,
     DocumentStart,
     DocumentEnd,
@@ -529,6 +530,13 @@ impl Editor {
                     &self.document,
                     self.cursor,
                     self.insert,
+                    self.formatting,
+                )?);
+            }
+            Command::InsertHardBreak => {
+                self.commit_edit(typing::insert_hard_break(
+                    &self.document,
+                    self.cursor,
                     self.formatting,
                 )?);
             }
