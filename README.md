@@ -108,7 +108,11 @@ The desktop prototype includes IBM Plex Mono and a recreated VGA font under thei
 
 ## Dedication
 
-Dedicated to George R. R. Martin and the world of *Game of Thrones*. Martin [described](https://georgerrmartin.com/notablog/2007/05/18/) writing his fiction in WordStar 4.0 on a DOS machine separate from the computer he used for the internet. He preferred typed commands to icons and mouse gestures. OpenStar seeks to preserve that familiar, distraction-free way of writing on current hardware, without requiring a dedicated DOS computer.
+OpenStar is dedicated to George R. R. Martin, author of *A Song of Ice and Fire*, the novels behind *Game of Thrones*. Martin [described](https://georgerrmartin.com/notablog/2007/05/18/) his writing setup in 2007:
+
+> Windows sucks. I use it, under protest, for the internet, but all my fiction is written on a DOS machine, using WordStar 4.0. I’m a word guy. When I want to copy something, I like to type “copy.” When I want to delete it, I like to type “delete.” I don’t like puzzling out these stupid little cartoons they call icons, or dragging them around with a mouse. The day WordStar 4.0 stops working is the day I retire.
+
+OpenStar aims to recreate the WordStar 4.0 writing experience on current computers, with its familiar commands and quiet screen, without requiring a dedicated DOS machine.
 
 ## License
 
