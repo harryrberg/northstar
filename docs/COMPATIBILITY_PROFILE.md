@@ -93,6 +93,10 @@ Eight synthetic scenarios compare Ctrl-K B, Ctrl-K K and Ctrl-K C against retain
 
 Twenty synthetic scenarios compare Ctrl-K V and Ctrl-K Y with retained DOS screens and saved files. On an ordinary ASCII physical line, move relocates the block and its marks to a cursor position before or after the source. Delete clears the marks and can span one ordinary hard CRLF; it requires the cursor at or after the end mark. An end mark exactly one active byte before EOF is rejected because the DOS original loses that final byte in the measured move and delete cases. [Observed cases, DOS reopen checks and unresolved behavior](BLOCK_MOVE_DELETE.md) define the boundary. Cross-line movement and deletion across multiple breaks remain unqualified.
 
+## Block write: ws4-block-write-single-line-v1
+
+One isolated DOS case writes the marked `BC` in `ABCDE` to a new 128-byte file with `1A` padding. OpenStar's core and desktop file tests match the output SHA-256 and preserve the unsaved source and marks. The original prompts before overwriting an existing target; OpenStar refuses to replace it. [Starting conditions, output identity and limits](BLOCK_WRITE.md) define this narrow profile.
+
 ## Ctrl-Y and Ctrl-U: ws4-line-erasure-v1
 
 Fourteen synthetic scenarios compare whole-line deletion and reuse of the deleted-line buffer with retained DOS runs. Ctrl-Y deletes an ordinary physical line, including its hard CRLF when present, and moves to the line start. Ctrl-U inserts a copy of the buffer at the current cursor, leaves the cursor and Insert mode unchanged, and keeps the buffer for later use. Ctrl-G does not fill or clear this buffer in the observed sequences. [Cases, source identities, interoperability check, and limits](ERASURE.md) define the scope. The core owns the buffer; CLI and desktop adapters select commands without reproducing its rules.

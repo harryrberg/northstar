@@ -685,6 +685,53 @@ fn save_keys_keep_save_and_save_as_distinct() {
         keyboard.handle(&ctrl("x", false)),
         Some(Action::SaveAndExit)
     );
+    assert_eq!(keyboard.handle(&ctrl("k", false)), None);
+    assert_eq!(keyboard.handle(&ctrl("w", false)), Some(Action::WriteBlock));
+}
+
+#[test]
+fn write_marked_block_creates_the_observed_dos_carrier_without_saving_source() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("source.doc");
+    let target = scratch.0.join("part.doc");
+    let mut session = Session::new_at(source.clone());
+    session
+        .editor
+        .apply(&Command::InsertAscii {
+            text: "ABCDE".into(),
+        })
+        .unwrap();
+    session.editor.apply(&Command::DocumentStart).unwrap();
+    session.editor.apply(&Command::NextCharacter).unwrap();
+    session.editor.apply(&Command::MarkBlockBegin).unwrap();
+    session.editor.apply(&Command::NextCharacter).unwrap();
+    session.editor.apply(&Command::NextCharacter).unwrap();
+    session.editor.apply(&Command::MarkBlockEnd).unwrap();
+    let before = session.editor.document().bytes().to_vec();
+    session.write_block_new(&target).unwrap();
+    assert_eq!(
+        format!("{:x}", Sha256::digest(fs::read(&target).unwrap())),
+        "102b9c95520f06407210fcc65ba922d63824556bc7211fa6cbe9a6a37b39c7f1"
+    );
+    assert_eq!(session.editor.document().bytes(), before);
+    assert_eq!(session.editor.snapshot().cursor_byte, 1);
+    assert_eq!(session.editor.snapshot().block_begin, Some(1));
+    assert!(session.editor.snapshot().modified);
+    assert_eq!(session.path.as_deref(), Some(source.as_path()));
+    assert!(!source.exists());
+    assert_eq!(
+        session.write_block_new(&target).unwrap_err().kind(),
+        std::io::ErrorKind::AlreadyExists
+    );
+    assert_eq!(session.editor.snapshot().cursor_byte, 1);
+
+    let mut utf8 = DocumentSession::Utf8(Utf8Session::new_at(None));
+    let unsupported = scratch.0.join("utf8-block.doc");
+    assert_eq!(
+        utf8.write_block_new(&unsupported).unwrap_err().kind(),
+        std::io::ErrorKind::Unsupported
+    );
+    assert!(!unsupported.exists());
 }
 
 #[test]

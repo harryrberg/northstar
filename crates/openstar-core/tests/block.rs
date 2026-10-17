@@ -17,6 +17,37 @@ fn editor(active: &[u8], cursor: usize) -> Editor {
 }
 
 #[test]
+fn marked_block_writer_matches_the_observed_dos_carrier_without_editing_source() {
+    let mut editor = editor(b"ABCDE", 1);
+    editor.apply(&Command::MarkBlockBegin).unwrap();
+    editor.apply(&Command::NextCharacter).unwrap();
+    editor.apply(&Command::NextCharacter).unwrap();
+    editor.apply(&Command::MarkBlockEnd).unwrap();
+    let before = editor.snapshot();
+    let source = editor.document().bytes().to_vec();
+    let output = editor.marked_block_carrier().unwrap();
+    assert_eq!(&output[..2], b"BC");
+    assert_eq!(output.len(), 128);
+    assert!(output[2..].iter().all(|byte| *byte == 0x1a));
+    assert_eq!(editor.snapshot(), before);
+    assert_eq!(editor.document().bytes(), source);
+}
+
+#[test]
+fn marked_block_writer_rejects_unmarked_and_cross_line_ranges() {
+    let unmarked = editor(b"ABCDE", 1);
+    assert!(unmarked.marked_block_carrier().is_err());
+
+    let mut editor = editor(b"AB\r\nCD", 1);
+    editor.apply(&Command::MarkBlockBegin).unwrap();
+    editor.apply(&Command::DocumentEnd).unwrap();
+    editor.apply(&Command::MarkBlockEnd).unwrap();
+    let before = editor.snapshot();
+    assert!(editor.marked_block_carrier().is_err());
+    assert_eq!(editor.snapshot(), before);
+}
+
+#[test]
 fn quick_block_jumps_require_a_mark_and_leave_carrier_unchanged() {
     let mut editor = editor(b"ONE TWO\r\nTHREE FOUR\r\n", 0);
     let carrier = editor.document().bytes().to_vec();

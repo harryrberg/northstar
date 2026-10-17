@@ -153,6 +153,30 @@ fn selected(
     Ok((active_end, begin, end))
 }
 
+pub(super) fn write_carrier(
+    document: &Document,
+    formatting: Formatting,
+    marks: Marks,
+) -> Result<Vec<u8>, EditError> {
+    let (active_end, begin, end) = selected(document, formatting, marks)?;
+    let line = document.ascii_line(begin, active_end)?;
+    if end > line.end {
+        return Err(EditError::UnqualifiedOperation(
+            "writing a block across physical lines",
+        ));
+    }
+    check_lines(document, begin, end)?;
+    let mut carrier = document.bytes()[begin..end].to_vec();
+    let size = (carrier.len() + 2).div_ceil(128) * 128;
+    if size > 1024 * 1024 {
+        return Err(EditError::UnqualifiedOperation(
+            "block output exceeds the 1 MiB prototype limit",
+        ));
+    }
+    carrier.resize(size, 0x1a);
+    Ok(carrier)
+}
+
 fn check_terminal_suffix(active_end: usize, end: usize) -> Result<(), EditError> {
     if active_end - end == 1 {
         return Err(EditError::UnqualifiedOperation(

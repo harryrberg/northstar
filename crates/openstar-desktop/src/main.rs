@@ -79,6 +79,7 @@ enum PathKind {
     OpenLegacy,
     OpenUtf8,
     SaveAs { next: Option<Next> },
+    WriteBlock,
     ChangeDirectory,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -155,6 +156,7 @@ pub(crate) enum Message {
     ToggleDirectory,
     Save(Option<Next>),
     SaveAs(Option<Next>),
+    WriteBlock,
     Help,
     PathChanged(String),
     Submit,
@@ -511,14 +513,9 @@ impl App {
     fn path_dialog(&mut self, kind: PathKind) -> Task<Message> {
         self.find_dialog = None;
         self.keyboard.reset();
-        let value = match kind {
-            PathKind::OpenLegacy | PathKind::OpenUtf8 => String::new(),
-            PathKind::SaveAs { .. } => String::new(),
-            PathKind::ChangeDirectory => String::new(),
-        };
         self.dialog = Some(Dialog::Path {
             kind,
-            value,
+            value: String::new(),
             error: String::new(),
         });
         iced::widget::operation::focus("document-path")
@@ -748,6 +745,7 @@ impl App {
                 }
             }
             Message::SaveAs(next) => return self.path_dialog(PathKind::SaveAs { next }),
+            Message::WriteBlock => return self.path_dialog(PathKind::WriteBlock),
             Message::Help => {
                 self.keyboard.reset();
                 self.dialog = Some(Dialog::Help { topic: None });
@@ -840,6 +838,7 @@ impl App {
                             Err(e) => Err(e),
                         },
                         PathKind::SaveAs { .. } => self.session.save_as(&path),
+                        PathKind::WriteBlock => self.session.write_block_new(&path),
                         PathKind::ChangeDirectory => match std::fs::metadata(&path) {
                             Ok(metadata) if metadata.is_dir() => {
                                 changed_directory = Some(path);
@@ -865,6 +864,7 @@ impl App {
                             opened_document =
                                 matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8);
                             let saved_copy = matches!(kind, PathKind::SaveAs { .. });
+                            let written_block = matches!(kind, PathKind::WriteBlock);
                             if matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8) {
                                 self.session_generation += 1;
                                 self.utf8_top_row = 0;
@@ -881,6 +881,11 @@ impl App {
                             self.dialog = None;
                             self.notice.clear();
                             self.projection = Projection::for_session(&self.session);
+                            if written_block {
+                                self.preferred_column = None;
+                                self.mark_recovery_changed();
+                                self.refresh_directory();
+                            }
                             if saved_copy && let Err(problem) = self.clear_recovery() {
                                 self.notice =
                                     format!("Saved, but recovery cleanup failed: {problem}");
@@ -892,7 +897,7 @@ impl App {
                         }
                         Err(e) => {
                             *error = if e.kind() == std::io::ErrorKind::AlreadyExists {
-                                "File exists. Choose a new path for Save As.".into()
+                                "File exists. Choose a new path.".into()
                             } else {
                                 format!("{e}. Document retained; no new file was published.")
                             }
@@ -1144,6 +1149,7 @@ impl App {
                             Some(Action::SaveAndExit) => {
                                 return self.update(Message::Save(Some(Next::Close(id))));
                             }
+                            Some(Action::WriteBlock) => return self.update(Message::WriteBlock),
                             Some(Action::Done) => return self.begin(Next::Opening),
                             Some(Action::Help) => return self.update(Message::Help),
                             Some(Action::Notice(message)) => self.notice = message.into(),
@@ -1327,6 +1333,10 @@ impl App {
                 ..
             } => "K",
             Dialog::Path {
+                kind: PathKind::WriteBlock,
+                ..
+            } => "KW",
+            Dialog::Path {
                 kind: PathKind::ChangeDirectory,
                 ..
             } => "L",
@@ -1430,6 +1440,15 @@ impl App {
                             );
                             screen.put(3, 0, "Include the drive and directory if needed.", 7);
                             screen.put(8, 0, "New file name?", 7);
+                        }
+                        PathKind::WriteBlock => {
+                            screen.put(
+                                2,
+                                0,
+                                "Specify a file name where the marked block is to be stored on disk.",
+                                7,
+                            );
+                            screen.put(8, 0, "Name?", 7);
                         }
                         PathKind::ChangeDirectory => unreachable!(),
                     }
@@ -1643,6 +1662,11 @@ impl App {
                 value,
                 ..
             } => Some((value, 13.0, 53.0)),
+            Dialog::Path {
+                kind: PathKind::WriteBlock,
+                value,
+                ..
+            } => Some((value, 8.0, 6.0)),
             Dialog::Path { value, .. } => Some((value, 8.0, 18.0)),
             Dialog::DirectoryMatch { value, .. } => Some((value, 7.0, 27.0)),
             Dialog::FilePrompt {
@@ -1944,6 +1968,61 @@ mod tests {
         assert!(app.session.modified());
         assert!(app.notice.starts_with("Save failed:"));
         assert!(!path.exists());
+    }
+
+    #[test]
+    fn write_block_uses_the_path_prompt_and_keeps_the_source_dirty() {
+        let scratch = Scratch::new();
+        let existing = scratch.0.join("existing.doc");
+        let exported = scratch.0.join("part.doc");
+        fs::write(&existing, b"keep").unwrap();
+        let mut app = App::new_with_recovery(None, None);
+        app.window_focused = true;
+        app.opening = false;
+        app.session = DocumentSession::Legacy(Session::new_at(scratch.0.join("source.doc")));
+        for command in [
+            openstar_core::Command::InsertAscii {
+                text: "ABCDE".into(),
+            },
+            openstar_core::Command::DocumentStart,
+            openstar_core::Command::NextCharacter,
+            openstar_core::Command::MarkBlockBegin,
+            openstar_core::Command::NextCharacter,
+            openstar_core::Command::NextCharacter,
+            openstar_core::Command::MarkBlockEnd,
+        ] {
+            app.session.apply_command(&command).unwrap();
+        }
+        let id = window::Id::unique();
+        let _ = app.update(Message::Event(
+            key(Key::Character("k".into()), true, None),
+            id,
+        ));
+        let _ = app.update(Message::Event(
+            key(Key::Character("w".into()), true, None),
+            id,
+        ));
+        assert!(matches!(
+            app.dialog,
+            Some(Dialog::Path {
+                kind: PathKind::WriteBlock,
+                ..
+            })
+        ));
+        let _ = app.update(Message::PathChanged(existing.display().to_string()));
+        let _ = app.update(Message::Submit);
+        assert!(
+            matches!(app.dialog, Some(Dialog::Path { kind: PathKind::WriteBlock, ref error, .. }) if !error.is_empty())
+        );
+        assert_eq!(fs::read(&existing).unwrap(), b"keep");
+        let _ = app.update(Message::PathChanged(exported.display().to_string()));
+        let _ = app.update(Message::Submit);
+        assert!(app.dialog.is_none());
+        let bytes = fs::read(&exported).unwrap();
+        assert_eq!(&bytes[..2], b"BC");
+        assert_eq!(bytes.len(), 128);
+        assert!(app.session.modified());
+        assert_eq!(app.projection.cursor.1, 1);
     }
 
     #[test]

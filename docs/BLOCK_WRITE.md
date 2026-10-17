@@ -1,0 +1,9 @@
+# Ctrl-K W: write a marked block
+
+In the tested WordStar Professional 4.00 case, Ctrl-K W writes a marked block to a separate WordStar document. The original asks for a file name, writes the selected bytes with DOS EOF padding, and returns to the open document with the cursor at the block's begin mark.
+
+The isolated run `C:/Projects/rea/investigations/wordstar/runtime-openstar-kw-01` used the primary `WS.EXE` (SHA-256 `535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d`). Its input manifest records the copied program files. Starting with a new `BLOCK.DOC`, Insert and Align on, the run typed `ABCDE`, marked `BC` with Ctrl-K B/K, pressed Ctrl-K W, and entered `PART.DOC`. The output was 128 bytes: `42 43` followed by 126 `1A` bytes, SHA-256 `102b9c95520f06407210fcc65ba922d63824556bc7211fa6cbe9a6a37b39c7f1`. The source was still open and unsaved. The cursor moved from L01 C04 to L01 C02; the marks remained visible. A second write to `PART.DOC` displayed an overwrite question. Answering N left the output hash unchanged.
+
+OpenStar's `marked_block_carrier` test and desktop file-writing test reproduce those 128 output bytes, cursor position, retained marks, and unchanged source bytes. The desktop prompts for a target path. It writes only a marked block within one ordinary ASCII physical line, in document mode with single spacing, margins 1/65, and justification off. It rejects missing or reversed marks and unsupported source tokens. Its 1 MiB prototype bound also applies to the output carrier.
+
+OpenStar refuses an existing target and lets the user choose another name. The DOS original offers an overwrite confirmation; that branch is not implemented in OpenStar. Multiline blocks, other formatting, failed DOS writes, unusual filenames, and later changes to the selected block have not been compared. The observed output hash establishes byte equality for this one case, not general Ctrl-K W compatibility.

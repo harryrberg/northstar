@@ -33,6 +33,7 @@
       <ComponentRef Id="BackspaceDeleteGuide" />
       <ComponentRef Id="BlockCopyGuide" />
       <ComponentRef Id="BlockMoveDeleteGuide" />
+      <ComponentRef Id="BlockWriteGuide" />
       <ComponentRef Id="ErasureGuide" />
       <ComponentRef Id="WordErasureGuide" />
     </Feature>
@@ -118,6 +119,10 @@
     <Component Id="BlockMoveDeleteGuide" Directory="INSTALLFOLDER" Guid="A46E88E2-20B2-49DC-B9EC-83C834191DEB">
       <File Source="$(var.RepoRoot)\docs\BLOCK_MOVE_DELETE.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="BlockMoveDeleteGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="BlockWriteGuide" Directory="INSTALLFOLDER" Guid="B5BDBFC2-3481-43B0-884F-BB27A773F83D">
+      <File Source="$(var.RepoRoot)\docs\BLOCK_WRITE.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="BlockWriteGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
     <Component Id="ErasureGuide" Directory="INSTALLFOLDER" Guid="C9626847-DE87-4AE4-89AF-F5DFE888D1DB">
       <File Source="$(var.RepoRoot)\docs\ERASURE.md" />

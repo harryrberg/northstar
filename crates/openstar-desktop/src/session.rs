@@ -167,6 +167,16 @@ impl DocumentSession {
             Self::Utf8(session) => session.save(),
         }
     }
+
+    pub fn write_block_new(&mut self, path: &Path) -> io::Result<()> {
+        match self {
+            Self::Legacy(session) => session.write_block_new(path),
+            Self::Utf8(_) => Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "Block writing is available only in WordStar mode",
+            )),
+        }
+    }
 }
 
 impl Default for Session {
@@ -252,6 +262,20 @@ impl Session {
         save_current(path, self.baseline.as_deref(), bytes, BackupKind::Legacy)?;
         self.baseline = Some(bytes.to_vec());
         self.editor.mark_saved();
+        Ok(())
+    }
+
+    /// Write the selected block as a separate, new WordStar document.
+    /// The active document and its save checkpoint remain unchanged.
+    pub fn write_block_new(&mut self, path: &Path) -> io::Result<()> {
+        let carrier = self
+            .editor
+            .marked_block_carrier()
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
+        write_new_file(path, &carrier)?;
+        self.editor
+            .apply(&Command::JumpBlockBegin)
+            .expect("a validated block retains its begin mark after writing");
         Ok(())
     }
 }

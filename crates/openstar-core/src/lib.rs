@@ -462,6 +462,17 @@ impl Editor {
         }
     }
 
+    /// Produce a standalone WordStar carrier for the marked single-line block.
+    /// File creation belongs to the caller and does not alter this editor.
+    pub fn marked_block_carrier(&self) -> Result<Vec<u8>, EditError> {
+        if self.replace_pending {
+            return Err(EditError::UnqualifiedOperation(
+                "answer the pending replacement before another command",
+            ));
+        }
+        block::write_carrier(&self.document, self.formatting, self.block)
+    }
+
     /// Reject unsupported cases before changing state. Returned errors are atomic.
     pub fn apply(&mut self, command: &Command) -> Result<(), EditError> {
         if self.replace_pending && !matches!(command, Command::AnswerReplace { .. }) {

@@ -351,12 +351,19 @@ impl Screen {
                 7,
             );
             self.put(16, 0, "Ctrl-Z undoes; Ctrl-Y redoes; Ctrl-K S saves.", 7);
+            self.put(17, 0, "Ctrl-K X saves and exits OpenStar.", 7);
         } else {
             self.put(15, 0, "Ctrl-S/D move left/right; Ctrl-E/X move up/down.", 7);
             self.put(
                 16,
                 0,
                 "Ctrl-K S saves; Ctrl-K D saves and returns to the menu.",
+                7,
+            );
+            self.put(
+                17,
+                0,
+                "Ctrl-K W writes a block; Ctrl-K X saves and exits.",
                 7,
             );
         }
