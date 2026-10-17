@@ -78,7 +78,7 @@ enum Next {
 enum PathKind {
     OpenLegacy,
     OpenUtf8,
-    SaveAs { done: bool },
+    SaveAs { next: Option<Next> },
     ChangeDirectory,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -153,8 +153,8 @@ pub(crate) enum Message {
     FileAction(FileAction),
     ConfirmDelete,
     ToggleDirectory,
-    Save(bool),
-    SaveAs(bool),
+    Save(Option<Next>),
+    SaveAs(Option<Next>),
     Help,
     PathChanged(String),
     Submit,
@@ -729,9 +729,9 @@ impl App {
                     }
                 }
             }
-            Message::Save(done) => {
+            Message::Save(next) => {
                 if self.session.path().is_none() {
-                    return self.path_dialog(PathKind::SaveAs { done });
+                    return self.path_dialog(PathKind::SaveAs { next });
                 }
                 match self.session.save() {
                     Ok(()) => {
@@ -740,14 +740,14 @@ impl App {
                             self.notice = format!("Saved, but recovery cleanup failed: {error}");
                             return Task::none();
                         }
-                        if done {
-                            return self.proceed(Next::Opening);
+                        if let Some(next) = next {
+                            return self.proceed(next);
                         }
                     }
                     Err(e) => self.notice = format!("Save failed: {e}"),
                 }
             }
-            Message::SaveAs(done) => return self.path_dialog(PathKind::SaveAs { done }),
+            Message::SaveAs(next) => return self.path_dialog(PathKind::SaveAs { next }),
             Message::Help => {
                 self.keyboard.reset();
                 self.dialog = Some(Dialog::Help { topic: None });
@@ -873,7 +873,10 @@ impl App {
                                 self.recovery_written = false;
                                 self.recovery_pending = false;
                             }
-                            let done = matches!(kind, PathKind::SaveAs { done: true });
+                            let next = match kind {
+                                PathKind::SaveAs { next } => *next,
+                                _ => None,
+                            };
                             self.opening = false;
                             self.dialog = None;
                             self.notice.clear();
@@ -883,8 +886,8 @@ impl App {
                                     format!("Saved, but recovery cleanup failed: {problem}");
                                 return Task::none();
                             }
-                            if done {
-                                return self.proceed(Next::Opening);
+                            if let Some(next) = next {
+                                return self.proceed(next);
                             }
                         }
                         Err(e) => {
@@ -1133,9 +1136,14 @@ impl App {
                                 return clipboard::read()
                                     .map(move |text| Message::Paste(generation, text));
                             }
-                            Some(Action::Save) => return self.update(Message::Save(false)),
-                            Some(Action::SaveAs) => return self.update(Message::SaveAs(false)),
-                            Some(Action::SaveAndDone) => return self.update(Message::Save(true)),
+                            Some(Action::Save) => return self.update(Message::Save(None)),
+                            Some(Action::SaveAs) => return self.update(Message::SaveAs(None)),
+                            Some(Action::SaveAndDone) => {
+                                return self.update(Message::Save(Some(Next::Opening)));
+                            }
+                            Some(Action::SaveAndExit) => {
+                                return self.update(Message::Save(Some(Next::Close(id))));
+                            }
                             Some(Action::Done) => return self.begin(Next::Opening),
                             Some(Action::Help) => return self.update(Message::Help),
                             Some(Action::Notice(message)) => self.notice = message.into(),
@@ -1855,6 +1863,89 @@ mod tests {
         })
     }
 
+    fn press_save_and_exit(app: &mut App, id: window::Id) {
+        let _ = app.update(Message::Event(
+            key(Key::Character("k".into()), true, None),
+            id,
+        ));
+        let _ = app.update(Message::Event(
+            key(Key::Character("x".into()), true, None),
+            id,
+        ));
+    }
+
+    #[test]
+    fn save_and_exit_prompts_for_a_new_path_and_saves_before_closing() {
+        let scratch = Scratch::new();
+        let path = scratch.0.join("chapter.doc");
+        let mut app = App::new_with_recovery(None, None);
+        app.window_focused = true;
+        app.opening = false;
+        app.session
+            .apply_command(&openstar_core::Command::InsertAscii {
+                text: "ALPHA".into(),
+            })
+            .unwrap();
+        let id = window::Id::unique();
+        press_save_and_exit(&mut app, id);
+        assert!(matches!(
+            app.dialog,
+            Some(Dialog::Path {
+                kind: PathKind::SaveAs {
+                    next: Some(Next::Close(close_id))
+                },
+                ..
+            }) if close_id == id
+        ));
+        let _ = app.update(Message::PathChanged(
+            scratch
+                .0
+                .join("missing")
+                .join("chapter.doc")
+                .display()
+                .to_string(),
+        ));
+        let _ = app.update(Message::Submit);
+        assert!(matches!(
+            app.dialog,
+            Some(Dialog::Path {
+                kind: PathKind::SaveAs {
+                    next: Some(Next::Close(close_id))
+                },
+                ref error,
+                ..
+            }) if close_id == id && !error.is_empty()
+        ));
+        assert!(app.session.modified());
+        let _ = app.update(Message::PathChanged(path.display().to_string()));
+        let _ = app.update(Message::Submit);
+        assert!(app.dialog.is_none());
+        assert!(!app.session.modified());
+        assert_eq!(app.session.path(), Some(path.as_path()));
+        assert!(fs::read(path).unwrap().starts_with(b"ALPHA"));
+    }
+
+    #[test]
+    fn save_and_exit_keeps_the_editor_open_when_saving_fails() {
+        let scratch = Scratch::new();
+        let path = scratch.0.join("missing").join("chapter.doc");
+        let mut app = App::new_with_recovery(None, None);
+        app.window_focused = true;
+        app.opening = false;
+        app.session = DocumentSession::Legacy(Session::new_at(path.clone()));
+        app.session
+            .apply_command(&openstar_core::Command::InsertAscii {
+                text: "ALPHA".into(),
+            })
+            .unwrap();
+        press_save_and_exit(&mut app, window::Id::unique());
+        assert!(app.dialog.is_none());
+        assert!(!app.opening);
+        assert!(app.session.modified());
+        assert!(app.notice.starts_with("Save failed:"));
+        assert!(!path.exists());
+    }
+
     #[test]
     fn help_and_discard_prompts_keep_keyboard_navigation() {
         let mut app = App::new_with_recovery(None, None);
@@ -2232,7 +2323,7 @@ mod tests {
         assert_eq!(session.editor.document().bytes(), expected);
         assert!(session.editor.snapshot().modified);
         assert_eq!(fs::read(&path).unwrap(), original);
-        let _ = restarted.update(Message::Save(false));
+        let _ = restarted.update(Message::Save(None));
         assert_eq!(fs::read(&path).unwrap(), expected);
         assert_eq!(
             Session::open(&path).unwrap().editor.document().bytes(),

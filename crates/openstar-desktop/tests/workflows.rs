@@ -680,6 +680,11 @@ fn save_keys_keep_save_and_save_as_distinct() {
         keyboard.handle(&ctrl("d", false)),
         Some(Action::SaveAndDone)
     );
+    assert_eq!(keyboard.handle(&ctrl("k", false)), None);
+    assert_eq!(
+        keyboard.handle(&ctrl("x", false)),
+        Some(Action::SaveAndExit)
+    );
 }
 
 #[test]
