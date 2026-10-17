@@ -80,6 +80,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-block-copy-v1"
                 | "ws4-block-move-delete-v1"
                 | "ws4-block-display-v1"
+                | "ws4-line-right-erasure-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
@@ -315,6 +316,20 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | Command::ToggleInsert
         )
     };
+    let right_erasure = |command: &Command| {
+        matches!(
+            command,
+            Command::DeleteToLineEnd | Command::UneraseLine | Command::NextCharacter
+        )
+    };
+    if (spec.profile == "ws4-line-right-erasure-v1"
+        && (spec.commands.iter().any(|command| !right_erasure(command))
+            || !spec.commands.contains(&Command::DeleteToLineEnd)))
+        || (spec.profile != "ws4-line-right-erasure-v1"
+            && spec.commands.contains(&Command::DeleteToLineEnd))
+    {
+        return Err("Ctrl-Q Y requires its declared line-right erasure profile".into());
+    }
     let word_erasure = |command: &Command| {
         matches!(
             command,
@@ -330,7 +345,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
         && spec.commands.iter().any(|command| !line_erasure(command)))
         || (!matches!(
             spec.profile.as_str(),
-            "ws4-line-erasure-v1" | "ws4-word-erasure-v1"
+            "ws4-line-erasure-v1" | "ws4-word-erasure-v1" | "ws4-line-right-erasure-v1"
         ) && spec
             .commands
             .iter()

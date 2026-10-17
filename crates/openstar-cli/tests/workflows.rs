@@ -98,6 +98,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("replace-")
                 || name.starts_with("backdel-")
                 || name.starts_with("block-")
+                || name.starts_with("right-")
                 || name.starts_with("hard-break-")
         })
         .collect();

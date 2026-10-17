@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-//! Bounded WordStar Backspace, Delete, Ctrl-G, Ctrl-T, Ctrl-Y, and Ctrl-U semantics.
+//! Bounded WordStar Backspace, Delete, Ctrl-G, Ctrl-T, Ctrl-Y, Ctrl-Q Y, and Ctrl-U semantics.
 use crate::{AsciiLine, Document, Edit, EditError, Formatting, TokenKind};
 
 pub(super) enum ErasedText {
     Line(Vec<u8>),
     Word(Vec<u8>),
+    Right(Vec<u8>),
 }
 
 fn check_formatting(formatting: Formatting) -> Result<(), EditError> {
@@ -261,6 +262,26 @@ pub(super) fn delete_line(
     )))
 }
 
+/// Ctrl-Q Y removes the text suffix of one physical line and retains it for
+/// Ctrl-U. A cursor already at the line end leaves the previous buffer alone.
+pub(super) fn delete_to_line_end(
+    document: &Document,
+    cursor: usize,
+    formatting: Formatting,
+) -> Result<Option<(Edit, Vec<u8>)>, EditError> {
+    check_formatting(formatting)?;
+    let end = document.checked_active_end()?;
+    let line = document.ascii_line(cursor, end)?;
+    check_line(document, &line, true)?;
+    check_previous_break(document, line.start)?;
+    if cursor == line.end {
+        return Ok(None);
+    }
+    let mut active = document.bytes()[..end].to_vec();
+    let erased = active.drain(cursor..line.end).collect();
+    Ok(Some((Edit::Replace { active, cursor }, erased)))
+}
+
 /// Ctrl-U inserts the retained Ctrl-T or Ctrl-Y buffer without consuming it.
 pub(super) fn unerase_line(
     document: &Document,
@@ -271,9 +292,10 @@ pub(super) fn unerase_line(
     let Some(erased) = erased else {
         return Ok(Edit::MoveTo(cursor));
     };
-    let (erased, from_line) = match erased {
-        ErasedText::Line(bytes) => (bytes.as_slice(), true),
-        ErasedText::Word(bytes) => (bytes.as_slice(), false),
+    let (erased, from_line, allow_high_bit) = match erased {
+        ErasedText::Line(bytes) => (bytes.as_slice(), true, false),
+        ErasedText::Word(bytes) => (bytes.as_slice(), false, false),
+        ErasedText::Right(bytes) => (bytes.as_slice(), false, true),
     };
     if erased.is_empty() {
         return Ok(Edit::MoveTo(cursor));
@@ -281,7 +303,7 @@ pub(super) fn unerase_line(
     check_formatting(formatting)?;
     let end = document.checked_active_end()?;
     let line = document.ascii_line(cursor, end)?;
-    check_line(document, &line, false)?;
+    check_line(document, &line, allow_high_bit)?;
     check_previous_break(document, line.start)?;
     if from_line && cursor == line.end && line.next.is_some() {
         return Err(EditError::UnqualifiedOperation("unerase at a line break"));

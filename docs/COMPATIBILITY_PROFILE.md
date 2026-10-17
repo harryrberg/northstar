@@ -109,6 +109,10 @@ Two isolated DOS cases insert `XY` from a synthetic 128-byte WordStar file into 
 
 Fourteen synthetic scenarios compare whole-line deletion and reuse of the deleted-line buffer with retained DOS runs. Ctrl-Y deletes an ordinary physical line, including its hard CRLF when present, and moves to the line start. Ctrl-U inserts a copy of the buffer at the current cursor, leaves the cursor and Insert mode unchanged, and keeps the buffer for later use. Ctrl-G does not fill or clear this buffer in the observed sequences. [Cases, source identities, interoperability check, and limits](ERASURE.md) define the scope. The core owns the buffer; CLI and desktop adapters select commands without reproducing its rules.
 
+## Ctrl-Q Y: ws4-line-right-erasure-v1
+
+Six retained scenarios compare deletion from the cursor through the current line's text, Ctrl-U restoration, a hard-break no-op that preserves the buffer, and high-bit word-end markers. The cursor and hard break remain. One OpenStar output was reopened and resaved in DOS WordStar without byte changes. [Exact cases and limits](LINE_RIGHT.md) define this bounded profile.
+
 ## Ctrl-T word erasure: ws4-word-erasure-v1
 
 Twenty-seven synthetic scenarios compare Ctrl-T and its shared Ctrl-U buffer with retained DOS runs. At a word, Ctrl-T removes text from the cursor to a measured boundary; at spaces it removes the space run. On an ordinary hard break it joins the lines and clears the buffer. At EOF it leaves the buffer alone. Punctuation and adjacent-space cases are qualified only where measured. [Exact observations, source identities, interoperability check, and limits](WORD_ERASURE.md) define the scope. The core owns all erasure state.

@@ -369,6 +369,12 @@ impl Screen {
         }
         self.put(18, 0, "F11 toggles full screen; F12 changes the font.", 7);
         if !utf8 {
+            self.put(
+                14,
+                0,
+                "Ctrl-Q Y erases text to the right; Ctrl-U restores it.",
+                7,
+            );
             self.put(19, 0, "Ctrl-K R inserts a WordStar file at the cursor.", 7);
             self.put(21, 0, "Ctrl-K H shows or hides block marks.", 7);
         }

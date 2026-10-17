@@ -1,0 +1,15 @@
+# Ctrl-Q Y: erase to the right
+
+In the measured WordStar Professional 4.00 cases, Ctrl-Q Y removes the text from the cursor through the end of the current physical line. It leaves the cursor and any hard CRLF in place. Ctrl-U reinserts the removed bytes at the cursor without consuming them. Ctrl-Q Y at a hard line end changes neither the document nor the previous Ctrl-U content.
+
+The reference is the primary floppy `WS.EXE`, SHA-256 `535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d`. The isolated DOS runs under `C:/Projects/rea/investigations/wordstar/runtime-openstar-qy-01`, `runtime-openstar-qy-lines-01`, and `runtime-openstar-qy-space-01` retain their input manifests, ordered actions, screenshots and saved file identities. Each run used a new synthetic document on a copied program disk, with Insert and Align on.
+
+In `RIGHT.DOC`, the run typed `ABCDE`, moved to byte offset 2 (L01 C03), and pressed Ctrl-Q Y. The saved file contained `AB` and DOS EOF padding, 128 bytes with SHA-256 `edb9a210d68647962c250949b13c4c16f55bb065428a0b5983458d405e8d8219`. Ctrl-U restored `ABCDE` at the same cursor, SHA-256 `c11c22e6cd0442d059e36d26d5dd9cbc89bff00af0c64f39003fb00a184e7362`.
+
+In `LINES.DOC`, the starting active bytes were `AB` CRLF `CD`. From byte offset 1, Ctrl-Q Y removed `B` but kept the break and `CD`, yielding `A` CRLF `CD` with SHA-256 `7eedcffbf8f4a787b5de982a99ec732468c7f8f1e68bf4c38adf9e26dbdd5a38`. Ctrl-U restored `B`. At the following hard break, Ctrl-Q Y left `AB` CRLF `CD` unchanged and retained the buffer; Ctrl-U then produced `ABB` CRLF `CD`, SHA-256 `8516f91d59c558788027264e3973925732b4ec4e7e77cf3f7179b6e38d7d878b`.
+
+The `SPACES.DOC` run typed `ONE TWO THREE`. WordStar saved the preceding `E` and `O` with their high bits set (`4F 4E C5 20 54 57 CF 20 54 48 52 45 45`). From the `T` of `TWO`, Ctrl-Q Y left `4F 4E C5 20`, SHA-256 `a268b2ca87e033eb7f3e63f7ef9fc33781e15a9f47336256163b4b7683d9e38d`. Ctrl-U restored the exact original 128-byte carrier, SHA-256 `7b83835e7375dd40cb51edf024f4ddbd7dc3dc861a7512ac324d9a8c87521a94`.
+
+Six `ws4-line-right-erasure-v1` scenarios compare these saved hashes, cursor positions, modes and declared formatting with the Rust core and desktop key route. A separate DOS run, `runtime-openstar-qy-reopen-01`, opened an OpenStar-generated copy of the `AB` result, displayed it, and resaved it with the same SHA-256. This checks file interoperability for that result.
+
+OpenStar supports this command on an ordinary physical line of at most 65 cells, in document mode with single spacing, margins 1/65 and justification off. The selected line may contain ordinary one-byte ASCII and high-bit text markers. Soft spaces, controls, framed characters, dot-command lines, malformed EOF payload, unsupported formatting and placed block marks are rejected before mutation. The existing Ctrl-U buffer is retained if Ctrl-Q Y removes nothing. Interaction with Ctrl-Y or Ctrl-T after Ctrl-Q Y, other break types, long lines, marked blocks, and native UTF-8 documents have not been compared with DOS. A native-window pixel check remains untested.

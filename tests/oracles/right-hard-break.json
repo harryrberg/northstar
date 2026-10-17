@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-line-right-erasure-v1",
+  "id": "right-hard-break",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5",
+        "path": "runtime-openstar-qy-lines-01/input-manifest.json"
+      },
+      {
+        "sha256": "d5a9ace4c6c9089031f1be69b0dddf6de743aa6b3fe0bfa491ec721ae7f6ad6a",
+        "path": "runtime-openstar-qy-lines-01/events.json"
+      },
+      {
+        "sha256": "0fe3a6ab58b81269b36891d80377d65a22b008ff5593dedb26331f9f86d95ae2",
+        "path": "runtime-openstar-qy-lines-01/files/LINES.BAK"
+      },
+      {
+        "sha256": "b549aadaadf38ac322d37b801c15d614ceaad24999b38b6199e479d6997b1894",
+        "path": "runtime-openstar-qy-lines-01/02-after-qy.png"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document in an isolated DOSBox copy on 2026-10-17.",
+      "Cursor offsets are derived from one-byte DOS screen cells.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Other control cells, long lines, and marked blocks remain outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41420d0a43441a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 1,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_to_line_end"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "7eedcffbf8f4a787b5de982a99ec732468c7f8f1e68bf4c38adf9e26dbdd5a38",
+    "cursor_byte": 1,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

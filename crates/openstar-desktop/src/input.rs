@@ -89,6 +89,7 @@ impl Keyboard {
                 ('Q', "k") if !utf8 => Action::Edit(Command::JumpBlockEnd),
                 ('Q', "f") if !utf8 => Action::Find,
                 ('Q', "a") if !utf8 => Action::Replace,
+                ('Q', "y") if !utf8 => Action::Edit(Command::DeleteToLineEnd),
                 ('K', "s") => Action::Save,
                 ('K', "d") => Action::SaveAndDone,
                 ('K', "x") => Action::SaveAndExit,

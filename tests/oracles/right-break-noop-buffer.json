@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-line-right-erasure-v1",
+  "id": "right-break-noop-buffer",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5",
+        "path": "runtime-openstar-qy-lines-01/input-manifest.json"
+      },
+      {
+        "sha256": "d5a9ace4c6c9089031f1be69b0dddf6de743aa6b3fe0bfa491ec721ae7f6ad6a",
+        "path": "runtime-openstar-qy-lines-01/events.json"
+      },
+      {
+        "sha256": "0fe3a6ab58b81269b36891d80377d65a22b008ff5593dedb26331f9f86d95ae2",
+        "path": "runtime-openstar-qy-lines-01/files/LINES.BAK"
+      },
+      {
+        "sha256": "b549aadaadf38ac322d37b801c15d614ceaad24999b38b6199e479d6997b1894",
+        "path": "runtime-openstar-qy-lines-01/02-after-qy.png"
+      },
+      {
+        "sha256": "2243ff5292e687bf9f85a6a83962f2379a5aa22a8a45a6153fb73af70483bf66",
+        "path": "runtime-openstar-qy-lines-01/03-after-u.png"
+      },
+      {
+        "sha256": "5001c198e79a119a4d3e35bf11ab011f4cc3272fc6a2cd1e04a1b680a993b258",
+        "path": "runtime-openstar-qy-lines-01/04-at-break-after-qy.png"
+      },
+      {
+        "sha256": "71f67c22bf6d810b64c52b0e1d30776ac7ec12683d181bafe09d1d116816285c",
+        "path": "runtime-openstar-qy-lines-01/05-at-break-after-u.png"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document in an isolated DOSBox copy on 2026-10-17.",
+      "Cursor offsets are derived from one-byte DOS screen cells.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Other control cells, long lines, and marked blocks remain outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41420d0a43441a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 1,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_to_line_end"
+    },
+    {
+      "command": "unerase_line"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "delete_to_line_end"
+    },
+    {
+      "command": "unerase_line"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "8516f91d59c558788027264e3973925732b4ec4e7e77cf3f7179b6e38d7d878b",
+    "cursor_byte": 2,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

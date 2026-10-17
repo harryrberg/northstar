@@ -97,6 +97,12 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "block-display-mark-on",
         "block-display-hide",
         "block-display-show",
+        "right-delete-suffix",
+        "right-restore-suffix",
+        "right-hard-break",
+        "right-break-noop-buffer",
+        "right-highbit-suffix",
+        "right-highbit-restore",
         "block-copy-repeat-before-source",
         "block-copy-repeat-inside-source",
         "block-move-end",
@@ -261,6 +267,19 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 }
                 Command::DeleteWord => dispatch(&mut keyboard, &mut session, ctrl("t", false)),
                 Command::DeleteLine => dispatch(&mut keyboard, &mut session, ctrl("y", false)),
+                Command::DeleteToLineEnd => {
+                    dispatch(&mut keyboard, &mut session, ctrl("q", false));
+                    dispatch(
+                        &mut keyboard,
+                        &mut session,
+                        press(
+                            Key::Character("y".into()),
+                            Modifiers::empty(),
+                            Some("y"),
+                            false,
+                        ),
+                    );
+                }
                 Command::UneraseLine => dispatch(&mut keyboard, &mut session, ctrl("u", false)),
                 Command::Enter => dispatch(
                     &mut keyboard,

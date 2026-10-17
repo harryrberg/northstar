@@ -38,6 +38,7 @@
       <ComponentRef Id="BlockDisplayGuide" />
       <ComponentRef Id="ErasureGuide" />
       <ComponentRef Id="WordErasureGuide" />
+      <ComponentRef Id="LineRightGuide" />
     </Feature>
 
     <Component Id="DesktopExecutable" Directory="INSTALLFOLDER" Guid="2A838F5F-8E76-4801-B9EB-D9B767CB32C3">
@@ -141,6 +142,10 @@
     <Component Id="WordErasureGuide" Directory="INSTALLFOLDER" Guid="BD2B8876-F38F-4A7E-BF46-1A3D8C08F53C">
       <File Source="$(var.RepoRoot)\docs\WORD_ERASURE.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="WordErasureGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="LineRightGuide" Directory="INSTALLFOLDER" Guid="AFBE49D5-1E94-4F5F-8C6A-CBDB9E9DC1C4">
+      <File Source="$(var.RepoRoot)\docs\LINE_RIGHT.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="LineRightGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
   </Package>
 </Wix>
