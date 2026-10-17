@@ -304,6 +304,10 @@ pub enum Command {
         whole_words: bool,
         backwards: bool,
     },
+    FindCharacter {
+        character: char,
+        backwards: bool,
+    },
     ReplaceLiteral {
         text: String,
         replacement: String,
@@ -719,6 +723,26 @@ impl Editor {
                 self.find = Some(spec);
                 self.replacement = None;
                 self.replace_pending = false;
+            }
+            Command::FindCharacter {
+                character,
+                backwards,
+            } => {
+                if !character.is_ascii_alphabetic() {
+                    return Err(EditError::UnqualifiedOperation(
+                        "character search currently requires an ASCII letter",
+                    ));
+                }
+                let spec = search::FindSpec::new(&character.to_string(), false, false, *backwards)?;
+                let target = search::target(&self.document, self.cursor, &spec, false)?;
+                self.cursor = target.unwrap_or_else(|| {
+                    if *backwards {
+                        0
+                    } else {
+                        self.document.active_end()
+                    }
+                });
+                self.last_find_result = Some(target.is_some());
             }
             Command::ReplaceLiteral {
                 text,

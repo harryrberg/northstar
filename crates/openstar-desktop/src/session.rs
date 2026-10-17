@@ -91,6 +91,7 @@ impl DocumentSession {
                     | Command::DeleteToLineStart
                     | Command::UneraseLine
                     | Command::FindLiteral { .. }
+                    | Command::FindCharacter { .. }
                     | Command::ReplaceLiteral { .. }
                     | Command::AnswerReplace { .. }
                     | Command::RepeatFind => {

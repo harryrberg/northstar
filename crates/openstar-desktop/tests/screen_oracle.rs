@@ -6,6 +6,29 @@ use sha2::{Digest, Sha256};
 use std::{fs, path::PathBuf};
 
 #[test]
+fn character_search_prompt_and_failure_preserve_status_and_document_rows() {
+    let mut screen = Screen::default();
+    screen.put(0, 3, "C:CHAR.DOC", 0x70);
+    screen.put(0, 23, "P01 L01 C01 Insert Align", 0x70);
+    screen.put(11, 0, "ABACABA", 7);
+    screen.character_find_prompt(false);
+    assert_eq!(screen.cells[0][0].glyph, 'Q');
+    assert_eq!(screen.cells[0][1].glyph, 'G');
+    assert_eq!(screen.cells[2][23].glyph, 'F');
+    assert_eq!(screen.cells[11][0].glyph, 'A');
+    screen.character_find_notice('Z', false);
+    assert_eq!(screen.cells[0][0].glyph, 'Q');
+    assert_eq!(screen.cells[0][1].glyph, 'G');
+    assert_eq!(screen.cells[0][3].glyph, 'W');
+    assert_eq!(screen.cells[0][8].glyph, ' ');
+    assert_eq!(screen.cells[0][23].glyph, 'P');
+    assert_eq!(screen.cells[2][17].glyph, 'Z');
+    assert_eq!(screen.cells[11][0].glyph, 'A');
+    screen.character_find_prompt(true);
+    assert_eq!(screen.cells[0][1].glyph, 'H');
+}
+
+#[test]
 fn find_prompt_keeps_all_options_inside_the_eighty_column_header() {
     let mut screen = Screen::default();
     screen.find_prompt("cat", Some("WU"));

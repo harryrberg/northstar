@@ -304,6 +304,7 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 ),
                 Command::InsertHardBreak => dispatch(&mut keyboard, &mut session, ctrl("n", false)),
                 Command::FindLiteral { .. }
+                | Command::FindCharacter { .. }
                 | Command::ReplaceLiteral { .. }
                 | Command::AnswerReplace { .. }
                 | Command::RepeatFind => unreachable!("other profile"),

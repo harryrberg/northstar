@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-character-find-v1",
+  "id": "charfind-case-lower",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "path": "runtime-openstar-qchar-case-01/input-manifest.json",
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5"
+      },
+      {
+        "path": "runtime-openstar-qchar-case-01/events.json",
+        "sha256": "4f85c6b90964962472b622b12661c1cf1cfd3f1e1554bd623b8b4c8ec0639cb0"
+      },
+      {
+        "path": "runtime-openstar-qchar-case-01/files/CASE.DOC",
+        "sha256": "2b46fb81b6b7fe1e4393d9846d251ea2eeafb59b8efc47342f0c374dd20ee8d1"
+      },
+      {
+        "path": "runtime-openstar-qchar-case-01/03-forward-lower.png",
+        "sha256": "d797b37da24eb4fe4349b706c98b237efa4eeebb999420b371a2fdf65ff387b8"
+      }
+    ],
+    "limitations": [
+      "Synthetic document in an isolated DOSBox copy on 2026-10-17.",
+      "Cursor byte offsets are derived from DOS line and column on one-byte cells.",
+      "The DOS run did not expose every internal formatting state."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "614261411a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "find_character",
+      "character": "a",
+      "backwards": false
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "2b46fb81b6b7fe1e4393d9846d251ea2eeafb59b8efc47342f0c374dd20ee8d1",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    },
+    "find_found": true
+  }
+}

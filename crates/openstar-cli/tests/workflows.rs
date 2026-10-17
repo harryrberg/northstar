@@ -95,6 +95,7 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
                 || name.starts_with("erasure-")
                 || name.starts_with("word-")
                 || name.starts_with("find-")
+                || name.starts_with("charfind-")
                 || name.starts_with("replace-")
                 || name.starts_with("backdel-")
                 || name.starts_with("block-")

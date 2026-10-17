@@ -72,6 +72,26 @@ impl Screen {
         self.cursor = None;
     }
 
+    pub fn character_find_prompt(&mut self, backwards: bool) {
+        self.clear_find_header();
+        self.cells[0][1].glyph = if backwards { 'H' } else { 'G' };
+        self.put(2, 23, "Find what?", 7);
+        self.cursor = None;
+    }
+
+    pub fn character_find_notice(&mut self, character: char, backwards: bool) {
+        self.clear_find_header();
+        self.cells[0][1].glyph = if backwards { 'H' } else { 'G' };
+        self.cells[0][2..23].fill(Cell {
+            glyph: ' ',
+            attribute: 0x70,
+        });
+        self.put(0, 3, "Wait", 0x70);
+        self.put(2, 0, &format!("Could not find:  {character}"), 7);
+        self.put(4, 0, "Press Esc to continue.", 7);
+        self.cursor = None;
+    }
+
     pub fn replace_prompt(&mut self, term: &str, replacement: Option<&str>, options: Option<&str>) {
         self.clear_find_header();
         self.cells[0][1].glyph = 'A';

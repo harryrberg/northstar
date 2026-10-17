@@ -75,6 +75,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-line-erasure-v1"
                 | "ws4-word-erasure-v1"
                 | "ws4-ascii-find-v1"
+                | "ws4-character-find-v1"
                 | "ws4-ascii-replace-v1"
                 | "ws4-backspace-delete-v1"
                 | "ws4-block-copy-v1"
@@ -121,12 +122,24 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | Command::NextCharacter
         )
     };
+    let character_find = |command: &Command| {
+        matches!(
+            command,
+            Command::FindCharacter { .. } | Command::DocumentStart | Command::NextCharacter
+        )
+    };
     if (spec.profile == "ws4-ascii-find-v1" && spec.commands.iter().any(|command| !find(command)))
+        || (spec.profile == "ws4-character-find-v1"
+            && (spec.commands.iter().any(|command| !character_find(command))
+                || !spec
+                    .commands
+                    .iter()
+                    .any(|command| matches!(command, Command::FindCharacter { .. }))))
         || (spec.profile == "ws4-ascii-replace-v1"
             && spec.commands.iter().any(|command| !replace(command)))
         || (!matches!(
             spec.profile.as_str(),
-            "ws4-ascii-find-v1" | "ws4-ascii-replace-v1"
+            "ws4-ascii-find-v1" | "ws4-ascii-replace-v1" | "ws4-character-find-v1"
         ) && spec.commands.iter().any(|command| {
             matches!(
                 command,
@@ -134,6 +147,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                     | Command::ReplaceLiteral { .. }
                     | Command::AnswerReplace { .. }
                     | Command::RepeatFind
+                    | Command::FindCharacter { .. }
             )
         }))
     {
@@ -141,7 +155,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
     }
     if matches!(
         spec.profile.as_str(),
-        "ws4-ascii-find-v1" | "ws4-ascii-replace-v1"
+        "ws4-ascii-find-v1" | "ws4-ascii-replace-v1" | "ws4-character-find-v1"
     ) != spec.expected.find_found.is_some()
     {
         return Err("find or replace profile requires a declared found result".into());

@@ -40,6 +40,7 @@
       <ComponentRef Id="WordErasureGuide" />
       <ComponentRef Id="LineRightGuide" />
       <ComponentRef Id="LineLeftGuide" />
+      <ComponentRef Id="CharacterFindGuide" />
     </Feature>
 
     <Component Id="DesktopExecutable" Directory="INSTALLFOLDER" Guid="2A838F5F-8E76-4801-B9EB-D9B767CB32C3">
@@ -151,6 +152,10 @@
     <Component Id="LineLeftGuide" Directory="INSTALLFOLDER" Guid="3E8340B5-6A93-4A43-9A52-AC4B34CEDD72">
       <File Source="$(var.RepoRoot)\docs\LINE_LEFT.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="LineLeftGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="CharacterFindGuide" Directory="INSTALLFOLDER" Guid="4AE055D9-6C89-4F81-91C2-0DD64E4E95A8">
+      <File Source="$(var.RepoRoot)\docs\CHARACTER_FIND.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="CharacterFindGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
   </Package>
 </Wix>

@@ -123,6 +123,13 @@ enum Dialog {
     },
 }
 enum FindDialog {
+    Character {
+        backwards: bool,
+    },
+    CharacterNotice {
+        character: char,
+        backwards: bool,
+    },
     Term(String),
     Options {
         term: String,
@@ -199,6 +206,38 @@ impl App {
             return;
         }
         match dialog {
+            FindDialog::Character { backwards } => {
+                if !modifiers.control()
+                    && !modifiers.alt()
+                    && !modifiers.logo()
+                    && let Some(value) = text
+                    && value.len() == 1
+                    && let Some(character) = value.chars().next()
+                    && character.is_ascii_alphabetic()
+                {
+                    let result =
+                        self.session
+                            .apply_command(&openstar_core::Command::FindCharacter {
+                                character,
+                                backwards,
+                            });
+                    let ok = result.is_ok();
+                    self.record_edit(result);
+                    if ok
+                        && let DocumentSession::Legacy(session) = &self.session
+                        && session.editor.last_find_result() == Some(false)
+                    {
+                        self.find_dialog = Some(FindDialog::CharacterNotice {
+                            character,
+                            backwards,
+                        });
+                    }
+                } else {
+                    self.find_dialog = Some(FindDialog::Character { backwards });
+                    self.notice = "Type one ASCII letter".into();
+                }
+            }
+            notice @ FindDialog::CharacterNotice { .. } => self.find_dialog = Some(notice),
             FindDialog::Term(mut term) => match key {
                 Key::Named(Named::Enter) if !term.is_empty() => {
                     self.find_dialog = Some(FindDialog::Options {
@@ -1093,6 +1132,10 @@ impl App {
                                 self.find_dialog = Some(FindDialog::Term(String::new()));
                                 self.notice.clear();
                             }
+                            Some(Action::FindCharacter { backwards }) => {
+                                self.find_dialog = Some(FindDialog::Character { backwards });
+                                self.notice.clear();
+                            }
                             Some(Action::Replace) => {
                                 self.find_dialog = Some(FindDialog::ReplaceTerm(String::new()));
                                 self.notice.clear();
@@ -1819,6 +1862,11 @@ impl App {
             }
         } else if let Some(find) = &self.find_dialog {
             match find {
+                FindDialog::Character { backwards } => screen.character_find_prompt(*backwards),
+                FindDialog::CharacterNotice {
+                    character,
+                    backwards,
+                } => screen.character_find_notice(*character, *backwards),
                 FindDialog::Term(term) => screen.find_prompt(term, None),
                 FindDialog::Options { term, flags } => screen.find_prompt(term, Some(flags)),
                 FindDialog::ReplaceTerm(term) => screen.replace_prompt(term, None, None),
@@ -2292,6 +2340,86 @@ mod tests {
             ));
             assert_eq!(app.keyboard.prefix(), None);
         }
+    }
+
+    #[test]
+    fn character_search_keys_prompt_and_failure_flow_through_app() {
+        let scratch = Scratch::new();
+        let path = scratch.0.join("char.doc");
+        let mut carrier = b"ABACABA".to_vec();
+        carrier.resize(128, 0x1a);
+        fs::write(&path, &carrier).unwrap();
+        let mut app = App::new_with_recovery(None, None);
+        app.session = DocumentSession::Legacy(Session::open(&path).unwrap());
+        app.projection = Projection::for_session(&app.session);
+        app.opening = false;
+        app.window_focused = true;
+        let id = window::Id::unique();
+        let _ = app.update(Message::Event(
+            key(Key::Character("d".into()), true, None),
+            id,
+        ));
+        for (command, character, cursor) in [('g', 'A', 2), ('g', 'A', 2), ('h', 'A', 0)] {
+            let _ = app.update(Message::Event(
+                key(Key::Character("q".into()), true, None),
+                id,
+            ));
+            let _ = app.update(Message::Event(
+                key(
+                    Key::Character(command.to_string().into()),
+                    false,
+                    Some(&command.to_string()),
+                ),
+                id,
+            ));
+            assert!(matches!(
+                app.find_dialog,
+                Some(FindDialog::Character { .. })
+            ));
+            let _ = app.update(Message::Event(
+                key(
+                    Key::Character(character.to_string().into()),
+                    false,
+                    Some(&character.to_string()),
+                ),
+                id,
+            ));
+            assert!(app.find_dialog.is_none());
+            let DocumentSession::Legacy(session) = &app.session else {
+                panic!()
+            };
+            assert_eq!(session.editor.snapshot().cursor_byte, cursor);
+        }
+        let _ = app.update(Message::Event(
+            key(Key::Character("q".into()), true, None),
+            id,
+        ));
+        let _ = app.update(Message::Event(
+            key(Key::Character("g".into()), false, Some("g")),
+            id,
+        ));
+        let _ = app.update(Message::Event(
+            key(Key::Character("z".into()), false, Some("Z")),
+            id,
+        ));
+        assert!(matches!(
+            app.find_dialog,
+            Some(FindDialog::CharacterNotice {
+                character: 'Z',
+                backwards: false
+            })
+        ));
+        let _ = app.update(Message::Event(
+            key(Key::Named(Named::Escape), false, None),
+            id,
+        ));
+        assert!(app.find_dialog.is_none());
+        let DocumentSession::Legacy(session) = &app.session else {
+            panic!()
+        };
+        assert_eq!(session.editor.snapshot().cursor_byte, 7);
+        assert!(!session.editor.snapshot().modified);
+        assert_eq!(fs::read(path).unwrap(), carrier);
     }
 
     #[test]

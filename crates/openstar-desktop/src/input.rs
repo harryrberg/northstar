@@ -5,6 +5,7 @@ use openstar_core::Command;
 #[derive(Debug, PartialEq, Eq)]
 pub enum Action {
     Find,
+    FindCharacter { backwards: bool },
     Replace,
     RepeatFind,
     Edit(Command),
@@ -91,6 +92,8 @@ impl Keyboard {
                 ('Q', "b") if !utf8 => Action::Edit(Command::JumpBlockBegin),
                 ('Q', "k") if !utf8 => Action::Edit(Command::JumpBlockEnd),
                 ('Q', "f") if !utf8 => Action::Find,
+                ('Q', "g") if !utf8 => Action::FindCharacter { backwards: false },
+                ('Q', "h") if !utf8 => Action::FindCharacter { backwards: true },
                 ('Q', "a") if !utf8 => Action::Replace,
                 ('Q', "y") if !utf8 => Action::Edit(Command::DeleteToLineEnd),
                 ('K', "s") => Action::Save,
