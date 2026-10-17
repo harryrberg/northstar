@@ -177,6 +177,16 @@ impl DocumentSession {
             )),
         }
     }
+
+    pub fn insert_file(&mut self, path: &Path) -> io::Result<()> {
+        match self {
+            Self::Legacy(session) => session.insert_file(path),
+            Self::Utf8(_) => Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "File insertion is available only in WordStar mode",
+            )),
+        }
+    }
 }
 
 impl Default for Session {
@@ -277,6 +287,14 @@ impl Session {
             .apply(&Command::JumpBlockBegin)
             .expect("a validated block retains its begin mark after writing");
         Ok(())
+    }
+
+    /// Read one bounded WordStar carrier and stage the edit before mutation.
+    pub fn insert_file(&mut self, path: &Path) -> io::Result<()> {
+        let source = Document::from_bytes(read_document(path)?);
+        self.editor
+            .insert_wordstar_file(&source)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))
     }
 }
 

@@ -9,6 +9,7 @@ use std::{error::Error, fmt, ops::Range};
 
 mod block;
 mod erasure;
+mod file_insert;
 mod formatting;
 mod reformat;
 mod search;
@@ -471,6 +472,26 @@ impl Editor {
             ));
         }
         block::write_carrier(&self.document, self.formatting, self.block)
+    }
+
+    /// Insert the active bytes of a qualified WordStar file at the cursor.
+    /// EOF padding is excluded; the cursor stays before the inserted text.
+    pub fn insert_wordstar_file(&mut self, source: &Document) -> Result<(), EditError> {
+        if self.replace_pending {
+            return Err(EditError::UnqualifiedOperation(
+                "answer the pending replacement before another command",
+            ));
+        }
+        let active = file_insert::prepare(
+            &self.document,
+            self.cursor,
+            self.insert,
+            self.formatting,
+            self.block,
+            source,
+        )?;
+        self.replace_active(active);
+        Ok(())
     }
 
     /// Reject unsupported cases before changing state. Returned errors are atomic.

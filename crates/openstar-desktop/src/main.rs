@@ -80,6 +80,7 @@ enum PathKind {
     OpenUtf8,
     SaveAs { next: Option<Next> },
     WriteBlock,
+    InsertFile,
     ChangeDirectory,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -157,6 +158,7 @@ pub(crate) enum Message {
     Save(Option<Next>),
     SaveAs(Option<Next>),
     WriteBlock,
+    InsertFile,
     Help,
     PathChanged(String),
     Submit,
@@ -746,6 +748,7 @@ impl App {
             }
             Message::SaveAs(next) => return self.path_dialog(PathKind::SaveAs { next }),
             Message::WriteBlock => return self.path_dialog(PathKind::WriteBlock),
+            Message::InsertFile => return self.path_dialog(PathKind::InsertFile),
             Message::Help => {
                 self.keyboard.reset();
                 self.dialog = Some(Dialog::Help { topic: None });
@@ -839,6 +842,7 @@ impl App {
                         },
                         PathKind::SaveAs { .. } => self.session.save_as(&path),
                         PathKind::WriteBlock => self.session.write_block_new(&path),
+                        PathKind::InsertFile => self.session.insert_file(&path),
                         PathKind::ChangeDirectory => match std::fs::metadata(&path) {
                             Ok(metadata) if metadata.is_dir() => {
                                 changed_directory = Some(path);
@@ -865,6 +869,7 @@ impl App {
                                 matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8);
                             let saved_copy = matches!(kind, PathKind::SaveAs { .. });
                             let written_block = matches!(kind, PathKind::WriteBlock);
+                            let inserted_file = matches!(kind, PathKind::InsertFile);
                             if matches!(kind, PathKind::OpenLegacy | PathKind::OpenUtf8) {
                                 self.session_generation += 1;
                                 self.utf8_top_row = 0;
@@ -881,9 +886,11 @@ impl App {
                             self.dialog = None;
                             self.notice.clear();
                             self.projection = Projection::for_session(&self.session);
-                            if written_block {
+                            if written_block || inserted_file {
                                 self.preferred_column = None;
                                 self.mark_recovery_changed();
+                            }
+                            if written_block {
                                 self.refresh_directory();
                             }
                             if saved_copy && let Err(problem) = self.clear_recovery() {
@@ -896,7 +903,9 @@ impl App {
                             }
                         }
                         Err(e) => {
-                            *error = if e.kind() == std::io::ErrorKind::AlreadyExists {
+                            *error = if matches!(kind, PathKind::InsertFile) {
+                                format!("Insert failed: {e}. Document unchanged.")
+                            } else if e.kind() == std::io::ErrorKind::AlreadyExists {
                                 "File exists. Choose a new path.".into()
                             } else {
                                 format!("{e}. Document retained; no new file was published.")
@@ -1150,6 +1159,7 @@ impl App {
                                 return self.update(Message::Save(Some(Next::Close(id))));
                             }
                             Some(Action::WriteBlock) => return self.update(Message::WriteBlock),
+                            Some(Action::InsertFile) => return self.update(Message::InsertFile),
                             Some(Action::Done) => return self.begin(Next::Opening),
                             Some(Action::Help) => return self.update(Message::Help),
                             Some(Action::Notice(message)) => self.notice = message.into(),
@@ -1337,6 +1347,10 @@ impl App {
                 ..
             } => "KW",
             Dialog::Path {
+                kind: PathKind::InsertFile,
+                ..
+            } => "KR",
+            Dialog::Path {
                 kind: PathKind::ChangeDirectory,
                 ..
             } => "L",
@@ -1449,6 +1463,16 @@ impl App {
                                 7,
                             );
                             screen.put(8, 0, "Name?", 7);
+                        }
+                        PathKind::InsertFile => {
+                            screen.put(
+                                2,
+                                0,
+                                "Specify the name of the document that you wish to insert into the file",
+                                7,
+                            );
+                            screen.put(3, 0, "being edited. If no drive is specified, the logged drive will be used.", 7);
+                            screen.put(8, 0, "Document?", 7);
                         }
                         PathKind::ChangeDirectory => unreachable!(),
                     }
@@ -1667,6 +1691,11 @@ impl App {
                 value,
                 ..
             } => Some((value, 8.0, 6.0)),
+            Dialog::Path {
+                kind: PathKind::InsertFile,
+                value,
+                ..
+            } => Some((value, 8.0, 10.0)),
             Dialog::Path { value, .. } => Some((value, 8.0, 18.0)),
             Dialog::DirectoryMatch { value, .. } => Some((value, 7.0, 27.0)),
             Dialog::FilePrompt {
@@ -2023,6 +2052,69 @@ mod tests {
         assert_eq!(bytes.len(), 128);
         assert!(app.session.modified());
         assert_eq!(app.projection.cursor.1, 1);
+    }
+
+    #[test]
+    fn insert_file_uses_the_path_prompt_and_keeps_failed_reads_atomic() {
+        let scratch = Scratch::new();
+        let input = scratch.0.join("INSERT.DOC");
+        let mut source = b"XY".to_vec();
+        source.resize(128, 0x1a);
+        fs::write(&input, source).unwrap();
+        let mut app = App::new_with_recovery(None, None);
+        app.window_focused = true;
+        app.opening = false;
+        app.session = DocumentSession::Legacy(Session::new_at(scratch.0.join("MAIN.DOC")));
+        for command in [
+            openstar_core::Command::InsertAscii {
+                text: "ABCDE".into(),
+            },
+            openstar_core::Command::DocumentStart,
+            openstar_core::Command::NextCharacter,
+            openstar_core::Command::NextCharacter,
+        ] {
+            app.session.apply_command(&command).unwrap();
+        }
+        let before = match &app.session {
+            DocumentSession::Legacy(session) => session.editor.document().bytes().to_vec(),
+            DocumentSession::Utf8(_) => unreachable!(),
+        };
+        let id = window::Id::unique();
+        let _ = app.update(Message::Event(
+            key(Key::Character("k".into()), true, None),
+            id,
+        ));
+        let _ = app.update(Message::Event(
+            key(Key::Character("r".into()), true, None),
+            id,
+        ));
+        assert!(matches!(
+            app.dialog,
+            Some(Dialog::Path {
+                kind: PathKind::InsertFile,
+                ..
+            })
+        ));
+        let _ = app.update(Message::PathChanged(
+            scratch.0.join("missing.doc").display().to_string(),
+        ));
+        let _ = app.update(Message::Submit);
+        assert!(
+            matches!(app.dialog, Some(Dialog::Path { kind: PathKind::InsertFile, ref error, .. }) if !error.is_empty())
+        );
+        if let DocumentSession::Legacy(session) = &app.session {
+            assert_eq!(session.editor.document().bytes(), before);
+            assert_eq!(session.editor.snapshot().cursor_byte, 2);
+        }
+        let _ = app.update(Message::PathChanged(input.display().to_string()));
+        let _ = app.update(Message::Submit);
+        assert!(app.dialog.is_none());
+        if let DocumentSession::Legacy(session) = &app.session {
+            assert_eq!(&session.editor.document().bytes()[..7], b"ABXYCDE");
+            assert_eq!(session.editor.snapshot().cursor_byte, 2);
+        }
+        assert!(app.session.modified());
+        assert_eq!(app.projection.cursor.1, 2);
     }
 
     #[test]

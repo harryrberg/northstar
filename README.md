@@ -6,7 +6,7 @@ The project checks its behavior against controlled runs of the DOS original and 
 
 ## Try it on Windows
 
-[Download OpenStar 0.1.34 for Windows (MSI)](releases/windows/OpenStar-Prototype-0.1.34-x64.msi). The unsigned installer is per-user and adds a Start menu entry. [Installer details](packaging/windows/README.md).
+[Download OpenStar 0.1.35 for Windows (MSI)](releases/windows/OpenStar-Prototype-0.1.35-x64.msi). The unsigned installer is per-user and adds a Start menu entry. [Installer details](packaging/windows/README.md).
 
 At the opening menu:
 

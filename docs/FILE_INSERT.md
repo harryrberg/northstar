@@ -1,0 +1,15 @@
+# Ctrl-K R: insert a WordStar file
+
+In the tested WordStar Professional 4.00 case, Ctrl-K R asks for a document name and inserts that file's active text at the cursor. The inserted file remains unchanged. The cursor stays before the inserted text. Ctrl-K S saves the combined document.
+
+The isolated run `C:/Projects/rea/investigations/wordstar/runtime-openstar-kr-01` used the primary `WS.EXE` (SHA-256 `535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d`). The copied runtime received a synthetic `INSERT.DOC` after startup; `injected-input.json` records its path and identity. It contained `XY` followed by 126 DOS EOF bytes (`1A`), for 128 bytes total and SHA-256 `86b9120ba873b8f733e56182932da28f7f54c13f2621322c2c31af13884056cc`.
+
+Starting in a new `MAIN.DOC` with Insert on, justification off, document mode, single spacing, and margins 1/65, the run typed `ABCDE`, moved to byte offset 2 (L01 C03), pressed Ctrl-K R, and entered `INSERT.DOC`. The screen showed `ABXYCDE` at L01 C03. Ctrl-K S produced 128 bytes: `41 42 58 59 43 44 45` followed by `1A` padding, SHA-256 `3233716c289dcb21280b7716c735d33f721441b56ff879c36e6b77409fc87ca4`. The inserted file kept its original hash.
+
+The separate `runtime-openstar-kr-marks-01` run marked `BC` in `ABCDE` with Ctrl-K B/K, placed the cursor at the end mark (byte offset 3, L01 C04), then inserted the same file. The screen showed `ABCXYDE`; the saved 128-byte file had SHA-256 `38c0e32b75c6e1caf40267273fc2d9d6cf0df6f3bc2193ed00d7842bb5df5ebe`. Ctrl-Q B and Ctrl-Q K subsequently returned to the original begin and end positions. This qualifies retaining marks for that one placement.
+
+OpenStar's core, keyboard, desktop-session, and application-flow tests cover these cases. Its desktop workflow saves `MAIN.DOC` with the same SHA-256 as the first DOS result, reopens it, and checks that the source file stayed unchanged. In `runtime-openstar-kr-reopen-01`, the DOS original opened a byte-identical `MAIN.DOC`, displayed `ABXYCDE`, and saved it with the same SHA-256. These are separate, reproducible checks of the selected bytes and DOS interoperability; they do not qualify other document shapes.
+
+OpenStar currently accepts only a 128-byte inserted WordStar carrier containing one nonempty line of printable ASCII without spaces, followed by EOF padding. The target physical line must also contain only printable ASCII without spaces, and insertion must remain within 65 columns. Insert must be on; justification must be off; formatting must use document mode, single spacing, and margins 1/65. Marks must be absent or both on that same line in the observed begin/end arrangement with the cursor at the end mark. Unsupported inputs are rejected before the open document changes. Relative paths use the logged directory, and the source is read without being written.
+
+Multiline files, spaces, high-bit characters, formatting controls, other marks, wrapping, other modes, larger files, failures in the DOS original, and native UTF-8 insertion have not been qualified. The Windows path prompt follows the observed DOS wording, but its pixels have not been compared in a native-window check.

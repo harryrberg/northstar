@@ -687,6 +687,42 @@ fn save_keys_keep_save_and_save_as_distinct() {
     );
     assert_eq!(keyboard.handle(&ctrl("k", false)), None);
     assert_eq!(keyboard.handle(&ctrl("w", false)), Some(Action::WriteBlock));
+    assert_eq!(keyboard.handle(&ctrl("k", false)), None);
+    assert_eq!(keyboard.handle(&ctrl("r", false)), Some(Action::InsertFile));
+}
+
+#[test]
+fn ctrl_k_r_inserts_a_wordstar_file_and_saves_the_dos_result() {
+    let scratch = Scratch::new();
+    let source = scratch.0.join("INSERT.DOC");
+    let target = scratch.0.join("MAIN.DOC");
+    let mut input = b"XY".to_vec();
+    input.resize(128, 0x1a);
+    fs::write(&source, &input).unwrap();
+    let mut session = Session::new_at(target.clone());
+    session
+        .editor
+        .apply(&Command::InsertAscii {
+            text: "ABCDE".into(),
+        })
+        .unwrap();
+    session.editor.apply(&Command::DocumentStart).unwrap();
+    session.editor.apply(&Command::NextCharacter).unwrap();
+    session.editor.apply(&Command::NextCharacter).unwrap();
+    session.insert_file(&source).unwrap();
+    assert_eq!(session.editor.snapshot().cursor_byte, 2);
+    assert_eq!(&session.editor.document().bytes()[..7], b"ABXYCDE");
+    assert_eq!(fs::read(&source).unwrap(), input);
+    session.save().unwrap();
+    assert_eq!(
+        format!("{:x}", Sha256::digest(fs::read(&target).unwrap())),
+        "3233716c289dcb21280b7716c735d33f721441b56ff879c36e6b77409fc87ca4"
+    );
+    assert_eq!(
+        Session::open(&target).unwrap().editor.document().bytes(),
+        fs::read(&target).unwrap()
+    );
+    assert_eq!(fs::read(&source).unwrap(), input);
 }
 
 #[test]

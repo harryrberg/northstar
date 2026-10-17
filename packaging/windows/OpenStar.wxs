@@ -34,6 +34,7 @@
       <ComponentRef Id="BlockCopyGuide" />
       <ComponentRef Id="BlockMoveDeleteGuide" />
       <ComponentRef Id="BlockWriteGuide" />
+      <ComponentRef Id="FileInsertGuide" />
       <ComponentRef Id="ErasureGuide" />
       <ComponentRef Id="WordErasureGuide" />
     </Feature>
@@ -123,6 +124,10 @@
     <Component Id="BlockWriteGuide" Directory="INSTALLFOLDER" Guid="B5BDBFC2-3481-43B0-884F-BB27A773F83D">
       <File Source="$(var.RepoRoot)\docs\BLOCK_WRITE.md" />
       <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="BlockWriteGuide" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <Component Id="FileInsertGuide" Directory="INSTALLFOLDER" Guid="86C16375-9E73-4B9C-BA0F-59136A1133E6">
+      <File Source="$(var.RepoRoot)\docs\FILE_INSERT.md" />
+      <RegistryValue Root="HKCU" Key="Software\OpenStar\Prototype" Name="FileInsertGuide" Type="integer" Value="1" KeyPath="yes" />
     </Component>
     <Component Id="ErasureGuide" Directory="INSTALLFOLDER" Guid="C9626847-DE87-4AE4-89AF-F5DFE888D1DB">
       <File Source="$(var.RepoRoot)\docs\ERASURE.md" />

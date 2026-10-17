@@ -368,6 +368,9 @@ impl Screen {
             );
         }
         self.put(18, 0, "F11 toggles full screen; F12 changes the font.", 7);
+        if !utf8 {
+            self.put(19, 0, "Ctrl-K R inserts a WordStar file at the cursor.", 7);
+        }
         self.put(20, 0, "Press Esc to return to your document.", 7);
         self.put(22, 0, crate::APP_TITLE, 7);
         self.cursor = None;

@@ -97,6 +97,10 @@ Twenty synthetic scenarios compare Ctrl-K V and Ctrl-K Y with retained DOS scree
 
 One isolated DOS case writes the marked `BC` in `ABCDE` to a new 128-byte file with `1A` padding. OpenStar's core and desktop file tests match the output SHA-256 and preserve the unsaved source and marks. The original prompts before overwriting an existing target; OpenStar refuses to replace it. [Starting conditions, output identity and limits](BLOCK_WRITE.md) define this narrow profile.
 
+## File insertion: ws4-file-insert-single-line-v1
+
+Two isolated DOS cases insert `XY` from a synthetic 128-byte WordStar file into `ABCDE`, with and without block marks. The cursor stays before the inserted text, and marks at the observed end position remain. OpenStar's saved output matches the unmarked DOS result byte for byte; the DOS original reopens and resaves that result without changes. [Starting conditions, file identities, reopen evidence and limits](FILE_INSERT.md) define the supported single-line ASCII profile.
+
 ## Ctrl-Y and Ctrl-U: ws4-line-erasure-v1
 
 Fourteen synthetic scenarios compare whole-line deletion and reuse of the deleted-line buffer with retained DOS runs. Ctrl-Y deletes an ordinary physical line, including its hard CRLF when present, and moves to the line start. Ctrl-U inserts a copy of the buffer at the current cursor, leaves the cursor and Insert mode unchanged, and keeps the buffer for later use. Ctrl-G does not fill or clear this buffer in the observed sequences. [Cases, source identities, interoperability check, and limits](ERASURE.md) define the scope. The core owns the buffer; CLI and desktop adapters select commands without reproducing its rules.

@@ -3,7 +3,7 @@
 use crate::{Document, Edit, EditError, Formatting, formatting};
 use std::ops::Range;
 
-fn check_formatting(formatting: Formatting) -> Result<(), EditError> {
+pub(super) fn check_formatting(formatting: Formatting) -> Result<(), EditError> {
     if (formatting.left_margin, formatting.right_margin) != (1, 65)
         || formatting.line_spacing != 1
         || !formatting.document_mode
