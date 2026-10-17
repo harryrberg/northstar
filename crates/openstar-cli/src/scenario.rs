@@ -53,6 +53,7 @@ struct Expected {
     replace_pending: Option<bool>,
     block_begin: Option<usize>,
     block_end: Option<usize>,
+    block_visible: Option<bool>,
     marks_cleared: Option<bool>,
 }
 
@@ -78,6 +79,7 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | "ws4-backspace-delete-v1"
                 | "ws4-block-copy-v1"
                 | "ws4-block-move-delete-v1"
+                | "ws4-block-display-v1"
         )
     {
         return Err("unsupported scenario schema or compatibility profile".into());
@@ -235,13 +237,41 @@ pub fn parse(bytes: &[u8]) -> Result<Scenario, Box<dyn Error>> {
                 | Command::ToggleInsert
         )
     };
+    let block_display = |command: &Command| {
+        matches!(
+            command,
+            Command::MarkBlockBegin
+                | Command::MarkBlockEnd
+                | Command::ToggleBlockDisplay
+                | Command::NextCharacter
+                | Command::DocumentStart
+        )
+    };
+    if (spec.profile == "ws4-block-display-v1"
+        && (spec.commands.iter().any(|command| !block_display(command))
+            || !spec.commands.iter().any(|command| {
+                matches!(
+                    command,
+                    Command::MarkBlockBegin | Command::MarkBlockEnd | Command::ToggleBlockDisplay
+                )
+            })
+            || spec.expected.block_visible.is_none()))
+        || (spec.profile != "ws4-block-display-v1"
+            && (spec.commands.contains(&Command::ToggleBlockDisplay)
+                || spec.expected.block_visible.is_some()))
+    {
+        return Err("block display requires its declared profile and expected visibility".into());
+    }
     if (matches!(
         spec.profile.as_str(),
         "ws4-block-copy-v1" | "ws4-block-move-delete-v1"
     ) && spec.commands.iter().any(|command| !block_copy(command)))
         || (!matches!(
             spec.profile.as_str(),
-            "ws4-block-copy-v1" | "ws4-block-move-delete-v1" | "ws4-quick-jump-v1"
+            "ws4-block-copy-v1"
+                | "ws4-block-move-delete-v1"
+                | "ws4-quick-jump-v1"
+                | "ws4-block-display-v1"
         ) && spec.commands.iter().any(|command| {
             matches!(
                 command,
@@ -412,6 +442,13 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
     }
     if spec
         .expected
+        .block_visible
+        .is_some_and(|visible| visible != snapshot.block_visible)
+    {
+        mismatches.push("block_visible");
+    }
+    if spec
+        .expected
         .find_found
         .is_some_and(|x| Some(x) != editor.last_find_result())
     {
@@ -460,7 +497,7 @@ pub fn replay(spec: Scenario, output: Option<&Path>) -> Result<serde_json::Value
         "state": snapshot,
         "steps": steps,
         "find_found": editor.last_find_result(),
-        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some(), "find_found": spec.expected.find_found.is_some(), "replace_pending": spec.expected.replace_pending.is_some(), "block_begin": spec.expected.block_begin.is_some(), "block_end": spec.expected.block_end.is_some(), "marks_cleared": spec.expected.marks_cleared == Some(true)},
+        "compared_fields": {"carrier_sha256": true, "cursor_byte": spec.expected.cursor_byte.is_some(), "insert": spec.expected.insert.is_some(), "formatting": spec.expected.formatting.is_some(), "find_found": spec.expected.find_found.is_some(), "replace_pending": spec.expected.replace_pending.is_some(), "block_begin": spec.expected.block_begin.is_some(), "block_end": spec.expected.block_end.is_some(), "block_visible": spec.expected.block_visible.is_some(), "marks_cleared": spec.expected.marks_cleared == Some(true)},
         "output_path": output,
         "target_executed": false,
         "provenance": spec.provenance,

@@ -370,12 +370,13 @@ impl Screen {
         self.put(18, 0, "F11 toggles full screen; F12 changes the font.", 7);
         if !utf8 {
             self.put(19, 0, "Ctrl-K R inserts a WordStar file at the cursor.", 7);
+            self.put(21, 0, "Ctrl-K H shows or hides block marks.", 7);
         }
         self.put(20, 0, "Press Esc to return to your document.", 7);
         self.put(22, 0, crate::APP_TITLE, 7);
         self.cursor = None;
     }
-    fn submenu(&mut self, prefix: char) {
+    fn submenu(&mut self, prefix: char, block_visible: bool) {
         let title = match prefix {
             'K' => " B L O C K   &   S A V E   M E N U ",
             'Q' => " Q U I C K   M E N U ",
@@ -390,6 +391,11 @@ impl Screen {
             });
         }
         self.border(1, 9, title);
+        let block_display = if block_visible {
+            "H turn display off"
+        } else {
+            "H turn display on"
+        };
         let entries: &[(usize, usize, &str)] = match prefix {
             'K' => &[
                 (2, 13, "SAVE"),
@@ -405,7 +411,7 @@ impl Screen {
                 (4, 46, "V move"),
                 (4, 58, "E rename"),
                 (5, 2, "X save & exit OpenStar"),
-                (5, 26, "H turn display on"),
+                (5, 26, block_display),
                 (5, 46, "Y delete"),
                 (5, 58, "J erase"),
                 (6, 2, "Q quit without saving"),
@@ -519,7 +525,14 @@ impl Screen {
         label: &str,
         prefix: Option<char>,
     ) -> Self {
-        Self::editor_view(projection, state.insert, label, prefix, None)
+        Self::editor_view(
+            projection,
+            state.insert,
+            state.block_visible,
+            label,
+            prefix,
+            None,
+        )
     }
 
     pub fn utf8_editor(
@@ -528,12 +541,13 @@ impl Screen {
         prefix: Option<char>,
         viewport_top: usize,
     ) -> Self {
-        Self::editor_view(projection, true, label, prefix, Some(viewport_top))
+        Self::editor_view(projection, true, false, label, prefix, Some(viewport_top))
     }
 
     fn editor_view(
         projection: &Projection,
         insert_mode: bool,
+        block_visible: bool,
         label: &str,
         prefix: Option<char>,
         utf8_viewport_top: Option<usize>,
@@ -628,7 +642,7 @@ impl Screen {
             }
         }
         if !utf8 && let Some(prefix) = prefix {
-            s.submenu(prefix);
+            s.submenu(prefix, block_visible);
         }
         let top = utf8_viewport_top.unwrap_or_else(|| row.saturating_sub(11));
         let left = column.saturating_sub(78);
@@ -810,7 +824,7 @@ mod tests {
             ('O', "O N S C R E E N", "L set left"),
             ('P', "P R I N T   C O N T R O L S", "B bold"),
         ] {
-            screen.submenu(prefix);
+            screen.submenu(prefix, false);
             let menu = screen.cells[1..10]
                 .iter()
                 .flatten()

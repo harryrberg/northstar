@@ -152,18 +152,27 @@ impl Projection {
     pub fn new(editor: &Editor) -> Self {
         let snapshot = editor.snapshot();
         let selected = snapshot
-            .block_begin
-            .zip(snapshot.block_end)
-            .filter(|(begin, end)| begin < end);
+            .block_visible
+            .then(|| {
+                snapshot
+                    .block_begin
+                    .zip(snapshot.block_end)
+                    .filter(|(begin, end)| begin < end)
+            })
+            .flatten();
         let mut result = Self {
             rows: vec![vec![]],
             ..Self::default()
         };
         for token in editor.document().tokens() {
-            if token.range.start == snapshot.block_begin.unwrap_or(usize::MAX) {
+            if snapshot.block_visible
+                && token.range.start == snapshot.block_begin.unwrap_or(usize::MAX)
+            {
                 result.block_begin_row = Some(result.rows.len() - 1);
             }
-            if token.range.start == snapshot.block_end.unwrap_or(usize::MAX) {
+            if snapshot.block_visible
+                && token.range.start == snapshot.block_end.unwrap_or(usize::MAX)
+            {
                 result.block_end_row = Some(result.rows.len() - 1);
             }
             if token.range.start == snapshot.cursor_byte {
@@ -223,10 +232,10 @@ impl Projection {
         if snapshot.cursor_byte == snapshot.active_bytes {
             result.cursor = (result.rows.len() - 1, result.rows.last().unwrap().len());
         }
-        if snapshot.block_end == Some(snapshot.active_bytes) {
+        if snapshot.block_visible && snapshot.block_end == Some(snapshot.active_bytes) {
             result.block_end_row = Some(result.rows.len() - 1);
         }
-        if snapshot.block_begin == Some(snapshot.active_bytes) {
+        if snapshot.block_visible && snapshot.block_begin == Some(snapshot.active_bytes) {
             result.block_begin_row = Some(result.rows.len() - 1);
         }
         // Padding remains in the carrier. A payload following the first EOF is

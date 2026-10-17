@@ -81,6 +81,7 @@ impl DocumentSession {
                     | Command::Backspace
                     | Command::MarkBlockBegin
                     | Command::MarkBlockEnd
+                    | Command::ToggleBlockDisplay
                     | Command::CopyBlock
                     | Command::MoveBlock
                     | Command::DeleteBlock

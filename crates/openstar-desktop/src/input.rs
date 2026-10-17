@@ -97,6 +97,7 @@ impl Keyboard {
                 ('K', "q") => Action::Done,
                 ('K', "b") if !utf8 => Action::Edit(Command::MarkBlockBegin),
                 ('K', "k") if !utf8 => Action::Edit(Command::MarkBlockEnd),
+                ('K', "h") if !utf8 => Action::Edit(Command::ToggleBlockDisplay),
                 ('K', "c") if !utf8 => Action::Edit(Command::CopyBlock),
                 ('K', "v") if !utf8 => Action::Edit(Command::MoveBlock),
                 ('K', "y") if !utf8 => Action::Edit(Command::DeleteBlock),

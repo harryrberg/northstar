@@ -94,6 +94,9 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "block-copy-before-source",
         "block-copy-inside-source",
         "block-copy-insert-off",
+        "block-display-mark-on",
+        "block-display-hide",
+        "block-display-show",
         "block-copy-repeat-before-source",
         "block-copy-repeat-inside-source",
         "block-move-end",
@@ -231,12 +234,14 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                 ),
                 Command::MarkBlockBegin
                 | Command::MarkBlockEnd
+                | Command::ToggleBlockDisplay
                 | Command::CopyBlock
                 | Command::MoveBlock
                 | Command::DeleteBlock => {
                     let key = match command {
                         Command::MarkBlockBegin => "b",
                         Command::MarkBlockEnd => "k",
+                        Command::ToggleBlockDisplay => "h",
                         Command::CopyBlock => "c",
                         Command::MoveBlock => "v",
                         Command::DeleteBlock => "y",
@@ -281,6 +286,7 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         if case["profile"] == "ws4-block-copy-v1"
             || (case["profile"] == "ws4-block-move-delete-v1"
                 && case["expected"]["marks_cleared"] != true)
+            || case["profile"] == "ws4-block-display-v1"
         {
             assert_eq!(
                 session.editor.snapshot().block_begin,
@@ -289,6 +295,12 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
             assert_eq!(
                 session.editor.snapshot().block_end,
                 Some(expected["block_end"].as_u64().unwrap() as usize)
+            );
+        }
+        if case["profile"] == "ws4-block-display-v1" {
+            assert_eq!(
+                session.editor.snapshot().block_visible,
+                expected["block_visible"].as_bool().unwrap()
             );
         }
         if case["expected"]["marks_cleared"] == true {
@@ -367,6 +379,37 @@ fn selected_block_uses_reverse_video_and_end_marker() {
     assert_eq!(screen.cells[11][2].attribute, 0x70);
     assert_eq!(screen.cells[11][3].attribute, 7);
     assert_eq!(screen.cells[11][79].glyph, 'K');
+    session.editor.apply(&Command::ToggleBlockDisplay).unwrap();
+    let hidden_projection = Projection::new(&session.editor);
+    let hidden = Screen::editor(
+        &hidden_projection,
+        &session.editor.snapshot(),
+        "TEST.DOC",
+        Some('K'),
+    );
+    assert_eq!(hidden.cells[11][1].attribute, 7);
+    assert_eq!(hidden.cells[11][2].attribute, 7);
+    assert_ne!(hidden.cells[11][79].glyph, 'K');
+    assert!(!hidden_projection.rows[0][1].selected);
+    let menu: String = hidden.cells[5][26..43]
+        .iter()
+        .map(|cell| cell.glyph)
+        .collect();
+    assert_eq!(menu, "H turn display on");
+    session.editor.apply(&Command::ToggleBlockDisplay).unwrap();
+    let shown = Screen::editor(
+        &Projection::new(&session.editor),
+        &session.editor.snapshot(),
+        "TEST.DOC",
+        Some('K'),
+    );
+    assert_eq!(shown.cells[11][1].attribute, 0x70);
+    assert_eq!(shown.cells[11][79].glyph, 'K');
+    let menu: String = shown.cells[5][26..44]
+        .iter()
+        .map(|cell| cell.glyph)
+        .collect();
+    assert_eq!(menu, "H turn display off");
 }
 
 #[test]
@@ -689,6 +732,11 @@ fn save_keys_keep_save_and_save_as_distinct() {
     assert_eq!(keyboard.handle(&ctrl("w", false)), Some(Action::WriteBlock));
     assert_eq!(keyboard.handle(&ctrl("k", false)), None);
     assert_eq!(keyboard.handle(&ctrl("r", false)), Some(Action::InsertFile));
+    assert_eq!(keyboard.handle(&ctrl("k", false)), None);
+    assert_eq!(
+        keyboard.handle(&ctrl("h", false)),
+        Some(Action::Edit(Command::ToggleBlockDisplay))
+    );
 }
 
 #[test]

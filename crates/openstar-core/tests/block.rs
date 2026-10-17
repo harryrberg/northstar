@@ -70,6 +70,34 @@ fn quick_block_jumps_require_a_mark_and_leave_carrier_unchanged() {
 }
 
 #[test]
+fn block_display_toggle_keeps_marks_cursor_and_saved_bytes() {
+    let mut editor = editor(b"ABCDE", 1);
+    let carrier = editor.document().bytes().to_vec();
+    assert!(!editor.snapshot().block_visible);
+    editor.apply(&Command::MarkBlockBegin).unwrap();
+    assert!(editor.snapshot().block_visible);
+    editor.apply(&Command::NextCharacter).unwrap();
+    editor.apply(&Command::NextCharacter).unwrap();
+    editor.apply(&Command::MarkBlockEnd).unwrap();
+    editor.apply(&Command::ToggleBlockDisplay).unwrap();
+    let hidden = editor.snapshot();
+    assert!(!hidden.block_visible);
+    assert_eq!(
+        (hidden.cursor_byte, hidden.block_begin, hidden.block_end),
+        (3, Some(1), Some(3))
+    );
+    assert!(!hidden.modified);
+    assert_eq!(editor.document().bytes(), carrier);
+    editor.apply(&Command::JumpBlockBegin).unwrap();
+    assert_eq!(editor.snapshot().cursor_byte, 1);
+    editor.apply(&Command::JumpBlockEnd).unwrap();
+    assert_eq!(editor.snapshot().cursor_byte, 3);
+    editor.apply(&Command::ToggleBlockDisplay).unwrap();
+    assert!(editor.snapshot().block_visible);
+    assert_eq!(editor.document().bytes(), carrier);
+}
+
+#[test]
 fn missing_or_empty_block_rejects_copy_without_mutation() {
     let mut editor = editor(b"ABCDE", 2);
     let carrier = editor.document().bytes().to_vec();

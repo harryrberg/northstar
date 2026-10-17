@@ -87,7 +87,11 @@ Ten synthetic scenarios compare physical Backspace and Delete with retained DOS 
 
 ## Block marks and copy: ws4-block-copy-v1
 
-Eight synthetic scenarios compare Ctrl-K B, Ctrl-K K and Ctrl-K C against retained DOS screenshots and saved bytes. The marks define a half-open byte range. Copy inserts those bytes at the cursor, leaves the cursor in place and retains the selection for repeated copying. Copy before and inside the selection, an ordinary hard CRLF, and Insert-off mode are covered. Incomplete or empty blocks are rejected atomically. [Observed cases, source identities, DOS reopen check and limits](BLOCK_COPY.md) define the scope. Block hiding and later editing while marked remain unqualified.
+Eight synthetic scenarios compare Ctrl-K B, Ctrl-K K and Ctrl-K C against retained DOS screenshots and saved bytes. The marks define a half-open byte range. Copy inserts those bytes at the cursor, leaves the cursor in place and retains the selection for repeated copying. Copy before and inside the selection, an ordinary hard CRLF, and Insert-off mode are covered. Incomplete or empty blocks are rejected atomically. [Observed cases, source identities, DOS reopen check and limits](BLOCK_COPY.md) define the scope. Later editing while marked remains unqualified.
+
+## Block display: ws4-block-display-v1
+
+Three retained scenarios compare Ctrl-K H hiding and restoring a marked single-line block, with unchanged saved bytes, cursor and marks. A separate menu run records the initial `turn display on` wording and the change after toggling. The portable core owns visibility; the Windows screen uses it to draw the selection, marker and menu wording. [Exact observations and limits](BLOCK_DISPLAY.md) define this profile.
 
 ## Block move and delete: ws4-block-move-delete-v1
 

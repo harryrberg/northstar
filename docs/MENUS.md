@@ -24,7 +24,7 @@ The opening menu and D prompt show a four-column directory. PgUp/PgDn browse dir
 
 Ctrl-K, Ctrl-Q, Ctrl-O, and Ctrl-P show separate Block & Save, Quick, Onscreen Format, and Print Controls menus in the original menu area. The document and bottom status rows remain visible. The menu surfaces were transcribed from retained DOS screenshots; command behavior is separate.
 
-Ctrl-K S/D/X/Q/B/K/C/V/Y/W/R and Ctrl-Q R/F/A/S/D/B/K/C have the bounded behaviors in the [Windows prototype guide](WINDOWS_PROTOTYPE.md). [Ctrl-K W](BLOCK_WRITE.md) writes a marked block to a new file in one tested single-line case. [Ctrl-K R](FILE_INSERT.md) inserts one qualified file into the open document. Other Ctrl-K and Ctrl-Q choices, and all Ctrl-O and Ctrl-P choices, currently report that the command is not implemented. Direct editing commands and the function-key line have the limits in the same guide. Native UTF-8 mode retains its own key map and does not display the legacy prefix menus.
+Ctrl-K S/D/X/Q/B/K/C/V/Y/W/R/H and Ctrl-Q R/F/A/S/D/B/K/C have the bounded behaviors in the [Windows prototype guide](WINDOWS_PROTOTYPE.md). [Ctrl-K W](BLOCK_WRITE.md) writes a marked block to a new file in one tested single-line case. [Ctrl-K R](FILE_INSERT.md) inserts one qualified file into the open document. [Ctrl-K H](BLOCK_DISPLAY.md) hides or shows the block marks without changing the document. Other Ctrl-K and Ctrl-Q choices, and all Ctrl-O and Ctrl-P choices, currently report that the command is not implemented. Direct editing commands and the function-key line have the limits in the same guide. Native UTF-8 mode retains its own key map and does not display the legacy prefix menus.
 
 ## Evidence and limits
 

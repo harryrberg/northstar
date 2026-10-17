@@ -144,11 +144,19 @@ fn retained_editing_reformat_navigation_and_deletion_scenarios_match_bytes_curso
         if spec["profile"] == "ws4-block-copy-v1"
             || (spec["profile"] == "ws4-block-move-delete-v1"
                 && spec["expected"]["marks_cleared"] != true)
+            || spec["profile"] == "ws4-block-display-v1"
         {
             for field in ["block_begin", "block_end"] {
                 assert_eq!(report["compared_fields"][field], true);
                 assert_eq!(report["state"][field], spec["expected"][field]);
             }
+        }
+        if spec["profile"] == "ws4-block-display-v1" {
+            assert_eq!(report["compared_fields"]["block_visible"], true);
+            assert_eq!(
+                report["state"]["block_visible"],
+                spec["expected"]["block_visible"]
+            );
         }
         if spec["expected"]["marks_cleared"] == true {
             assert_eq!(report["compared_fields"]["marks_cleared"], true);

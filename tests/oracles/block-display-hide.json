@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-block-display-v1",
+  "id": "block-display-hide",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5",
+        "path": "runtime-openstar-kh-01/input-manifest.json"
+      },
+      {
+        "sha256": "6ee42a279969ab68267a0d5c2c50da96415fa4679400531e815fa8bc6528d285",
+        "path": "runtime-openstar-kh-01/events.json"
+      },
+      {
+        "sha256": "4a044e67317f64c39053f1f2f29541a95dfd4319da4b0e3dfa5c2fb0eb71cb80",
+        "path": "runtime-openstar-kh-01/02-after-hide.png"
+      },
+      {
+        "sha256": "c11c22e6cd0442d059e36d26d5dd9cbc89bff00af0c64f39003fb00a184e7362",
+        "path": "runtime-openstar-kh-01/files/HIDE.DOC"
+      }
+    ],
+    "limitations": [
+      "Synthetic ASCII document in an isolated DOSBox copy on 2026-10-17.",
+      "The screenshot establishes block display in one physical line; other document shapes are untested.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41424344451a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_begin"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "next_character"
+    },
+    {
+      "command": "mark_block_end"
+    },
+    {
+      "command": "toggle_block_display"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "c11c22e6cd0442d059e36d26d5dd9cbc89bff00af0c64f39003fb00a184e7362",
+    "cursor_byte": 3,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    },
+    "block_begin": 1,
+    "block_end": 3,
+    "block_visible": false
+  }
+}

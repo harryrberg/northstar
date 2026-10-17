@@ -288,6 +288,7 @@ pub enum Command {
     Backspace,
     MarkBlockBegin,
     MarkBlockEnd,
+    ToggleBlockDisplay,
     CopyBlock,
     MoveBlock,
     DeleteBlock,
@@ -351,6 +352,7 @@ pub struct Snapshot {
     pub formatting: Formatting,
     pub block_begin: Option<usize>,
     pub block_end: Option<usize>,
+    pub block_visible: bool,
     pub replace_pending: bool,
 }
 
@@ -367,6 +369,7 @@ pub struct Editor {
     replace_pending: bool,
     last_find_result: Option<bool>,
     block: block::Marks,
+    block_visible: bool,
 }
 
 impl Editor {
@@ -401,6 +404,7 @@ impl Editor {
             replace_pending: false,
             last_find_result: None,
             block: block::Marks::default(),
+            block_visible: false,
         })
     }
 
@@ -459,6 +463,7 @@ impl Editor {
             formatting: self.formatting,
             block_begin: self.block.begin,
             block_end: self.block.end,
+            block_visible: self.block_visible,
             replace_pending: self.replace_pending,
         }
     }
@@ -589,11 +594,14 @@ impl Editor {
             Command::MarkBlockBegin => {
                 block::mark(&self.document, self.cursor, self.formatting)?;
                 self.block.begin = Some(self.cursor);
+                self.block_visible = true;
             }
             Command::MarkBlockEnd => {
                 block::mark(&self.document, self.cursor, self.formatting)?;
                 self.block.end = Some(self.cursor);
+                self.block_visible = true;
             }
+            Command::ToggleBlockDisplay => self.block_visible = !self.block_visible,
             Command::CopyBlock => {
                 let (edit, marks) =
                     block::copy(&self.document, self.cursor, self.formatting, self.block)?;

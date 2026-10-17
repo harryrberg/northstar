@@ -37,7 +37,7 @@ try {
     $installed = $true
 
     $files = @('openstar-desktop.exe', 'LICENSE.txt', 'THIRD_PARTY_FONTS.md',
-               'IBM-Plex-OFL.txt', 'WINDOWS_PROTOTYPE.md', 'MENUS.md', 'FILE_OPERATIONS.md', 'RECOVERY.md', 'NAVIGATION.md', 'HARD_BREAK.md', 'LINE_BOUNDARIES.md', 'QUICK_JUMPS.md', 'WORD_NAVIGATION.md', 'FIND.md', 'REPLACEMENT.md', 'DELETION.md', 'BACKSPACE_DELETE.md', 'BLOCK_COPY.md', 'BLOCK_MOVE_DELETE.md', 'BLOCK_WRITE.md', 'FILE_INSERT.md', 'ERASURE.md', 'WORD_ERASURE.md')
+               'IBM-Plex-OFL.txt', 'WINDOWS_PROTOTYPE.md', 'MENUS.md', 'FILE_OPERATIONS.md', 'RECOVERY.md', 'NAVIGATION.md', 'HARD_BREAK.md', 'LINE_BOUNDARIES.md', 'QUICK_JUMPS.md', 'WORD_NAVIGATION.md', 'FIND.md', 'REPLACEMENT.md', 'DELETION.md', 'BACKSPACE_DELETE.md', 'BLOCK_COPY.md', 'BLOCK_MOVE_DELETE.md', 'BLOCK_WRITE.md', 'FILE_INSERT.md', 'BLOCK_DISPLAY.md', 'ERASURE.md', 'WORD_ERASURE.md')
     foreach ($file in $files) {
         if (-not (Test-Path -LiteralPath (Join-Path $installDir $file) -PathType Leaf)) {
             throw "Installed file missing: $file"
