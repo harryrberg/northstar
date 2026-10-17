@@ -103,6 +103,14 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
         "right-break-noop-buffer",
         "right-highbit-suffix",
         "right-highbit-restore",
+        "left-delete-prefix",
+        "left-start-noop-buffer",
+        "left-hard-break",
+        "left-hard-break-restore",
+        "left-break-full-line",
+        "left-break-restore",
+        "left-highbit-prefix",
+        "left-highbit-restore",
         "block-copy-repeat-before-source",
         "block-copy-repeat-inside-source",
         "block-move-end",
@@ -278,6 +286,14 @@ fn desktop_key_sequences_save_the_retained_dos_results() {
                             Some("y"),
                             false,
                         ),
+                    );
+                }
+                Command::DeleteToLineStart => {
+                    dispatch(&mut keyboard, &mut session, ctrl("q", false));
+                    dispatch(
+                        &mut keyboard,
+                        &mut session,
+                        press(Key::Named(Named::Delete), Modifiers::empty(), None, false),
                     );
                 }
                 Command::UneraseLine => dispatch(&mut keyboard, &mut session, ctrl("u", false)),

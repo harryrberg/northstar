@@ -295,6 +295,7 @@ pub enum Command {
     DeleteWord,
     DeleteLine,
     DeleteToLineEnd,
+    DeleteToLineStart,
     UneraseLine,
     Reformat,
     FindLiteral {
@@ -659,7 +660,20 @@ impl Editor {
                     erasure::delete_to_line_end(&self.document, self.cursor, self.formatting)?
                 {
                     self.commit_edit(edit);
-                    self.erased_text = Some(erasure::ErasedText::Right(erased));
+                    self.erased_text = Some(erasure::ErasedText::Inline(erased));
+                }
+            }
+            Command::DeleteToLineStart => {
+                if self.block.begin.is_some() || self.block.end.is_some() {
+                    return Err(EditError::UnqualifiedOperation(
+                        "line-prefix erasure with block marks",
+                    ));
+                }
+                if let Some((edit, erased)) =
+                    erasure::delete_to_line_start(&self.document, self.cursor, self.formatting)?
+                {
+                    self.commit_edit(edit);
+                    self.erased_text = Some(erasure::ErasedText::Inline(erased));
                 }
             }
             Command::UneraseLine => {

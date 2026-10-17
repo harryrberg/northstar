@@ -113,6 +113,10 @@ Fourteen synthetic scenarios compare whole-line deletion and reuse of the delete
 
 Six retained scenarios compare deletion from the cursor through the current line's text, Ctrl-U restoration, a hard-break no-op that preserves the buffer, and high-bit word-end markers. The cursor and hard break remain. One OpenStar output was reopened and resaved in DOS WordStar without byte changes. [Exact cases and limits](LINE_RIGHT.md) define this bounded profile.
 
+## Ctrl-Q Delete: ws4-line-left-erasure-v1
+
+Eight retained scenarios compare deletion from the current line start up to the cursor, Ctrl-U restoration, a line-start no-op that preserves the buffer, hard-break preservation, and high-bit word-end markers. The cursor moves to line start. One OpenStar output was reopened and resaved in DOS WordStar without byte changes. [Exact cases and limits](LINE_LEFT.md) define this bounded profile.
+
 ## Ctrl-T word erasure: ws4-word-erasure-v1
 
 Twenty-seven synthetic scenarios compare Ctrl-T and its shared Ctrl-U buffer with retained DOS runs. At a word, Ctrl-T removes text from the cursor to a measured boundary; at spaces it removes the space run. On an ordinary hard break it joins the lines and clears the buffer. At EOF it leaves the buffer alone. Punctuation and adjacent-space cases are qualified only where measured. [Exact observations, source identities, interoperability check, and limits](WORD_ERASURE.md) define the scope. The core owns all erasure state.

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-line-left-erasure-v1",
+  "id": "left-highbit-restore",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5",
+        "path": "runtime-openstar-ql-space-01/input-manifest.json"
+      },
+      {
+        "sha256": "d5e8c63f13743e5c9bc97f5b0ea867d59a03e3b72a7174948ffb325104a5191a",
+        "path": "runtime-openstar-ql-space-01/events.json"
+      },
+      {
+        "sha256": "5b6d4ba1b389b75b688063ba5fe42fe5117293c17e9396609dad317e6b299d03",
+        "path": "runtime-openstar-ql-space-01/02-after-left.png"
+      },
+      {
+        "sha256": "e660ddbace4da32d53fc60f392b5e4070a3fc5153721842a0253a28c72ef983a",
+        "path": "runtime-openstar-ql-space-01/03-after-u.png"
+      },
+      {
+        "sha256": "7b83835e7375dd40cb51edf024f4ddbd7dc3dc861a7512ac324d9a8c87521a94",
+        "path": "runtime-openstar-ql-space-01/files/SPACES.DOC"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document in an isolated DOSBox copy on 2026-10-17.",
+      "Cursor offsets are derived from one-byte DOS screen cells.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Other controls, long lines, and marked blocks remain outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "4f4ec5205457cf2054485245451a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 8,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_to_line_start"
+    },
+    {
+      "command": "unerase_line"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "7b83835e7375dd40cb51edf024f4ddbd7dc3dc861a7512ac324d9a8c87521a94",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

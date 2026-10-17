@@ -81,6 +81,9 @@ impl Keyboard {
                 return Some(Action::Notice("Unsupported command"));
             }
             return Some(match (prefix, letter.as_str()) {
+                ('Q', _) if !utf8 && *key == Key::Named(Named::Delete) => {
+                    Action::Edit(Command::DeleteToLineStart)
+                }
                 ('Q', "r") => Action::Edit(Command::DocumentStart),
                 ('Q', "c") if !utf8 => Action::Edit(Command::DocumentEnd),
                 ('Q', "s") if !utf8 => Action::Edit(Command::LineStart),

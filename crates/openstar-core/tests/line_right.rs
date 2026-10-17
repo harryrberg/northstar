@@ -45,7 +45,7 @@ fn hard_break_stays_and_noop_at_break_retains_erasure_buffer() {
 
 #[test]
 fn high_bit_word_markers_survive_erasure_and_restoration() {
-    let original = b"ON\xc5 TWO\xcf THREE";
+    let original = b"ON\xc5 TW\xcf THREE";
     let mut editor = editor(original, 4);
     editor.apply(&Command::DeleteToLineEnd).unwrap();
     assert_eq!(&editor.document().bytes()[..4], b"ON\xc5 ");

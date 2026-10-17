@@ -372,7 +372,7 @@ impl Screen {
             self.put(
                 14,
                 0,
-                "Ctrl-Q Y erases text to the right; Ctrl-U restores it.",
+                "Ctrl-Q Del erases left; Ctrl-Q Y erases right; Ctrl-U restores.",
                 7,
             );
             self.put(19, 0, "Ctrl-K R inserts a WordStar file at the cursor.", 7);

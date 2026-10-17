@@ -88,6 +88,7 @@ impl DocumentSession {
                     | Command::DeleteWord
                     | Command::DeleteLine
                     | Command::DeleteToLineEnd
+                    | Command::DeleteToLineStart
                     | Command::UneraseLine
                     | Command::FindLiteral { .. }
                     | Command::ReplaceLiteral { .. }

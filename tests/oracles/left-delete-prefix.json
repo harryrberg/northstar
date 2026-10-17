@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "profile": "ws4-line-left-erasure-v1",
+  "id": "left-delete-prefix",
+  "provenance": {
+    "classification": "retained_runtime_comparison",
+    "executable_sha256": "535235e6a392d344948d065a5553798e6119b2a0c25ccbaca2221b6b4860904d",
+    "sources": [
+      {
+        "sha256": "6402fab1e6c95c2780cc1b0b09deb5318862f6e72ebbc2633e17da2815caedd5",
+        "path": "runtime-openstar-ql-01/input-manifest.json"
+      },
+      {
+        "sha256": "ffd88d6545c9830062a6c2eef352a9162e43031e1a279db28e0dcf0d0707787d",
+        "path": "runtime-openstar-ql-01/events.json"
+      },
+      {
+        "sha256": "818ba6cefb7c982eb8b560a0aa37642090aee6234f369ed42576b3b21c0eb75b",
+        "path": "runtime-openstar-ql-01/01-before.png"
+      },
+      {
+        "sha256": "4a53e9ce8a81cc4f6e35c7170d0e5de0c3882322bdbddb9c2a3e7b138d268d60",
+        "path": "runtime-openstar-ql-01/02-after-qdel.png"
+      },
+      {
+        "sha256": "e0acdbb160bbea2a027a4a989ef7f66433794b88f1021ba81b765203bff0a101",
+        "path": "runtime-openstar-ql-01/files/LEFT.BAK"
+      }
+    ],
+    "limitations": [
+      "Synthetic 128-byte document in an isolated DOSBox copy on 2026-10-17.",
+      "Cursor offsets are derived from one-byte DOS screen cells.",
+      "Formatting is declared for replay; the DOS run did not expose all internal formatting state.",
+      "Other controls, long lines, and marked blocks remain outside this case."
+    ]
+  },
+  "initial": {
+    "carrier_hex": "41424344451a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a",
+    "cursor_byte": 2,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  },
+  "commands": [
+    {
+      "command": "delete_to_line_start"
+    }
+  ],
+  "expected": {
+    "carrier_sha256": "e0acdbb160bbea2a027a4a989ef7f66433794b88f1021ba81b765203bff0a101",
+    "cursor_byte": 0,
+    "insert": true,
+    "formatting": {
+      "left_margin": 1,
+      "right_margin": 65,
+      "right_justify": false,
+      "line_spacing": 1,
+      "document_mode": true
+    }
+  }
+}

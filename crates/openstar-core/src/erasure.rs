@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-//! Bounded WordStar Backspace, Delete, Ctrl-G, Ctrl-T, Ctrl-Y, Ctrl-Q Y, and Ctrl-U semantics.
+//! Bounded WordStar Backspace, Delete, Ctrl-G, Ctrl-T, Ctrl-Y, Ctrl-Q Y/Del, and Ctrl-U semantics.
 use crate::{AsciiLine, Document, Edit, EditError, Formatting, TokenKind};
 
 pub(super) enum ErasedText {
     Line(Vec<u8>),
     Word(Vec<u8>),
-    Right(Vec<u8>),
+    Inline(Vec<u8>),
 }
 
 fn check_formatting(formatting: Formatting) -> Result<(), EditError> {
@@ -282,6 +282,32 @@ pub(super) fn delete_to_line_end(
     Ok(Some((Edit::Replace { active, cursor }, erased)))
 }
 
+/// Ctrl-Q Del removes the text prefix of one physical line and retains it for
+/// Ctrl-U. At line start it leaves the previous buffer alone.
+pub(super) fn delete_to_line_start(
+    document: &Document,
+    cursor: usize,
+    formatting: Formatting,
+) -> Result<Option<(Edit, Vec<u8>)>, EditError> {
+    check_formatting(formatting)?;
+    let end = document.checked_active_end()?;
+    let line = document.ascii_line(cursor, end)?;
+    check_line(document, &line, true)?;
+    check_previous_break(document, line.start)?;
+    if cursor == line.start {
+        return Ok(None);
+    }
+    let mut active = document.bytes()[..end].to_vec();
+    let erased = active.drain(line.start..cursor).collect();
+    Ok(Some((
+        Edit::Replace {
+            active,
+            cursor: line.start,
+        },
+        erased,
+    )))
+}
+
 /// Ctrl-U inserts the retained Ctrl-T or Ctrl-Y buffer without consuming it.
 pub(super) fn unerase_line(
     document: &Document,
@@ -295,7 +321,7 @@ pub(super) fn unerase_line(
     let (erased, from_line, allow_high_bit) = match erased {
         ErasedText::Line(bytes) => (bytes.as_slice(), true, false),
         ErasedText::Word(bytes) => (bytes.as_slice(), false, false),
-        ErasedText::Right(bytes) => (bytes.as_slice(), false, true),
+        ErasedText::Inline(bytes) => (bytes.as_slice(), false, true),
     };
     if erased.is_empty() {
         return Ok(Edit::MoveTo(cursor));
